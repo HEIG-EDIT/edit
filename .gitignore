@@ -1,0 +1,3 @@
+.idea
+db/setup/.env
+node_modules
