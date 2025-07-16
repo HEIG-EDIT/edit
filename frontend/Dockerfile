@@ -1,4 +1,5 @@
 # syntax=docker.io/docker/dockerfile:1
 
-FROM docker pull hello-world:nanoserver-ltsc2025
+FROM alpine:latest
 
+CMD ["echo", "hello world"]
