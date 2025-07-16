@@ -1,25 +1,23 @@
-import frontendConfig from "./frontend/eslint.config.mjs";
-import backendConfig from "./backend/eslint.config.mjs";
+import { FlatCompat } from "@eslint/eslintrc";
+import tseslint from "typescript-eslint";
+import eslint from "@eslint/js";
 
-export default [
-  // Frontend config with specific file patterns
-  ...frontendConfig.map((config) => ({
-    ...config,
-    files: config.files?.map((pattern) => `frontend/${pattern}`) || [
-      "frontend/**/*",
-    ],
-  })),
+const compat = new FlatCompat({
+  // import.meta.dirname is available after Node.js v20.11.0
+  baseDirectory: import.meta.dirname,
+});
 
-  // Backend config with specific file patterns
-  ...backendConfig.map((config) => ({
-    ...config,
-    files: config.files?.map((pattern) => `backend/${pattern}`) || [
-      "backend/**/*",
-    ],
-  })),
-
-  // Ignore patterns
-  {
-    ignores: ["node_modules/", "dist/", ".next/", "build/"],
-  },
+const eslintConfig = [
+  ...compat.config({
+    extends: ["next"],
+    settings: {
+      next: {
+        rootDir: ["frontend/src", "backend"],
+      },
+    },
+    ignorePatterns: ["**/.next/", "**/node_modules/"],
+  }),
+  ...tseslint.config(eslint.configs.recommended, tseslint.configs.recommended),
 ];
+
+export default eslintConfig;
