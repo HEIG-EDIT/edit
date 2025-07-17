@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export const ProjectSelection = () => {
   return (
     <div className=" bg-gray-800 rounded-lg w-[1000px] overflow-hidden">
@@ -7,10 +9,13 @@ export const ProjectSelection = () => {
         </p>
       </div>
       <div className="m-6">
-        <img
-          className="rounded-lg border-3 border-violet-300"
+        <Image
           src="/landing_page/project_selection.jpg"
-        ></img>
+          alt="Project selection overview"
+          width={1000}
+          height={1000}
+          className="rounded-lg border-3 border-violet-300"
+        />
       </div>
       <div className="bg-gray-600 rounded-lg mb-7 w-[550px] mx-auto">
         <div className="flex divide-x divide-violet-50 items-center p-4">

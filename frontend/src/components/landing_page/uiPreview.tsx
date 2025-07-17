@@ -20,10 +20,13 @@ export const UiPreview = () => {
       <div className="flex gap-4">
         <div className="bg-gray-600 rounded-lg w-3/5 flex flex-row items-center justify-between mb-7 ml-12">
           <div className=" bg-gray-800 rounded-lg basis-1/2 m-2">
-            <img
-              className="rounded-lg"
+            <Image
               src="/landing_page/layers_panel.jpg"
-            ></img>
+              alt="Layers panel overview"
+              width={1000}
+              height={1000}
+              className="rounded-lg"
+            />
           </div>
           <p className="text-violet-50 text-xs basis-1/2 m-3">
             Compose images to make complex scenes with layers.
@@ -35,7 +38,13 @@ export const UiPreview = () => {
         <div className="bg-gray-600 rounded-lg w-2/5 flex flex-col justify-between mb-7 mr-12">
           <div className=" basis-1/2 m-2">
             <div className=" bg-gray-800 rounded-lg p-1 mt-2">
-              <img className="rounded-lg" src="/landing_page/toolbar.jpg"></img>
+              <Image
+                src="/landing_page/toolbar.jpg"
+                alt="Toolbar overview"
+                width={1000}
+                height={1000}
+                className="rounded-lg"
+              />
             </div>
           </div>
           <p className="text-violet-50 text-xs basis-1/2 m-5">
