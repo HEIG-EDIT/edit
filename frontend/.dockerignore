@@ -1,0 +1,12 @@
+# ignore everything
+*
+
+# allow files and directories
+!/public
+!/src
+!/eslint.config.mjs
+!/next.config.ts
+!/package-lock.json
+!/package.json
+!/postcss.config.mjs
+!/tsconfig.json
