@@ -1,6 +1,7 @@
 import { TitleBlock } from "../../components/landing_page/titleBlock";
 import { QuickSummary } from "../../components/landing_page/quickSummary";
 import { UiPreview } from "../../components/landing_page/uiPreview";
+import { ProjectSelection } from "../../components/landing_page/projectSelection";
 
 export default function LandingPage() {
   return (
@@ -13,6 +14,9 @@ export default function LandingPage() {
       </div>
       <div className="mt-40 flex justify-center">
         <UiPreview />
+      </div>
+      <div className="mt-40 flex justify-center">
+        <ProjectSelection />
       </div>
     </main>
   );
