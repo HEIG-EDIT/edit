@@ -15,4 +15,13 @@ export class MicrosoftStrategy  extends PassportStrategy(Strategy, 'microsoft') 
             tokenURL: 'https://login.microsoftonline.com/common/oauth2/v2.0/token'
         });
     }
+
+    validate(accessToken: string,
+             refreshToken: string,
+             profile: any,
+             done: Function,): Promise<false | unknown | null> | false | unknown | null {
+        return {
+            undefined
+        };
+    }
 }

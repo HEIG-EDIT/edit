@@ -12,4 +12,13 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, 'linkedin') {
             scope: ['r_emailaddress', 'r_liteprofile'],
         });
     }
+
+    validate(accessToken: string,
+             refreshToken: string,
+             profile: any,
+             done: Function,): Promise<false | unknown | null> | false | unknown | null {
+        return {
+            undefined
+        };
+    }
 }

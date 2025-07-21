@@ -13,4 +13,13 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
             scope: ['email', 'profile'],
         });
     }
+
+    validate(accessToken: string,
+             refreshToken: string,
+             profile: any,
+             done: Function,): Promise<false | unknown | null> | false | unknown | null {
+        return {
+            undefined
+        };
+    }
 }
