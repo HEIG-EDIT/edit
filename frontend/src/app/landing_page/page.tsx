@@ -3,6 +3,7 @@ import { QuickSummary } from "../../components/landing_page/quickSummary";
 import { Emojis } from "../../components/landing_page/emojis";
 import { UiPreview } from "../../components/landing_page/uiPreview";
 import { ProjectSelection } from "../../components/landing_page/projectSelection";
+import { Collaboration } from "../../components/landing_page/collaboration";
 
 export default function LandingPage() {
   return (
@@ -22,8 +23,11 @@ export default function LandingPage() {
         <div className="pt-20">
           <UiPreview />
         </div>
-        <div className="pt-20 pb-20">
+        <div className="pt-20">
           <ProjectSelection />
+        </div>
+        <div className="pt-20 pb-20">
+          <Collaboration />
         </div>
       </div>
     </main>
