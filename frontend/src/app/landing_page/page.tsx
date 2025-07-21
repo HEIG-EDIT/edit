@@ -5,18 +5,20 @@ import { ProjectSelection } from "../../components/landing_page/projectSelection
 
 export default function LandingPage() {
   return (
-    <main className="bg-gray-900 min-h-screen pt-1">
-      <div className="sticky top-0">
+    <main className="bg-gray-900 min-h-screen">
+      <div className="sticky top-0 px-4 z-30">
         <NavBar />
       </div>
-      <div className="mt-24 ml-12">
-        <QuickSummary />
-      </div>
-      <div className="mt-40 flex justify-center">
-        <UiPreview />
-      </div>
-      <div className="mt-40 flex justify-center">
-        <ProjectSelection />
+      <div className="container mx-auto p-4">
+        <div className="pt-20">
+          <QuickSummary />
+        </div>
+        <div className="pt-20">
+          <UiPreview />
+        </div>
+        <div className="pt-20 pb-20">
+          <ProjectSelection />
+        </div>
       </div>
     </main>
   );
