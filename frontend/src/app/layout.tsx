@@ -29,7 +29,7 @@ export default function RootLayout({
       <nav className="bg-gray-700 shadow-md py-2 px-4 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/" className="w-10 h-10 relative">
               <Image
-                  src=""
+                  src="globe.svg"
                   alt="EDIT"
                   fill
                   className="navLogo object-contain"
