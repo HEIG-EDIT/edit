@@ -1,4 +1,4 @@
-'use client';
+/*'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -124,7 +124,7 @@ export default function RegisterPage() {
                     </button>
                 </p>
 
-                {/* Consent Modal */}
+                {/* Consent Modal *//*}
                 {showConsentModal && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div className="bg-white p-6 rounded shadow max-w-md w-full">
@@ -187,4 +187,4 @@ export default function RegisterPage() {
             </div>
         </div>
     );
-}
+}*/
