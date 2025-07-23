@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { OutsideCard } from "../outsideCard";
+import { TextCard } from "./textCard";
 
 export const UiPreview = () => {
   return (
@@ -11,53 +12,53 @@ export const UiPreview = () => {
           width={0}
           height={0}
           sizes="100vw"
-          className="w-full h-auto rounded-lg border-4 border-violet-300"
+          className="w-full h-auto rounded-2xl border-4 border-violet-300"
         />
       </div>
-      <p className="text-violet-50 font-bold text-2xl flex justify-center mb-4">
+      <p className="text-violet-50 font-bold text-2xl flex justify-center my-12">
         Feature rich software with a pleasant interface
       </p>
       <div className="flex flex-col lg:flex-row gap-4">
-        <div className="bg-gray-600 rounded-lg p-4 flex flex-col lg:flex-row lg:flex-1 items-center">
-          <div className=" bg-gray-800 rounded-lg overflow-hidden w-full lg:w-1/2 max-w-xs mx-auto lg:mx-0">
+        <div className="bg-gray-600 rounded-2xl p-4 flex flex-col lg:flex-row lg:flex-1 items-center">
+          <div className=" bg-gray-800 rounded-2xl overflow-hidden w-full max-w-xs mx-auto lg:mx-0">
             <Image
               src="/landing_page/layers_panel.jpg"
               alt="Layers panel overview"
               width={0}
               height={0}
               sizes="100vw"
-              className="w-full h-auto rounded-lg"
+              className="w-full h-auto rounded-2xl"
             />
           </div>
-          <div className="w-full lg:w-1/2 p-4">
-            <p className="text-violet-50 text-sm text-center">
+          <div className="text-xl content-center w-full px-4 ">
+            <TextCard>
               Compose images to make complex scenes with layers.
-              <br />
-              <br />
+            </TextCard>
+            <TextCard>
               Easily stack images and adjust opacity or fully hide layers.
-            </p>
+            </TextCard>
           </div>
         </div>
-        <div className="bg-gray-600 rounded-lg p-4 flex flex-col">
-          <div className=" bg-gray-800 rounded-lg overflow-hidden">
+        <div className="bg-gray-600 rounded-2xl p-4 flex flex-col">
+          <div className=" bg-gray-800 rounded-2xl mb-2 overflow-hidden">
             <Image
               src="/landing_page/toolbar.jpg"
               alt="Toolbar overview"
               width={0}
               height={0}
               sizes="100vw"
-              className="w-full h-auto rounded-lg p-2"
+              className="w-full h-auto rounded-2xl p-2"
             />
           </div>
-          <div className="w-full p-4">
-            <p className="text-violet-50 text-sm text-center mt-9">
+          <div className="w-full max-w-lg p-4">
+          <TextCard>
               Comprehensive set of tools for easy manipulation and editing of
               images.
-              <br />
-              <br />
+          </TextCard>
+          <TextCard>
               Move, crop, resize, draw and add filters to make the visuals of
               your dreams.
-            </p>
+          </TextCard>
           </div>
         </div>
       </div>
