@@ -13,7 +13,7 @@ export const QuickSummary = () => {
             Design, modify, combine and improve images right in your browser
           </p>
         </div>
-        <p className="text-violet-50 p-4 font-thin text-lg">
+        <p className="text-violet-50 px-8 py-4 font-thin text-lg">
           Let your imagination loose and easily create professional grade (or
           not) illustrations in minutes. Store projects on the cloud and work
           from anywhere.
@@ -23,7 +23,7 @@ export const QuickSummary = () => {
           export compositions with a configurable size.
         </p>
       </div>
-      <div className="flex justify-center">
+      <div className="flex justify-center pt-4">
         <StartButton />
       </div>
     </OutsideCard>
