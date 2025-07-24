@@ -21,8 +21,8 @@ export const UiPreview = () => {
         Feature rich software with a pleasant interface
       </p>
 
-      <div className="grid h-xl grid-flow-row grid-rows-3 grid-cols-1 lg:grid-rows-2 lg:grid-cols-8 gap-4">
-        <div className="bg-gray-600 rounded-2xl flex flex-col lg:flex-row lg:flex-1 lg:row-span-7 lg:col-span-5 p-4 items-center">
+      <div className="grid h-xl grid-flow-row grid-rows-8 grid-cols-1 lg:grid-rows-2 lg:grid-cols-8 gap-4">
+        <div className="bg-gray-600 rounded-2xl flex row-span-4 flex-col lg:flex-row lg:flex-1 lg:row-span-7 lg:col-span-5 p-4 items-center">
           <div className=" bg-gray-800 rounded-2xl overflow-hidden w-full max-w-xs mx-auto lg:mx-0">
             <Image
               src="/landing_page/layers_panel.jpg"
@@ -43,7 +43,7 @@ export const UiPreview = () => {
           </div>
         </div>
 
-        <div className="bg-gray-600 max-h-[400px] rounded-2xl p-4 lg:row-span-7 lg:col-span-3">
+        <div className="bg-gray-600  rounded-2xl p-4 row-span-3 lg:row-span-7 lg:col-span-3">
           <div className=" bg-gray-800 rounded-2xl mb-2 overflow-hidden">
             <Image
               src="/landing_page/toolbar.jpg"
@@ -54,7 +54,7 @@ export const UiPreview = () => {
               className="w-full h-auto rounded-2xl p-2"
             />
           </div>
-          <div className="w-full  max-w-lg p-4">
+          <div className="w-full max-w-lg row-span-1 p-4">
             <TextCard>
               Comprehensive set of tools for easy manipulation and editing of
               images.
@@ -66,9 +66,9 @@ export const UiPreview = () => {
           </div>
         </div>
 
-        <div className="bg-gray-600 rounded-2xl max-h-[200px] p-4 lg:row-span-1 lg:col-span-8 ">
+        <div className="bg-gray-600 rounded-2xl  p-4 lg:row-span-1 lg:col-span-8 ">
           <div className="md:row-start-2 bg-gray-600 flex md:flex-col lg:flex-row items-center">
-            <div className="text-center p-4 overflow-hidden">
+            <div className="text-center overflow-hidden">
               <TextCard>
                 Easily fix mistakes or undo bad ideas. Securely save projects with the click of a button.
               </TextCard>
