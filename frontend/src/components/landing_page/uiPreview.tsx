@@ -43,7 +43,7 @@ export const UiPreview = () => {
           </div>
         </div>
 
-        <div className="bg-gray-600 rounded-2xl p-4 lg:row-span-7 lg:col-span-3">
+        <div className="bg-gray-600 max-h-[400px] rounded-2xl p-4 lg:row-span-7 lg:col-span-3">
           <div className=" bg-gray-800 rounded-2xl mb-2 overflow-hidden">
             <Image
               src="/landing_page/toolbar.jpg"
@@ -54,7 +54,7 @@ export const UiPreview = () => {
               className="w-full h-auto rounded-2xl p-2"
             />
           </div>
-          <div className="w-full max-w-lg p-4">
+          <div className="w-full  max-w-lg p-4">
             <TextCard>
               Comprehensive set of tools for easy manipulation and editing of
               images.
@@ -66,9 +66,9 @@ export const UiPreview = () => {
           </div>
         </div>
 
-        <div className="bg-gray-600 rounded-2xl p-4 lg:row-span-1 lg:col-span-8 ">
+        <div className="bg-gray-600 rounded-2xl max-h-[200px] p-4 lg:row-span-1 lg:col-span-8 ">
           <div className="md:row-start-2 bg-gray-600 flex md:flex-col lg:flex-row items-center">
-            <div className="text-center p-4">
+            <div className="text-center p-4 overflow-hidden">
               <TextCard>
                 Easily fix mistakes or undo bad ideas. Securely save projects with the click of a button.
               </TextCard>
