@@ -24,8 +24,8 @@ export const ProjectSelection = () => {
             find your work.
           </p>
           <p className="text-violet-50 text-sm text-center lg:pl-6 pt-4 lg:pt-0 lg:flex-1">
-            Share projects with your team for easy collaboration. Give edition
-            access to all authorized users.
+            Save your work and continue later. Connect to your account to access
+            your projects on any computer.
           </p>
         </div>
       </div>

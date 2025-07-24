@@ -15,7 +15,8 @@ export const Collaboration = () => {
             <br />
             <br />
             Create teams of users to easily give access to a project for a group
-            of people.
+            of people Share projects with your team for easy collaboration.
+            Manage roles of all authorized users to restrict edition access.
           </p>
         </div>
         <div className="overflow-hidden">
