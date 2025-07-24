@@ -2,7 +2,6 @@
 
 ## Pre-requisites
 
-
 ## Instructions
 
 ### Development setup
@@ -12,7 +11,6 @@ Run the following commands to install setup the general development environment.
 ```bash
 npm install
 ```
-
 
 ## License
 
