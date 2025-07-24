@@ -30,7 +30,7 @@ export const UiPreview = () => {
             />
           </div>
           <div className="w-full lg:w-1/2 p-4">
-            <p className="text-violet-50 text-xs text-center">
+            <p className="text-violet-50 text-sm text-center">
               Compose images to make complex scenes with layers.
               <br />
               <br />
@@ -50,7 +50,7 @@ export const UiPreview = () => {
             />
           </div>
           <div className="w-full p-4">
-            <p className="text-violet-50 text-xs text-center mt-12">
+            <p className="text-violet-50 text-sm text-center mt-9">
               Comprehensive set of tools for easy manipulation and editing of
               images.
               <br />
