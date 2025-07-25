@@ -2,7 +2,7 @@ import { NavBar } from "../../components/landing_page/navBar";
 import { QuickSummary } from "../../components/landing_page/quickSummary";
 import { Emojis } from "../../components/landing_page/emojis";
 import { UiPreview } from "../../components/landing_page/uiPreview";
-import { ProjectSelection } from "../../components/landing_page/projectSelection";
+import { ProjectSelectionPreview } from "../../components/landing_page/projectSelectionPreview";
 import { Collaboration } from "../../components/landing_page/collaboration";
 
 export default function LandingPage() {
@@ -24,7 +24,7 @@ export default function LandingPage() {
           <UiPreview />
         </div>
         <div className="pt-20">
-          <ProjectSelection />
+          <ProjectSelectionPreview />
         </div>
         <div className="pt-20 pb-20">
           <Collaboration />

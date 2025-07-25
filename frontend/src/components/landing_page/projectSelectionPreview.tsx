@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { OutsideCard } from "../outsideCard";
 
-export const ProjectSelection = () => {
+export const ProjectSelectionPreview = () => {
   return (
     <OutsideCard>
       <p className="text-violet-50 font-bold text-2xl flex justify-center mb-4">
