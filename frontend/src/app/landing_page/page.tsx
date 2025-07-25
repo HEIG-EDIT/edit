@@ -7,7 +7,7 @@ import { Collaboration } from "../../components/landing_page/collaboration";
 
 export default function LandingPage() {
   return (
-    <main className="bg-green-400 min-h-screen">
+    <main className="bg-gray-900 min-h-screen">
       <div className="sticky top-0 px-4 z-30">
         <NavBar />
       </div>
