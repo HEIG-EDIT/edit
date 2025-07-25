@@ -1,4 +1,4 @@
-import { StartButton } from "./startButton";
+import { CustomButton } from "../customButton";
 import { OutsideCard } from "../outsideCard";
 
 export const QuickSummary = () => {
@@ -24,7 +24,7 @@ export const QuickSummary = () => {
         </p>
       </div>
       <div className="flex justify-center">
-        <StartButton />
+        <CustomButton link="/" text="Start EDITing" />
       </div>
     </OutsideCard>
   );
