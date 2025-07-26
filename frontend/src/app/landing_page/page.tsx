@@ -11,7 +11,7 @@ export default function LandingPage() {
       <div className="sticky top-0 py-10 px-4 z-30">
         <NavBar />
       </div>
-      <div className="container mx-auto max-w-[1200px] p-4">
+      <div className="container mx-auto max-w-6xl p-4">
         <div className="pt-20 flex flex-col lg:flex-row items-center">
           <div>
             <QuickSummary />
