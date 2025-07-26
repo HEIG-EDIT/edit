@@ -78,7 +78,7 @@ export const UiPreview = () => {
               alt="Toolbar overview"
               width={418}
               height={144}
-              className="h-full max-w-[200px] w-auto rounded-2xl p-2 "
+              className="h-full max-w-3xs w-auto rounded-2xl p-2 "
             />
           </div>
         </div>
