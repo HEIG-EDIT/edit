@@ -1,9 +1,9 @@
 "use client"
-import { useRef, useState, useCallback } from "react"
+import { useRef, useState, useCallback, createRef } from "react"
 import { Stage } from "react-konva"
 import { LayerComponent } from "./Layer"
 
-var JSZip = require("jszip");
+var JSZip = require("jszip")
 
 const imageToImageData = (image: HTMLImageElement): ImageData => {
     const tmpCanvas = document.createElement("canvas")
@@ -34,8 +34,8 @@ const imageDataToImage = (imageData: ImageData): HTMLImageElement => {
 }
 
 interface CanvasProps {
-    width: number
-    height: number
+    initialWidth: number
+    initialHeight: number
 }
 
 interface LayerState {
@@ -88,8 +88,8 @@ function useUndoRedo<T>(initialState: T) {
     }
 }
 
-export const Canvas = ({ width, height }: CanvasProps) => {
-    const [nextLayerId, setNextLayerId] = useState<number>(0)
+export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
+    const nextLayerId = useRef(0)
     const {
         state: layers,
         setState: setLayers,
@@ -98,14 +98,13 @@ export const Canvas = ({ width, height }: CanvasProps) => {
         canUndo,
         canRedo,
     } = useUndoRedo([])
+    const [width, setWidth] = useState(initialWidth)
+    const [height, setHeight] = useState(initialHeight)
 
-    const stageRef = useRef(null);
+    const stageRef = useRef(null)
 
     const useLayerId = (): number => {
-        const result = nextLayerId
-        setNextLayerId((prev) => prev + 1)
-
-        return result
+        return nextLayerId.current++
     }
 
     const findLayer = (layerId: number): [number, LayerState] => {
@@ -173,6 +172,27 @@ export const Canvas = ({ width, height }: CanvasProps) => {
         editLayer(0)
     }
 
+    const createLayer = (
+        image: HTMLImageElement,
+        x: number = 0,
+        y: number = 0
+    ) => {
+        const layer: LayerState = {
+            id: useLayerId(),
+            image: image,
+            imageData: imageToImageData(image),
+            layerRef: createRef(),
+            x: x,
+            y: y,
+        }
+
+        return layer
+    }
+
+    const addLayer = (layer: LayerState) => {
+        setLayers((prev: LayerState[]) => [...prev, layer])
+    }
+
     const handleFileUpload = (e) => {
         const file = e.target.files?.[0]
         if (!file) return
@@ -184,13 +204,8 @@ export const Canvas = ({ width, height }: CanvasProps) => {
             img.src = reader.result as string
 
             img.onload = () => {
-                const layer = {
-                    id: useLayerId(),
-                    image: img,
-                    imageData: imageToImageData(img),
-                    layerRef: null
-                }
-                setLayers((prev) => [...prev, layer])
+                const layer = createLayer(img)
+                addLayer(layer)
             }
         }
 
@@ -199,39 +214,78 @@ export const Canvas = ({ width, height }: CanvasProps) => {
 
     const handleSave = () => {
         if (!stageRef.current) {
-            return;
+            return
         }
-        const json = stageRef.current.toJSON();
-        console.log(json);
+        const json = stageRef.current.toObject()
+        console.log(json)
 
-        const zip = new JSZip();
-        zip.file("index.json", json);
-
-        const layersFolder = zip.folder("layers");
+        // const layersFolder = zip.folder("layers");
 
         for (const layer of layers) {
-            console.log(layer);
-            if (!layer.layerRef) {
-                console.log("Missing layerRef");
-                continue;
+            console.log(layer)
+            if (!layer.layerRef.current) {
+                console.log("Missing layerRef")
+                continue
             }
-            const b64String = layer.layerRef.toDataURL({
+            const b64String = layer.layerRef.current.toDataURL({
                 mimeType: "image/jpeg",
-                quality: 1
-            });
-            layersFolder.file(`${layer.id}.jpeg`, b64String, { base64: true });
+                quality: 1,
+            })
+
+            for (let jsonLayer of json.children) {
+                jsonLayer.src = b64String
+            }
+            // const blob = atob(b64String);
+            // layersFolder.file(`${layer.id}.jpeg`, blob, { blob: true });
         }
 
-        var FileSaver = require("file-saver");
+        const JSONString = JSON.stringify(json)
+        var blob = new Blob([JSONString], { type: "text/json;charset=utf-8" })
 
-        zip.generateAsync({ type: "blob" })
-            .then(function(blob: any) {
-                FileSaver.saveAs(blob, "hello.zip");
-            });
-    };
+        var FileSaver = require("file-saver")
+
+        FileSaver.saveAs(blob, "project.json")
+    }
+
+    const handleProjectUpload = (e) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        const reader = new FileReader()
+
+        reader.onload = () => {
+            // console.log(reader.result as string);
+            const project = JSON.parse(reader.result as string)
+            console.log(project)
+            setWidth(project.attrs.width)
+            setHeight(project.attrs.height)
+
+            for (const layer of project.children) {
+                const image = new Image()
+                image.src = layer.src
+                image.onload = () => {
+                    const layerState = createLayer(
+                        image,
+                        layer.attrs.x,
+                        layer.attrs.y
+                    )
+                    console.log(layerState)
+                    setLayers((prev: LayerState[]) => [...prev, layerState])
+                }
+            }
+        }
+
+        reader.readAsText(file)
+    }
 
     return (
         <div>
+            <input
+                name="Import project"
+                type="file"
+                accept="text/json"
+                onChange={handleProjectUpload}
+            />
             <input
                 name="Add layer"
                 type="file"
@@ -245,11 +299,14 @@ export const Canvas = ({ width, height }: CanvasProps) => {
             <button disabled={!canRedo} onClick={redo}>
                 Redo
             </button>
-            <button onClick={handleSave}>
-                Save
-            </button>
+            <button onClick={handleSave}>Save</button>
             <div className="border-2 " id="stage-div">
-                <Stage ref={stageRef} className="border-1" width={width} height={height}>
+                <Stage
+                    ref={stageRef}
+                    className="border-1"
+                    width={width}
+                    height={height}
+                >
                     {layers?.map(({ image, id, x, y, layerRef }) => (
                         <LayerComponent
                             key={id}
@@ -270,7 +327,7 @@ export const Canvas = ({ width, height }: CanvasProps) => {
 export default function ImageEditor() {
     return (
         <div>
-            <Canvas width={800} height={600} />
+            <Canvas initialWidth={800} initialHeight={800} />
         </div>
     )
 }

@@ -1,4 +1,5 @@
 "use client"
+import { useRef, forwardRef } from "react"
 import { Image as ReactKonvaImage, Layer as ReactKonvaLayer } from "react-konva"
 
 interface LayerProps {
@@ -10,7 +11,8 @@ interface LayerProps {
     onDragEnd: any
 }
 
-export const LayerComponent = ({ image, onDragEnd, x, y, id, ref }: LayerProps) => {
+export const LayerComponent = forwardRef((props, ref) => {
+    const { image, x, y, id, onDragEnd }: LayerProps = props
     return (
         <ReactKonvaLayer
             x={x}
@@ -23,4 +25,4 @@ export const LayerComponent = ({ image, onDragEnd, x, y, id, ref }: LayerProps) 
             <ReactKonvaImage image={image} />
         </ReactKonvaLayer>
     )
-}
+})
