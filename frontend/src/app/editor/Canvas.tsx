@@ -3,6 +3,8 @@ import { useRef, useState, useCallback } from "react"
 import { Stage } from "react-konva"
 import { LayerComponent } from "./Layer"
 
+var JSZip = require("jszip");
+
 const imageToImageData = (image: HTMLImageElement): ImageData => {
     const tmpCanvas = document.createElement("canvas")
     tmpCanvas.width = image.width
@@ -39,6 +41,7 @@ interface CanvasProps {
 interface LayerState {
     image: HTMLImageElement
     imageData: ImageData
+    layerRef: any
     id: number
     x: number
     y: number
@@ -95,6 +98,8 @@ export const Canvas = ({ width, height }: CanvasProps) => {
         canUndo,
         canRedo,
     } = useUndoRedo([])
+
+    const stageRef = useRef(null);
 
     const useLayerId = (): number => {
         const result = nextLayerId
@@ -183,6 +188,7 @@ export const Canvas = ({ width, height }: CanvasProps) => {
                     id: useLayerId(),
                     image: img,
                     imageData: imageToImageData(img),
+                    layerRef: null
                 }
                 setLayers((prev) => [...prev, layer])
             }
@@ -190,6 +196,39 @@ export const Canvas = ({ width, height }: CanvasProps) => {
 
         reader.readAsDataURL(file)
     }
+
+    const handleSave = () => {
+        if (!stageRef.current) {
+            return;
+        }
+        const json = stageRef.current.toJSON();
+        console.log(json);
+
+        const zip = new JSZip();
+        zip.file("index.json", json);
+
+        const layersFolder = zip.folder("layers");
+
+        for (const layer of layers) {
+            console.log(layer);
+            if (!layer.layerRef) {
+                console.log("Missing layerRef");
+                continue;
+            }
+            const b64String = layer.layerRef.toDataURL({
+                mimeType: "image/jpeg",
+                quality: 1
+            });
+            layersFolder.file(`${layer.id}.jpeg`, b64String, { base64: true });
+        }
+
+        var FileSaver = require("file-saver");
+
+        zip.generateAsync({ type: "blob" })
+            .then(function(blob: any) {
+                FileSaver.saveAs(blob, "hello.zip");
+            });
+    };
 
     return (
         <div>
@@ -206,9 +245,12 @@ export const Canvas = ({ width, height }: CanvasProps) => {
             <button disabled={!canRedo} onClick={redo}>
                 Redo
             </button>
+            <button onClick={handleSave}>
+                Save
+            </button>
             <div className="border-2 " id="stage-div">
-                <Stage className="border-1" width={width} height={height}>
-                    {layers?.map(({ image, id, x, y }) => (
+                <Stage ref={stageRef} className="border-1" width={width} height={height}>
+                    {layers?.map(({ image, id, x, y, layerRef }) => (
                         <LayerComponent
                             key={id}
                             id={id}
@@ -216,6 +258,7 @@ export const Canvas = ({ width, height }: CanvasProps) => {
                             onDragEnd={handleDragEnd}
                             x={x}
                             y={y}
+                            ref={layerRef}
                         />
                     ))}
                 </Stage>
