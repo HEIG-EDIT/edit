@@ -40,6 +40,8 @@ interface LayerState {
     image: HTMLImageElement
     imageData: ImageData
     id: number
+    x: number
+    y: number
 }
 
 function useUndoRedo<T>(initialState: T) {
@@ -125,17 +127,41 @@ export const Canvas = ({ width, height }: CanvasProps) => {
         }
 
         const newImageData = new ImageData(newPixels, width, height)
-        const newLayer: LayerState = {
-            imageData: newImageData,
-            image: imageDataToImage(newImageData),
-            id: layer.id,
-        }
+        changeLayer(i, () => {
+            return {
+                ...layer,
+                imageData: newImageData,
+                image: imageDataToImage(newImageData),
+            }
+        })
+    }
+
+    const changeLayer = (
+        i: index,
+        callback: (layerState: LayerState) => LayerState
+    ) => {
+        const layer = layers[i]
+        const newLayer = callback(layer)
 
         setLayers((prev) => [
             ...prev.slice(0, i),
             newLayer,
             ...prev.slice(i + 1),
         ])
+    }
+
+    const handleDragEnd = (e) => {
+        const id = parseInt(e.target.id())
+        const [i, _] = findLayer(id)
+
+        changeLayer(i, (layer) => {
+            let newLayer: LayerState = {
+                ...layer,
+                x: e.target.x(),
+                y: e.target.y(),
+            }
+            return newLayer
+        })
     }
 
     const draw = () => {
@@ -182,11 +208,14 @@ export const Canvas = ({ width, height }: CanvasProps) => {
             </button>
             <div className="border-2 " id="stage-div">
                 <Stage className="border-1" width={width} height={height}>
-                    {layers?.map(({ image, imageData, id }) => (
+                    {layers?.map(({ image, id, x, y }) => (
                         <LayerComponent
                             key={id}
-                            imageData={imageData}
+                            id={id}
                             image={image}
+                            onDragEnd={handleDragEnd}
+                            x={x}
+                            y={y}
                         />
                     ))}
                 </Stage>
