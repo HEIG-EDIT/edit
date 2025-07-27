@@ -1,13 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --font-sans: var(--font-ubuntu);
+    --font-sans: var(--font-ubuntu);
+}
+
+button:disabled {
+    color: #777777;
+    margin: 2px;
 }
 
 /* WIP : voir si implemente ou non dans app au final */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
 }

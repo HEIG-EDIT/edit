@@ -1,6 +1,6 @@
 "use client"
-import { useRef, useEffect, useState } from "react"
-import { Stage, Layer as KonvaLayerComponent } from "react-konva"
+import { useRef, useState, useCallback } from "react"
+import { Stage } from "react-konva"
 import { LayerComponent } from "./Layer"
 
 const imageToImageData = (image: HTMLImageElement): ImageData => {
@@ -42,9 +42,57 @@ interface LayerState {
     id: number
 }
 
+function useUndoRedo<T>(initialState: T) {
+    const [states, setStates] = useState([initialState])
+    const [index, setIndex] = useState(0)
+
+    const setState = useCallback(
+        (newState: T) => {
+            const func =
+                typeof newState === "function" ? newState : () => newState
+
+            setStates((currentStates) => {
+                const newStates = currentStates.slice(0, index + 1)
+                return [...newStates, func(currentStates[index])]
+            })
+            setIndex((currentIndex) => currentIndex + 1)
+        },
+        [index]
+    )
+
+    const undo = useCallback(() => {
+        setIndex((currentIndex) => Math.max(0, currentIndex - 1))
+    }, [])
+
+    const redo = useCallback(() => {
+        setIndex((currentIndex) =>
+            Math.min(states.length - 1, currentIndex + 1)
+        )
+    }, [states.length])
+
+    const canUndo = index > 0
+    const canRedo = index < states.length - 1
+
+    return {
+        state: states[index],
+        setState,
+        undo,
+        redo,
+        canUndo,
+        canRedo,
+    }
+}
+
 export const Canvas = ({ width, height }: CanvasProps) => {
     const [nextLayerId, setNextLayerId] = useState<number>(0)
-    const [layers, setLayers] = useState<LayerState[]>([])
+    const {
+        state: layers,
+        setState: setLayers,
+        undo,
+        redo,
+        canUndo,
+        canRedo,
+    } = useUndoRedo([])
 
     const useLayerId = (): number => {
         const result = nextLayerId
@@ -91,7 +139,7 @@ export const Canvas = ({ width, height }: CanvasProps) => {
     }
 
     const draw = () => {
-        editLayer(1)
+        editLayer(0)
     }
 
     const handleFileUpload = (e) => {
@@ -126,9 +174,15 @@ export const Canvas = ({ width, height }: CanvasProps) => {
                 onChange={handleFileUpload}
             />
             <button onClick={draw}>Rosification</button>
+            <button disabled={!canUndo} onClick={undo}>
+                Undo
+            </button>
+            <button disabled={!canRedo} onClick={redo}>
+                Redo
+            </button>
             <div className="border-2 " id="stage-div">
                 <Stage className="border-1" width={width} height={height}>
-                    {layers.map(({ image, imageData, id }) => (
+                    {layers?.map(({ image, imageData, id }) => (
                         <LayerComponent
                             key={id}
                             imageData={imageData}
