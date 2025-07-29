@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+=======
+import { Injectable, ConflictException } from '@nestjs/common';
+>>>>>>> 02f4b1a (added integration tests for user creation (email unique))
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -63,6 +67,7 @@ export class UsersService {
       throw err;
     }
   }
+<<<<<<< HEAD
 
   async changeUsername(userId: number, newUsername: string): Promise<void> {
     // Check length constraint
@@ -85,4 +90,6 @@ export class UsersService {
       data: { userName: newUsername },
     });
   }
+=======
+>>>>>>> 02f4b1a (added integration tests for user creation (email unique))
 }

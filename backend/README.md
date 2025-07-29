@@ -69,6 +69,18 @@ $ npx jest ./path/to/test/test.name.spec.ts --detectOpenHandles
 npx prisma db push
 ```
 
+Alternatively, to run ome single test:
+
+```bash
+$ npx jest ./path/to/test/test.name.spec.ts --detectOpenHandles
+```
+
+## Database migration
+
+```bash
+npx prisma db push
+```
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
