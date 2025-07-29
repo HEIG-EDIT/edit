@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  userName        String    @unique
+  email           String    @unique
+  passwordHash    String?
+  isEmailVerified Boolean
+  twoFaMethod     String?
+  twoFaSecret     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime? @updatedAt
+
+  collaborations Collaboration[]
+  refreshTokens  RefreshToken[]
+  auditLogs      AuditLog[]
+}
+
+model RefreshToken {
+  id            Int      @id @default(autoincrement())
+  tokenHash     String
+  deviceId      String   @unique
+  oauthProvider String
+  expiresAt     DateTime
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  eventType String
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+model Project {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  images         Image[]
+  collaborations Collaboration[]
+}
+
+model Image {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  s3Url     String
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId Int
+}
+
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  collaborations Collaboration[]
+}
+
+model Collaboration {
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId Int
+
+  role   Role @relation(fields: [roleId], references: [id])
+  roleId Int
+
+  @@id([userId, projectId])
+}
