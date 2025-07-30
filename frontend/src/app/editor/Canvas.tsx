@@ -21,27 +21,6 @@ interface LayerState {
   lines: Array<Line>;
 }
 
-const CanvasLine = ({ line }) => {
-  if (line) {
-    console.log("Has line");
-    console.log(line);
-    return (
-      <KonvaLayer>
-        <KonvaLine
-          key={"line"}
-          points={line.points}
-          stroke={line.color}
-          strokeWidth={line.width}
-          tension={0.5}
-          lineCap="round"
-          lineJoin="round"
-          globalCompositeOperation={"source-over"}
-        />
-      </KonvaLayer>
-    );
-  }
-};
-
 export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   const {
     state: layers,
@@ -57,7 +36,6 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
 
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const isDrawing = useRef(false);
-  const [line, setLine] = useState();
 
   const stageRef = useRef(null);
 
@@ -255,22 +233,20 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     isDrawing.current = true;
     const pos = e.target.getStage().getPointerPosition();
 
-    setLine({ points: [pos.x, pos.y], color: "#FF00FF", width: 3, tool: null });
-
     setLayers((prev: Array<LayerState>) => {
       return prev.map((layer: LayerState) => {
-        const newLayer = {
+        return {
           ...layer,
           lines: layer.lines.concat([
             {
-              points: [pos.x, pos.y],
+              // Subtract layer position to account for offset
+              points: [pos.x - layer.x, pos.y - layer.y],
               color: "#FF00FFFF",
               width: 3,
               tool: null,
             },
           ]),
         };
-        return newLayer;
       });
     });
   };
@@ -281,26 +257,18 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       return;
     }
 
-    const stage = stageRef.current;
-    if (stage == null) {
-      return;
-    }
-
-    const point = stage.getPointerPosition();
+    const point = e.taget.getStage.getPointerPosition();
 
     setLayers((prev: Array<LayerState>) => {
-      const result = prev.map((layer: LayerState) => {
-        const newLayer = { ...layer };
-
+      return prev.map((layer: LayerState) => {
         const currentLine = layer.lines[layer.lines.length - 1];
-        currentLine.points = currentLine.points.concat([point.x, point.y]);
-        const newLine = layer.lines;
-        newLine.splice(layer.lines.length - 1, 1, currentLine);
-        newLayer.lines = newLine;
-        return newLayer;
+        currentLine.points = currentLine.points.concat([
+          point.x - layer.x,
+          point.y - layer.y,
+        ]);
+        layer.lines = layer.lines.concat([currentLine]);
+        return layer;
       });
-      console.log(`Result:`, result);
-      return result;
     });
   };
 
