@@ -31,52 +31,82 @@ export const imageDataToImage = (imageData: ImageData): HTMLImageElement => {
 export function useUndoRedo<T>(initialState: T) {
   interface UndoRedoState {
     stateHistory: Array<T>;
+    virtualState: T;
     index: number;
   }
 
-  const [states, setStates] = useState<UndoRedoState>({
+  const [state, setState] = useState<UndoRedoState>({
     stateHistory: [initialState],
+    virtualState: initialState,
     index: 0,
   });
 
-  const setState = useCallback(
+  const setStatePublic = useCallback(
     (newState: T) => {
       const func = typeof newState === "function" ? newState : () => newState;
-
-      setStates((prev) => {
+      setState((prev) => {
         let { stateHistory, index } = prev;
         const newStates = stateHistory.slice(0, index + 1);
-        console.log("Prev: ", stateHistory[index]);
+        const newState = func(stateHistory[index]);
+        console.log(newState);
         return {
-          stateHistory: [...newStates, func(stateHistory[index])],
+          stateHistory: [...newStates, newState],
+          virtualState: newState,
           index: index + 1,
         };
       });
     },
-    [setStates],
+    [setState],
   );
 
-  const undo = useCallback(() => {
-    setStates((prev) => {
-      return { ...prev, index: prev.index + 1 };
-    });
-  }, [setStates]);
+  const setVirtualState = useCallback(
+    (newState: T) => {
+      const func = typeof newState === "function" ? newState : () => newState;
+      setState((prev) => {
+        return {
+          ...prev,
+          virtualState: func(prev.virtualState),
+        };
+      });
+    },
+    [setState],
+  );
 
-  const redo = useCallback(() => {
-    setStates((prev) => {
+  const commitVirtualState = useCallback(() => {
+    setStatePublic(state.virtualState);
+  }, [setStatePublic, state]);
+
+  const undo = useCallback(() => {
+    setState((prev) => {
       return {
         ...prev,
-        index: Math.min(prev.stateHistory.length - 1, prev.index + 1),
+        index: prev.index - 1,
+        virtualState: prev.stateHistory[prev.index - 1],
       };
     });
-  }, [setStates]);
+  }, [setState]);
 
-  const canUndo = states.index > 0;
-  const canRedo = states.index < states.stateHistory.length - 1;
+  const redo = useCallback(() => {
+    setState((prev) => {
+      const index = Math.min(prev.stateHistory.length - 1, prev.index + 1);
+      return {
+        ...prev,
+        index: index,
+        virtualState: prev.stateHistory[index],
+      };
+    });
+  }, [setState]);
+
+  const canUndo = state.index > 0;
+  const canRedo = state.index < state.stateHistory.length - 1;
 
   return {
-    state: states.stateHistory[states.index],
-    setState,
+    get state() {
+      return state.virtualState;
+    },
+    setState: setStatePublic,
+    setVirtualState,
+    commitVirtualState,
     undo,
     redo,
     canUndo,

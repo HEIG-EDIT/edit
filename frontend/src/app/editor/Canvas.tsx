@@ -11,6 +11,8 @@ interface CanvasProps {
   initialHeight: number;
 }
 
+// The state of the layers is held by the parent "Cavnas" component. This enables
+// the dynamic creation of layers.
 interface LayerState {
   image: HTMLImageElement;
   imageData: ImageData;
@@ -25,6 +27,8 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   const {
     state: layers,
     setState: setLayers,
+    setVirtualState: setVirtualLayers,
+    commitVirtualState: commitVirtualLayers,
     undo,
     redo,
     canUndo,
@@ -233,7 +237,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     isDrawing.current = true;
     const pos = e.target.getStage().getPointerPosition();
 
-    setLayers((prev: Array<LayerState>) => {
+    setVirtualLayers((prev: Array<LayerState>) => {
       return prev.map((layer: LayerState) => {
         return {
           ...layer,
@@ -257,23 +261,28 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       return;
     }
 
-    const point = e.taget.getStage.getPointerPosition();
+    const point = e.target.getStage().getPointerPosition();
 
-    setLayers((prev: Array<LayerState>) => {
+    setVirtualLayers((prev: Array<LayerState>) => {
       return prev.map((layer: LayerState) => {
-        const currentLine = layer.lines[layer.lines.length - 1];
+        let lines = layer.lines.slice();
+        const currentLine = lines[lines.length - 1];
         currentLine.points = currentLine.points.concat([
           point.x - layer.x,
           point.y - layer.y,
         ]);
-        layer.lines = layer.lines.concat([currentLine]);
+
+        layer.lines = lines;
         return layer;
       });
     });
   };
 
   const handleMouseUp = () => {
-    isDrawing.current = false;
+    if (isDrawing.current) {
+      isDrawing.current = false;
+      commitVirtualLayers();
+    }
   };
 
   return (
