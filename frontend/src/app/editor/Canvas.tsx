@@ -2,25 +2,14 @@
 import { useRef, useState, useCallback, createRef } from "react";
 import { Stage, Line as KonvaLine, Layer as KonvaLayer } from "react-konva";
 import { LayerComponent } from "./Layer";
-import { Line } from "./types";
+import { LayerState, CanvasState } from "./types";
+import { projectFromJSON, projectToJSON } from "./serialization";
 
 const utils = require("./utils.ts");
 
 interface CanvasProps {
   initialWidth: number;
   initialHeight: number;
-}
-
-// The state of the layers is held by the parent "Cavnas" component. This enables
-// the dynamic creation of layers.
-interface LayerState {
-  image: HTMLImageElement;
-  imageData: ImageData;
-  layerRef: any;
-  id: string;
-  x: number;
-  y: number;
-  lines: Array<Line>;
 }
 
 export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
@@ -161,26 +150,11 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   };
 
   const handleSave = () => {
-    if (!stageRef.current) {
-      return;
-    }
-    const json = stageRef.current.toObject();
-    json.images = {};
-
-    for (const layer of layers) {
-      if (!layer.layerRef.current) {
-        console.log("Missing layerRef");
-        continue;
-      }
-      const b64String = layer.layerRef.current.toDataURL({
-        mimeType: "image/jpeg",
-        quality: 1,
-      });
-
-      json.images[layer.id] = b64String;
-    }
-
-    const JSONString = JSON.stringify(json);
+    const JSONString = projectToJSON({
+      layers: layers,
+      width: width,
+      height: height,
+    });
     var blob = new Blob([JSONString], { type: "text/json;charset=utf-8" });
 
     var FileSaver = require("file-saver");
@@ -195,31 +169,15 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     const reader = new FileReader();
 
     reader.onload = () => {
-      const project = JSON.parse(reader.result as string);
+      const project = projectFromJSON(reader.result as string);
 
-      setWidth(project.attrs.width);
-      setHeight(project.attrs.height);
-
-      const loadPromises = project.children.map((layer: object) => {
-        return new Promise<LayerState>((resolve) => {
-          const image = new Image();
-          image.src = layer.src;
-          image.onload = () => {
-            const layerState = createLayer(
-              image,
-              layer.attrs.x,
-              layer.attrs.y,
-              layer.attrs.id,
-            );
-            resolve(layerState);
-          };
-        });
-      });
-
-      Promise.all(loadPromises).then((loadedLayers) => {
-        setLayers(loadedLayers);
-        console.log("Loaded project");
-      });
+      setWidth(project.width);
+      setHeight(project.height);
+      setLayers(
+        project.layers.map((layer) => {
+          return createLayer(layer.image, layer.x, layer.y, layer.id);
+        }),
+      );
     };
 
     reader.readAsText(file);
