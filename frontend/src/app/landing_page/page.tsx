@@ -8,15 +8,15 @@ import { Collaboration } from "../../components/landing_page/collaboration";
 export default function LandingPage() {
   return (
     <main className="bg-gray-900 min-h-screen">
-      <div className="sticky top-0 px-4 z-30">
+      <div className="sticky top-0 py-10 px-4 z-30">
         <NavBar />
       </div>
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto max-w-6xl p-4">
         <div className="pt-20 flex flex-col lg:flex-row items-center">
           <div>
             <QuickSummary />
           </div>
-          <div className="pl-0 pt-4 lg:pl-20">
+          <div className="max-w-1/2 pl-0 pt-4 lg:pl-20">
             <Emojis />
           </div>
         </div>

@@ -42,7 +42,6 @@ export default function RootLayout({
             {/* WIP : en prevision d'autres liens */}
           </div>
         </nav>
-
         {children}
 
         <footer className="bg-gray-700 text-center text-sm p-4 text-gray-600">
