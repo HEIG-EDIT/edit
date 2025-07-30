@@ -1,9 +1,12 @@
 "use client";
 import { useRef, forwardRef } from "react";
+const reactConva = require("react-konva");
 import {
-  Image as ReactKonvaImage,
-  Layer as ReactKonvaLayer,
+  Image as KonvaImage,
+  Layer as KonvaLayer,
+  Line as KonvaLine,
 } from "react-konva";
+import { Line } from "./types";
 
 interface LayerProps {
   image: HTMLImageElement;
@@ -12,20 +15,35 @@ interface LayerProps {
   x: number;
   y: number;
   onDragEnd: any;
+  draggable: boolean;
+  lines: Array<Line>;
 }
 
 export const LayerComponent = forwardRef((props, ref) => {
-  const { image, x, y, id, onDragEnd }: LayerProps = props;
+  const { image, x, y, id, lines, onDragEnd, draggable }: LayerProps = props;
+  console.log(`Lines: ${lines}`);
   return (
-    <ReactKonvaLayer
+    <KonvaLayer
       x={x}
       y={y}
       id={id}
       onDragEnd={onDragEnd}
-      draggable={true}
+      draggable={draggable}
       ref={ref}
     >
-      <ReactKonvaImage image={image} />
-    </ReactKonvaLayer>
+      <KonvaImage image={image} />
+      {lines?.map((line, i) => (
+        <KonvaLine
+          key={i}
+          points={line.points}
+          stroke={line.color}
+          strokeWidth={line.width}
+          tension={0.5}
+          lineCap="round"
+          lineJoin="round"
+          globalCompositeOperation={"source-over"}
+        />
+      ))}
+    </KonvaLayer>
   );
 });

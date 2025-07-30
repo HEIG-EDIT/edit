@@ -1,35 +1,10 @@
 "use client";
 import { useRef, useState, useCallback, createRef } from "react";
-import { Stage } from "react-konva";
+import { Stage, Line as KonvaLine, Layer as KonvaLayer } from "react-konva";
 import { LayerComponent } from "./Layer";
+import { Line } from "./types";
 
-const imageToImageData = (image: HTMLImageElement): ImageData => {
-  const tmpCanvas = document.createElement("canvas");
-  tmpCanvas.width = image.width;
-  tmpCanvas.height = image.height;
-
-  const ctx = tmpCanvas.getContext("2d");
-  ctx?.drawImage(image, 0, 0);
-  const result = ctx?.getImageData(0, 0, image.width, image.height);
-
-  if (result) {
-    return result;
-  }
-
-  throw Error("Could not extract imageData from the input image.");
-};
-
-const imageDataToImage = (imageData: ImageData): HTMLImageElement => {
-  var canvas = document.createElement("canvas");
-  var ctx = canvas.getContext("2d");
-  canvas.width = imageData.width;
-  canvas.height = imageData.height;
-  ctx?.putImageData(imageData, 0, 0);
-
-  var image = new Image();
-  image.src = canvas.toDataURL();
-  return image;
-};
+const utils = require("./utils.ts");
 
 interface CanvasProps {
   initialWidth: number;
@@ -43,45 +18,29 @@ interface LayerState {
   id: string;
   x: number;
   y: number;
+  lines: Array<Line>;
 }
 
-function useUndoRedo<T>(initialState: T) {
-  const [states, setStates] = useState([initialState]);
-  const [index, setIndex] = useState(0);
-
-  const setState = useCallback(
-    (newState: T | ((prev: T) => T)) => {
-      const func = typeof newState === "function" ? newState : () => newState;
-
-      setStates((currentStates) => {
-        const newStates = currentStates.slice(0, index + 1);
-        return [...newStates, func(currentStates[index])];
-      });
-      setIndex((currentIndex) => currentIndex + 1);
-    },
-    [index],
-  );
-
-  const undo = useCallback(() => {
-    setIndex((currentIndex) => Math.max(0, currentIndex - 1));
-  }, []);
-
-  const redo = useCallback(() => {
-    setIndex((currentIndex) => Math.min(states.length - 1, currentIndex + 1));
-  }, [states.length]);
-
-  const canUndo = index > 0;
-  const canRedo = index < states.length - 1;
-
-  return {
-    state: states[index],
-    setState,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-  };
-}
+const CanvasLine = ({ line }) => {
+  if (line) {
+    console.log("Has line");
+    console.log(line);
+    return (
+      <KonvaLayer>
+        <KonvaLine
+          key={"line"}
+          points={line.points}
+          stroke={line.color}
+          strokeWidth={line.width}
+          tension={0.5}
+          lineCap="round"
+          lineJoin="round"
+          globalCompositeOperation={"source-over"}
+        />
+      </KonvaLayer>
+    );
+  }
+};
 
 export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   const {
@@ -91,9 +50,14 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     redo,
     canUndo,
     canRedo,
-  } = useUndoRedo(Array<LayerState>());
+  } = utils.useUndoRedo(Array<LayerState>());
+
   const [width, setWidth] = useState(initialWidth);
   const [height, setHeight] = useState(initialHeight);
+
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const isDrawing = useRef(false);
+  const [line, setLine] = useState();
 
   const stageRef = useRef(null);
 
@@ -133,7 +97,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       return {
         ...layer,
         imageData: newImageData,
-        image: imageDataToImage(newImageData),
+        image: utils.imageDataToImage(newImageData),
       };
     });
   };
@@ -177,10 +141,11 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       const layer: LayerState = {
         id: id,
         image: image,
-        imageData: imageToImageData(image),
+        imageData: utils.imageToImageData(image),
         layerRef: createRef(),
         x: x,
         y: y,
+        lines: [],
       };
 
       return layer;
@@ -189,7 +154,9 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   );
 
   const addLayer = (layer: LayerState) => {
-    setLayers((prev: LayerState[]) => [...prev, layer]);
+    setLayers((prev: LayerState[]) => {
+      return [...prev, layer];
+    });
   };
 
   const handleImageUpload = (e) => {
@@ -219,7 +186,6 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     json.images = {};
 
     for (const layer of layers) {
-      console.log(layer);
       if (!layer.layerRef.current) {
         console.log("Missing layerRef");
         continue;
@@ -256,7 +222,6 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
         return new Promise<LayerState>((resolve) => {
           const image = new Image();
           image.src = layer.src;
-          console.log(image);
           image.onload = () => {
             const layerState = createLayer(
               image,
@@ -271,15 +236,76 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
 
       Promise.all(loadPromises).then((loadedLayers) => {
         setLayers(loadedLayers);
-        console.log("All layers loaded:", loadedLayers);
+        console.log("Loaded project");
       });
     };
 
     reader.readAsText(file);
   };
 
-  const handleRefresh = (e) => {
-    console.log(layers);
+  const handleDrawMode = (e) => {
+    setIsDrawingMode((prev) => !prev);
+  };
+
+  const handleMouseDown = (e) => {
+    if (!isDrawingMode) {
+      return;
+    }
+
+    isDrawing.current = true;
+    const pos = e.target.getStage().getPointerPosition();
+
+    setLine({ points: [pos.x, pos.y], color: "#FF00FF", width: 3, tool: null });
+
+    setLayers((prev: Array<LayerState>) => {
+      return prev.map((layer: LayerState) => {
+        const newLayer = {
+          ...layer,
+          lines: layer.lines.concat([
+            {
+              points: [pos.x, pos.y],
+              color: "#FF00FFFF",
+              width: 3,
+              tool: null,
+            },
+          ]),
+        };
+        return newLayer;
+      });
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    // no drawing - skipping
+    if (!isDrawing.current) {
+      return;
+    }
+
+    const stage = stageRef.current;
+    if (stage == null) {
+      return;
+    }
+
+    const point = stage.getPointerPosition();
+
+    setLayers((prev: Array<LayerState>) => {
+      const result = prev.map((layer: LayerState) => {
+        const newLayer = { ...layer };
+
+        const currentLine = layer.lines[layer.lines.length - 1];
+        currentLine.points = currentLine.points.concat([point.x, point.y]);
+        const newLine = layer.lines;
+        newLine.splice(layer.lines.length - 1, 1, currentLine);
+        newLayer.lines = newLine;
+        return newLayer;
+      });
+      console.log(`Result:`, result);
+      return result;
+    });
+  };
+
+  const handleMouseUp = () => {
+    isDrawing.current = false;
   };
 
   return (
@@ -304,19 +330,27 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
         Redo
       </button>
       <button onClick={handleSave}>Save</button>
+      <label>
+        Draw: <input onChange={handleDrawMode} type="checkbox" />
+      </label>
       <div className="border-2 " id="stage-div">
         <Stage
           ref={stageRef}
           className="border-1"
           width={width}
           height={height}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
         >
-          {layers?.map(({ image, id, x, y, layerRef }) => (
+          {layers?.map(({ image, id, x, y, layerRef, lines }) => (
             <LayerComponent
               key={id}
               id={id}
               image={image}
               onDragEnd={handleDragEnd}
+              draggable={!isDrawingMode}
+              lines={lines}
               x={x}
               y={y}
               ref={layerRef}
