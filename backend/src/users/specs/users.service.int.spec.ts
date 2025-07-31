@@ -5,13 +5,11 @@ import { UsersService } from '../users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { execSync } from 'child_process';
 import { PrismaClient } from '@prisma/client';
-import path from 'path';
 
 describe('UserService Integration', () => {
   let app: INestApplication;
   let userService: UsersService;
   let prisma: PrismaClient;
-  const testEmails = ['unique@example.com', 'duplicate@example.com'];
 
   // Start Docker Compose before all tests
   beforeAll(async () => {
@@ -40,46 +38,107 @@ describe('UserService Integration', () => {
 
   // Clean up users created during tests
   afterAll(async () => {
-    await prisma.user.deleteMany({
-      where: {
-        email: {
-          in: testEmails,
-        },
-      },
-    });
-
     await app.close();
 
     console.log('🔴 Stopping docker containers...');
     execSync('docker compose down', { stdio: 'inherit' });
   });
 
-  // Test duplicate email behavior
-  it('should throw ConflictException if email already exists', async () => {
-    const dto: CreateUserDto = {
-      email: 'duplicate@example.com',
-      password: 'password123',
-    };
+  describe('createUser()', () => {
+    const testEmails = ['unique@example.com', 'duplicate@example.com'];
 
-    // Create user first
-    await userService.createUser(dto);
+    afterAll(async () => {
+      await prisma.user.deleteMany({
+        where: {
+          email: {
+            in: testEmails,
+          },
+        },
+      });
+    });
+    
+    // Test duplicate email behavior
+    it('should throw ConflictException if email already exists', async () => {
+      const dto: CreateUserDto = {
+        email: 'duplicate@example.com',
+        password: 'password123',
+      };
 
-    // Try to create user again with same email
-    await expect(userService.createUser(dto)).rejects.toThrow('Email already exists');
+      // Create user first
+      await userService.createUser(dto);
+
+      // Try to create user again with same email
+      await expect(userService.createUser(dto)).rejects.toThrow('Email already exists');
+    });
+
+    // Test user creation with a unique email
+    it('should create a user with unique email and random username', async () => {
+      const dto: CreateUserDto = {
+        email: 'unique@example.com',
+        password: 'password123',
+      };
+
+      const user = await userService.createUser(dto);
+
+      expect(user.email).toBe(dto.email);
+      expect(user.userName).toMatch(/^user_/);
+      expect(user.id).toBeDefined();
+      expect(user.createdAt).toBeDefined();
+    });
   });
 
-  // Test user creation with a unique email
-  it('should create a user with unique email and random username', async () => {
-    const dto: CreateUserDto = {
-      email: 'unique@example.com',
-      password: 'password123',
-    };
+  describe('changeUsername()', () => {
+    let user1Id: number;
+    let user2Id: number;
 
-    const user = await userService.createUser(dto);
+    beforeAll(async () => {
+      const user1 = await prisma.user.create({
+        data: {
+          email: 'test1@example.com',
+          passwordHash: 'hashedpass1',
+          userName: 'initial_user1',
+          isEmailVerified : false,
+        },
+      });
+      const user2 = await prisma.user.create({
+        data: {
+          email: 'test2@example.com',
+          passwordHash: 'hashedpass2',
+          userName: 'initial_user2',
+          isEmailVerified : false,
+        },
+      });
 
-    expect(user.email).toBe(dto.email);
-    expect(user.userName).toMatch(/^user_/);
-    expect(user.id).toBeDefined();
-    expect(user.createdAt).toBeDefined();
+      user1Id = user1.id;
+      user2Id = user2.id;
+    });
+
+    afterAll(async () => {
+      await prisma.user.deleteMany({
+        where: {
+          email: { in: ['test1@example.com', 'test2@example.com'] },
+        },
+      });
+    });
+
+    it('should change the username of a user', async () => {
+      await userService.changeUsername(user1Id, 'new_username');
+      const updatedUser = await prisma.user.findUnique({ where: { id: user1Id } });
+      expect(updatedUser).not.toBeNull();
+      expect(updatedUser!.userName).toBe('new_username');
+    });
+
+    it('should throw if username is already taken', async () => {
+      await expect(
+        userService.changeUsername(user2Id, 'new_username'),
+      ).rejects.toThrow('Username is already taken.');
+    });
+
+    it('should throw if username is too long', async () => {
+      const longUsername = 'a'.repeat(31);
+      await expect(
+        userService.changeUsername(user2Id, longUsername),
+      ).rejects.toThrow('Username must not exceed 30 characters.');
+    });
   });
 });
