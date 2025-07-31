@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -62,5 +62,27 @@ export class UsersService {
       }
       throw err;
     }
+  }
+
+  async changeUsername(userId: number, newUsername: string): Promise<void> {
+    // Check length constraint
+    if (newUsername.length > 30) {
+      throw new BadRequestException('Username must not exceed 30 characters.');
+    }
+
+    // Check uniqueness
+    const existingUser = await this.prisma.user.findUnique({
+      where: { userName: newUsername },
+    });
+
+    if (existingUser && existingUser.id !== userId) {
+      throw new BadRequestException('Username is already taken.');
+    }
+
+    // Update the username
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { userName: newUsername },
+    });
   }
 }
