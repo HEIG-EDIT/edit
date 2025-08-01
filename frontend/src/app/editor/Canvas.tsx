@@ -162,14 +162,14 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     FileSaver.saveAs(blob, "project.json");
   };
 
-  const handleProjectUpload = (e) => {
+  const handleProjectUpload = (e: any) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
 
-    reader.onload = () => {
-      const project = projectFromJSON(reader.result as string);
+    reader.onload = async () => {
+      const project = await projectFromJSON(reader.result as string);
 
       setWidth(project.width);
       setHeight(project.height);
