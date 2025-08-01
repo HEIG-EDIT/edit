@@ -14,10 +14,20 @@ export interface LayerState {
   imageData: ImageData;
   layerRef: any;
   id: string;
+  name: string;
+  visible: boolean;
   x: number;
   y: number;
   lines: Array<Line>;
 }
+
+export const defaultLayer: Partial<LayerState> = {
+  name: "",
+  visible: true,
+  x: 0,
+  y: 0,
+  lines: [],
+};
 
 export interface CanvasState {
   width: number;

@@ -2,6 +2,7 @@
 import { useRef, useState, useCallback, createRef } from "react";
 import { Stage, Line as KonvaLine, Layer as KonvaLayer } from "react-konva";
 import { LayerComponent } from "./Layer";
+import { LayerControlsComponent } from "./LayerControls";
 import { LayerState, CanvasState } from "./types";
 import { projectFromJSON, projectToJSON } from "./serialization";
 
@@ -243,6 +244,18 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     }
   };
 
+  const handleVisibilityToggle = (layerId: string) => {
+    return () => {
+      const [i, layerState] = findLayer(layerId);
+      changeLayer(i, (_) => {
+        return {
+          ...layerState,
+          visible: !layerState.visible,
+        };
+      });
+    };
+  };
+
   return (
     <div>
       <input
@@ -268,6 +281,19 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       <label>
         Draw: <input onChange={handleDrawMode} type="checkbox" />
       </label>
+      <div className="bg-red-200">
+        {layers.map(({ name, visible, id }: Partial<LayerState>) => {
+          console.log("Mapping layer controls");
+          return (
+            <LayerControlsComponent
+              key={id}
+              name={name}
+              isVisible={visible}
+              toggleVisible={handleVisibilityToggle(id)}
+            />
+          );
+        })}
+      </div>
       <div className="border-2 " id="stage-div">
         <Stage
           ref={stageRef}
@@ -278,19 +304,30 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
           onMouseUp={handleMouseUp}
           onMouseMove={handleMouseMove}
         >
-          {layers?.map(({ image, id, x, y, layerRef, lines }) => (
-            <LayerComponent
-              key={id}
-              id={id}
-              image={image}
-              onDragEnd={handleDragEnd}
-              draggable={!isDrawingMode}
-              lines={lines}
-              x={x}
-              y={y}
-              ref={layerRef}
-            />
-          ))}
+          {layers?.map(
+            ({
+              image,
+              id,
+              x,
+              y,
+              layerRef,
+              lines,
+              visible,
+            }: Partial<LayerState>) => (
+              <LayerComponent
+                key={id}
+                id={id}
+                image={image}
+                onDragEnd={handleDragEnd}
+                draggable={!isDrawingMode}
+                lines={lines}
+                x={x}
+                y={y}
+                ref={layerRef}
+                visible={visible}
+              />
+            ),
+          )}
         </Stage>
       </div>
     </div>
@@ -300,7 +337,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
 export default function ImageEditor() {
   return (
     <div>
-      <Canvas initialWidth={800} initialHeight={800} />
+      <Canvas initialWidth={800} initialHeight={200} />
     </div>
   );
 }

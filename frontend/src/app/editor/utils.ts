@@ -48,7 +48,6 @@ export function useUndoRedo<T>(initialState: T) {
         let { stateHistory, index } = prev;
         const newStates = stateHistory.slice(0, index + 1);
         const newState = func(stateHistory[index]);
-        console.log(newState);
         return {
           stateHistory: [...newStates, newState],
           virtualState: newState,

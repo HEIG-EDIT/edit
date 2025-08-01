@@ -17,11 +17,20 @@ interface LayerProps {
   onDragEnd: any;
   draggable: boolean;
   lines: Array<Line>;
+  visible: boolean;
 }
 
 export const LayerComponent = forwardRef((props, ref) => {
-  const { image, x, y, id, lines, onDragEnd, draggable }: LayerProps = props;
-  console.log(`Lines: ${lines}`);
+  const {
+    image,
+    x,
+    y,
+    id,
+    lines,
+    onDragEnd,
+    draggable,
+    visible,
+  }: Partial<LayerProps> = props;
   return (
     <KonvaLayer
       x={x}
@@ -30,6 +39,7 @@ export const LayerComponent = forwardRef((props, ref) => {
       onDragEnd={onDragEnd}
       draggable={draggable}
       ref={ref}
+      visible={visible}
     >
       <KonvaImage image={image} />
       {lines?.map((line, i) => (
