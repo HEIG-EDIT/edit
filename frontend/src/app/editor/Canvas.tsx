@@ -102,34 +102,38 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     // editLayer(0)
   };
 
-  const createLayer = useCallback(
-    (
-      image: HTMLImageElement,
-      x: number = 0,
-      y: number = 0,
-      id: string | null = null,
-    ) => {
-      id = id == null ? getUUID() : id;
-      const layer: LayerState = {
-        id: id,
-        image: image,
-        imageData: utils.imageToImageData(image),
-        layerRef: createRef(),
-        x: x,
-        y: y,
-        lines: [],
-      };
-
-      return layer;
-    },
-    [],
-  );
-
   const addLayer = (layer: LayerState) => {
     setLayers((prev: LayerState[]) => {
       return [...prev, layer];
     });
   };
+
+  const importLayer = useCallback((layer: Partial<LayerState>) => {
+    const result = {
+      ...layer,
+      layerRef: createRef(),
+      imageData: utils.imageToImageData(layer.image),
+    };
+    return result;
+  }, []);
+
+  const createLayer = useCallback(
+    (image: HTMLImageElement, name: string) => {
+      const layer: LayerState = {
+        id: getUUID(),
+        visible: true,
+        name: name,
+        image: image,
+        imageData: utils.imageToImageData(image),
+        layerRef: createRef(),
+        x: 0,
+        y: 0,
+        lines: [],
+      };
+      addLayer(layer);
+    },
+    [addLayer],
+  );
 
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
@@ -142,8 +146,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       img.src = reader.result as string;
 
       img.onload = () => {
-        const layer = createLayer(img);
-        addLayer(layer);
+        createLayer(img, file.name);
       };
     };
 
@@ -174,11 +177,12 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
 
       setWidth(project.width);
       setHeight(project.height);
-      setLayers(
-        project.layers.map((layer) => {
-          return createLayer(layer.image, layer.x, layer.y, layer.id);
-        }),
-      );
+      const layers = project.layers.map((layer) => {
+        console.log(layer);
+        return importLayer(layer);
+      });
+      console.log(layers);
+      setLayers(layers);
     };
 
     reader.readAsText(file);
@@ -288,7 +292,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
             <LayerControlsComponent
               key={id}
               name={name}
-              isVisible={visible}
+              visible={visible}
               toggleVisible={handleVisibilityToggle(id)}
             />
           );

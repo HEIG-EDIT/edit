@@ -4,6 +4,8 @@ import { imageToImageData } from "./utils";
 interface SerializedLayer {
   imageURL: string;
   id: string;
+  name: string;
+  visible: boolean;
   x: number;
   y: number;
 }
@@ -15,6 +17,9 @@ export const projectToJSON = (project: CanvasState): string => {
     layers: project.layers.map((layerState: LayerState) => {
       return {
         id: layerState.id,
+        visible: layerState.visible,
+        name: layerState.name,
+        // Rasterize the layer with all lines into a jpeg
         imageURL: layerState.layerRef.current.toDataURL({
           mimeType: "image/jpeg",
           quality: 1,
@@ -41,6 +46,8 @@ export const projectFromJSON = async (
         const layerState: Partial<LayerState> = {
           x: layer.x,
           y: layer.y,
+          name: layer.name,
+          visible: layer.visible,
           id: layer.id,
           image: image,
         };
