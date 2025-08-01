@@ -20,6 +20,8 @@ export const projectToJSON = (project: CanvasState): string => {
         visible: layerState.visible,
         name: layerState.name,
         // Rasterize the layer with all lines into a jpeg
+        // FIXME: The exported layers have the same size as the stage, we need them to have their unique size
+        // FIXME: Hidden layers are exported as a black image
         imageURL: layerState.layerRef.current.toDataURL({
           mimeType: "image/jpeg",
           quality: 1,

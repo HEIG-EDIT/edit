@@ -35,6 +35,8 @@ export const LayerComponent = forwardRef((props, ref) => {
     <KonvaLayer
       x={x}
       y={y}
+      width={image.width}
+      height={image.height}
       id={id}
       onDragEnd={onDragEnd}
       draggable={draggable}
