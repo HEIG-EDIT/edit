@@ -10,16 +10,14 @@ export const Collaboration = () => {
       </p>
       <div className="flex flex-col lg:flex-row gap-4 items-center">
         <div className="bg-gray-600 rounded-2xl p-4">
-        <TextCard>
+          <TextCard>
             Share projects with your team for easy collaboration. Manage roles
             of all authorized users to restrict edition access.
-        </TextCard>
-        <TextCard>
+          </TextCard>
+          <TextCard>
             Create teams of users to easily give access to a project for a group
-            of people Share projects with your team for easy collaboration.
-            Manage roles of all authorized users to restrict edition access.
             of people.
-        </TextCard>
+          </TextCard>
         </div>
         <div className="overflow-hidden">
           <Image

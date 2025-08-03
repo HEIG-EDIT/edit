@@ -20,17 +20,14 @@ export const ProjectSelection = () => {
       </div>
       <div className="bg-gray-600 rounded-2xl mx-6 p-4">
         <div className="content-around flex flex-col lg:flex-row lg:divide-x lg:divide-violet-50 divide-y lg:divide-y-0 divide-violet-50">
-        <TextCard>
+          <TextCard>
             Create new projects anytime. Change the sorting behavior to easily
             find your work.
-
+          </TextCard>
+          <TextCard>
             Save your work and continue later. Connect to your account to access
             your projects on any computer.
-        </TextCard>
-        <TextCard>
-            Share projects with your team for easy collaboration. Give edition
-            access to all authorized users.
-        </TextCard>
+          </TextCard>
         </div>
       </div>
     </OutsideCard>
