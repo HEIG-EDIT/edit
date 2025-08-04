@@ -1,12 +1,17 @@
 "use client";
 import { useRef, useState, useCallback, createRef } from "react";
-import { Stage, Line as KonvaLine, Layer as KonvaLayer } from "react-konva";
+import { Stage as StageComponent, Line as KonvaLine, Layer as KonvaLayer } from "react-konva";
+import KonvaEventObject from "konva";
+import Stage from "konva";
 import { LayerComponent } from "./Layer";
 import { LayerControlsComponent } from "./LayerControls";
 import { LayerState, CanvasState } from "./types";
 import { projectFromJSON, projectToJSON } from "./serialization";
 
 const utils = require("./utils.ts");
+
+type Event<T> = React.ChangeEvent<T>;
+type KonvaMouseEvent = KonvaEventObject.KonvaEventObject<MouseEvent>;
 
 interface CanvasProps {
   initialWidth: number;
@@ -31,7 +36,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const isDrawing = useRef(false);
 
-  const stageRef = useRef(null);
+  const stageRef = useRef<Stage.Stage>(null);
 
   const getUUID = useCallback((): string => {
     return crypto.randomUUID();
@@ -166,7 +171,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     FileSaver.saveAs(blob, "project.json");
   };
 
-  const handleProjectUpload = (e: any) => {
+  const handleProjectUpload = (e: Event<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -178,21 +183,28 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       setWidth(project.width);
       setHeight(project.height);
       const layers = project.layers.map((layer) => {
-        console.log(layer);
         return importLayer(layer);
       });
-      console.log(layers);
       setLayers(layers);
     };
 
     reader.readAsText(file);
   };
 
-  const handleDrawMode = (e) => {
+  const handleDrawMode = () => {
     setIsDrawingMode((prev) => !prev);
   };
 
-  const handleMouseDown = (e) => {
+
+  const handleMouseMiddleDown = (e: KonvaMouseEvent) => {
+  }
+
+  const handleMouseDown = (e: KonvaMouseEvent) => {
+    // Scroll click (The number is different from regular HTML events)
+    if (e.evt.button == 1) {
+      return handleMouseMiddleDown(e);
+    }
+
     if (!isDrawingMode) {
       return;
     }
@@ -218,7 +230,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     });
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: KonvaMouseEvent) => {
     // no drawing - skipping
     if (!isDrawing.current) {
       return;
@@ -260,6 +272,48 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     };
   };
 
+  const handleScroll = (e: any) => {
+    e.evt.preventDefault();
+
+    const stage = stageRef.current;
+    if (!stage) {
+      console.log("No Stage");
+      return;
+    }
+
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+
+    if (!pointer) {
+      return;
+    }
+
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+
+    // In or out
+    let direction = e.evt.deltaY > 0 ? 1 : -1;
+
+    if (e.evt.ctrlKey) {
+      direction = -direction;
+    }
+
+    const scaleBy = 1.10;
+    const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+    console.log(direction);
+
+    stage.scale({ x: newScale, y: newScale });
+
+    const newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    };
+
+    stage.position(newPos);
+  }
+
   return (
     <div>
       <input
@@ -287,7 +341,6 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       </label>
       <div className="bg-red-200">
         {layers.map(({ name, visible, id }: Partial<LayerState>) => {
-          console.log("Mapping layer controls");
           return (
             <LayerControlsComponent
               key={id}
@@ -299,40 +352,46 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
         })}
       </div>
       <div className="border-2 " id="stage-div">
-        <Stage
-          ref={stageRef}
-          className="border-1"
-          width={width}
-          height={height}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          onMouseMove={handleMouseMove}
-        >
-          {layers?.map(
-            ({
-              image,
-              id,
-              x,
-              y,
-              layerRef,
-              lines,
-              visible,
-            }: Partial<LayerState>) => (
-              <LayerComponent
-                key={id}
-                id={id}
-                image={image}
-                onDragEnd={handleDragEnd}
-                draggable={!isDrawingMode}
-                lines={lines}
-                x={x}
-                y={y}
-                ref={layerRef}
-                visible={visible}
-              />
-            ),
-          )}
-        </Stage>
+        <div id="stage-border" className={`w-[${width}px] h-[${height}px] border-dashed`}>
+          Test
+          <StageComponent
+            draw
+            ref={stageRef}
+            className="border-1"
+            width={width}
+            height={height}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+            onWheel={handleScroll}
+
+          >
+            {layers?.map(
+              ({
+                image,
+                id,
+                x,
+                y,
+                layerRef,
+                lines,
+                visible,
+              }: Partial<LayerState>) => (
+                <LayerComponent
+                  key={id}
+                  id={id}
+                  image={image}
+                  onDragEnd={handleDragEnd}
+                  draggable={!isDrawingMode}
+                  lines={lines}
+                  x={x}
+                  y={y}
+                  ref={layerRef}
+                  visible={visible}
+                />
+              ),
+            )}
+          </StageComponent>
+        </div>
       </div>
     </div>
   );
@@ -341,7 +400,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
 export default function ImageEditor() {
   return (
     <div>
-      <Canvas initialWidth={800} initialHeight={200} />
+      <Canvas initialWidth={1200} initialHeight={800} />
     </div>
   );
 }
