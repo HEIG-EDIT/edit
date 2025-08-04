@@ -15,6 +15,7 @@
     "next": "15.3.5",
     "postcss": "^8.5.6",
     "react": "^19.0.0",
+    "react-color": "^2.19.3",
     "react-dom": "^19.0.0",
     "react-konva": "^19.0.7"
   },
@@ -23,6 +24,7 @@
     "@tailwindcss/postcss": "^4.1.11",
     "@types/node": "^20",
     "@types/react": "^19",
+    "@types/react-color": "^3.0.13",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",

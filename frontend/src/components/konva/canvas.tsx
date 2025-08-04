@@ -6,14 +6,14 @@ import React, { useRef, useEffect } from "react";
 import { Stage, Layer, Image, Transformer } from "react-konva";
 import Konva from "konva";
 import { LoadedImage } from "../../app/konva/page";
-import { Option } from "../../app/konva/page";
+import { Tool } from "../../app/konva/page";
 
 type CanvasProps = {
   images: LoadedImage[];
   setImages: React.Dispatch<React.SetStateAction<LoadedImage[]>>;
   selectedImage: string | null;
   setSelectedImage: React.Dispatch<React.SetStateAction<string | null>>;
-  option: Option;
+  selectedTool: Tool;
 };
 
 export const Canvas = ({
@@ -21,7 +21,7 @@ export const Canvas = ({
   setImages,
   selectedImage,
   setSelectedImage,
-  option,
+  selectedTool,
 }: CanvasProps) => {
   const transformerRef = useRef<any>(null);
   const imageRefs = useRef<Map<string, Konva.Image>>(new Map());

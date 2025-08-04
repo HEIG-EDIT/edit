@@ -1,10 +1,18 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import { LoadImageButton } from "../../components/konva/loadImageButton";
-import { OptionSelector } from "../../components/konva/optionSelector";
+import { ToolSelector } from "../../components/konva/toolSelector";
 import { OutsideCard } from "../../components/outsideCard";
+
+import { MoveTool } from "../../components/konva/tools/move";
+import { CropTool } from "../../components/konva/tools/crop";
+import { PaintTool } from "../../components/konva/tools/paint";
+import { EraseTool } from "../../components/konva/tools/erase";
+import { PaintBucketTool } from "../../components/konva/tools/paint-bucket";
+import { SelectCursorTool } from "../../components/konva/tools/select-cursor";
+import { AdjustTool } from "../../components/konva/tools/adjust";
 
 const Canvas = dynamic(() => import("../../components/konva/canvas"), {
   ssr: false,
@@ -20,66 +28,57 @@ export type LoadedImage = {
   rotation: number;
 };
 
-export type Option = {
+export interface Tool {
   name: string;
   iconPath: string;
-};
+  configurationComponent: ReactNode;
+}
 
-export const Options: Record<string, Option> = {
-  move: {
-    name: "move",
-    iconPath: "/editor/toolbar/move.svg",
-  },
-  crop: {
-    name: "crop",
-    iconPath: "/editor/toolbar/crop.svg",
-  },
-  paint: {
-    name: "paint",
-    iconPath: "/editor/toolbar/paint.svg",
-  },
-  erase: {
-    name: "erase",
-    iconPath: "/editor/toolbar/erase.svg",
-  },
-  "paint-bucket": {
-    name: "paint-bucket",
-    iconPath: "/editor/toolbar/paint-bucket.svg",
-  },
-  "select-cursor": {
-    name: "select-cursor",
-    iconPath: "/editor/toolbar/select-cursor.svg",
-  },
-  adjust: {
-    name: "adjust",
-    iconPath: "/editor/toolbar/adjust.svg",
-  },
+export const Tools: Record<string, Tool> = {
+  [MoveTool.name]: MoveTool,
+  [CropTool.name]: CropTool,
+  [PaintTool.name]: PaintTool,
+  [EraseTool.name]: EraseTool,
+  [PaintBucketTool.name]: PaintBucketTool,
+  [SelectCursorTool.name]: SelectCursorTool,
+  [AdjustTool.name]: AdjustTool,
 };
 
 export default function EditorPage() {
   const [images, setImages] = useState<LoadedImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [option, setOption] = useState<Option>(Options.move);
+  const [selectedTool, setSelectedTool] = useState<Tool>(Tools.move);
 
   // TODO : remove after all ok
-  useEffect(() => console.log(option), [option]);
+  useEffect(() => console.log(selectedTool), [selectedTool]);
 
   return (
     <main className="bg-gray-900 min-h-screen">
-      <div className="container mx-auto p-4">
-        <div className="p-4">
-          <LoadImageButton setImages={setImages} />
+      <div className="grid grid-cols-5">
+        <div className="col-span-1">
+          <div className="p-4">
+            <LoadImageButton setImages={setImages} />
+            <OutsideCard>{selectedTool.configurationComponent}</OutsideCard>
+            <OutsideCard>TODO : layers</OutsideCard>
+          </div>
         </div>
-        <Canvas
-          images={images}
-          setImages={setImages}
-          selectedImage={selectedImage}
-          setSelectedImage={setSelectedImage}
-          option={option}
-        />
-        <OutsideCard>
-          <OptionSelector option={option} setOption={setOption} />
-        </OutsideCard>
+        <div className="col-span-4">
+          <Canvas
+            images={images}
+            setImages={setImages}
+            selectedImage={selectedImage}
+            setSelectedImage={setSelectedImage}
+            selectedTool={selectedTool}
+          />
+          <div className="py-6 flex justify-center">
+            <OutsideCard>
+              <ToolSelector
+                selectedTool={selectedTool}
+                setSelectedTool={setSelectedTool}
+              />
+            </OutsideCard>
+          </div>
+        </div>
       </div>
     </main>
   );
