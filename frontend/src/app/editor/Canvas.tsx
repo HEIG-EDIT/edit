@@ -7,6 +7,8 @@ import { LayerComponent } from "./Layer";
 import { LayerControlsComponent } from "./LayerControls";
 import { LayerState, CanvasState } from "./types";
 import { projectFromJSON, projectToJSON } from "./serialization";
+import { log } from "console";
+import { Vector2d } from "konva/lib/types";
 
 const utils = require("./utils.ts");
 
@@ -16,6 +18,11 @@ type KonvaMouseEvent = KonvaEventObject.KonvaEventObject<MouseEvent>;
 interface CanvasProps {
   initialWidth: number;
   initialHeight: number;
+}
+
+interface StageState {
+  scale: number;
+  offset: Vector2d;
 }
 
 export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
@@ -33,10 +40,20 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   const [width, setWidth] = useState(initialWidth);
   const [height, setHeight] = useState(initialHeight);
 
+  const [stageState, setStageState] = useState({
+    scale: 1,
+    offset: { x: 0, y: 0 },
+  });
+
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const isDrawing = useRef(false);
 
+  const [isMoveMode, setIsMoveMode] = useState(false);
+  const isMovingCanvas = useRef(false);
+
   const stageRef = useRef<Stage.Stage>(null);
+  const projectInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const getUUID = useCallback((): string => {
     return crypto.randomUUID();
@@ -191,13 +208,37 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     reader.readAsText(file);
   };
 
+  const handleMoveMode = () => {
+    setIsMoveMode((prev) => !prev);
+  };
+
   const handleDrawMode = () => {
     setIsDrawingMode((prev) => !prev);
   };
 
-
   const handleMouseMiddleDown = (e: KonvaMouseEvent) => {
+    if (!isMoveMode) {
+      return;
+    }
+
+    isMovingCanvas.current = true;
   }
+
+
+  const getPointerPosition = useCallback(() => {
+    const stagePosition = stageRef?.current?.getPointerPosition();
+    if (!stagePosition) {
+      throw new Error("Could not get the stage pointer position");
+    }
+
+    const { scale, offset } = stageState;
+    return {
+      x: (stagePosition.x - offset.x) / scale,
+      y: (stagePosition.y - offset.y) / scale,
+    };
+  },
+    [stageState]);
+
 
   const handleMouseDown = (e: KonvaMouseEvent) => {
     // Scroll click (The number is different from regular HTML events)
@@ -209,8 +250,8 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       return;
     }
 
+    const pos = getPointerPosition();
     isDrawing.current = true;
-    const pos = e.target.getStage().getPointerPosition();
 
     setVirtualLayers((prev: Array<LayerState>) => {
       return prev.map((layer: LayerState) => {
@@ -230,13 +271,22 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     });
   };
 
+  const handleMiddleMouseMove = (e: KonvaMouseEvent) => { };
+
   const handleMouseMove = (e: KonvaMouseEvent) => {
+    if (isMovingCanvas.current) {
+      console.log("Is movin");
+      return handleMiddleMouseMove(e);
+    }
+
     // no drawing - skipping
     if (!isDrawing.current) {
       return;
     }
 
-    const point = e.target.getStage().getPointerPosition();
+    console.log("Regular button move");
+
+    const point = getPointerPosition();
 
     setVirtualLayers((prev: Array<LayerState>) => {
       return prev.map((layer: LayerState) => {
@@ -253,7 +303,17 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     });
   };
 
-  const handleMouseUp = () => {
+  const handleMiddleMouseUp = (e: KonvaMouseEvent) => {
+    if (isMovingCanvas.current) {
+      isMovingCanvas.current = false;
+    }
+  };
+
+  const handleMouseUp = (e: KonvaMouseEvent) => {
+    if (isMovingCanvas.current) {
+      return handleMiddleMouseUp(e);
+    }
+
     if (isDrawing.current) {
       isDrawing.current = false;
       commitVirtualLayers();
@@ -275,24 +335,12 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   const handleScroll = (e: any) => {
     e.evt.preventDefault();
 
-    const stage = stageRef.current;
-    if (!stage) {
-      console.log("No Stage");
-      return;
-    }
-
-    const oldScale = stage.scaleX();
-    const pointer = stage.getPointerPosition();
-
+    const pointer = stageRef?.current?.getPointerPosition();
     if (!pointer) {
       return;
     }
 
-    const mousePointTo = {
-      x: (pointer.x - stage.x()) / oldScale,
-      y: (pointer.y - stage.y()) / oldScale,
-    };
-
+    const pos = getPointerPosition();
     // In or out
     let direction = e.evt.deltaY > 0 ? 1 : -1;
 
@@ -301,32 +349,39 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     }
 
     const scaleBy = 1.10;
-    const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
-    console.log(direction);
 
-    stage.scale({ x: newScale, y: newScale });
-
-    const newPos = {
-      x: pointer.x - mousePointTo.x * newScale,
-      y: pointer.y - mousePointTo.y * newScale,
-    };
-
-    stage.position(newPos);
+    setStageState(({ scale, offset }) => {
+      const newScale = direction > 0 ? scale * scaleBy : scale / scaleBy;
+      return {
+        scale: newScale,
+        offset: {
+          x: pointer.x - pos.x * scale, y: pointer.y - pos.y * scale
+        }
+      };
+    })
   }
 
   return (
-    <div>
+    <div className="m-2">
+      <label htmlFor="project-upload-input">Choose a project to upload</label>
       <input
         name="Import project"
+        id="project-upload-input"
         type="file"
-        accept="text/json"
+        accept="application/json"
         onChange={handleProjectUpload}
+        ref={projectInputRef}
+        className="opacity-0 w-0"
       />
+      <label htmlFor="image-upload-input">Import image as layer</label>
       <input
         name="Add layer"
+        id="image-upload-input"
         type="file"
         accept="image/*"
         onChange={handleImageUpload}
+        ref={imageInputRef}
+        className="opacity-0 w-0"
       />
       <button onClick={draw}>Rosification</button>
       <button disabled={!canUndo} onClick={undo}>
@@ -338,6 +393,9 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       <button onClick={handleSave}>Save</button>
       <label>
         Draw: <input onChange={handleDrawMode} type="checkbox" />
+      </label>
+      <label>
+        Move: <input onChange={handleMoveMode} type="checkbox" />
       </label>
       <div className="bg-red-200">
         {layers.map(({ name, visible, id }: Partial<LayerState>) => {
@@ -351,9 +409,8 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
           );
         })}
       </div>
-      <div className="border-2 " id="stage-div">
-        <div id="stage-border" className={`w-[${width}px] h-[${height}px] border-dashed`}>
-          Test
+      <div id="canvas-div" className="bg-purple-200">
+        <div className="inline-block border-2 " id="stage-div">
           <StageComponent
             draw
             ref={stageRef}
@@ -364,7 +421,8 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
             onWheel={handleScroll}
-
+            scale={{ x: stageState.scale, y: stageState.scale }}
+            offset={stageState.offset}
           >
             {layers?.map(
               ({
@@ -381,7 +439,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
                   id={id}
                   image={image}
                   onDragEnd={handleDragEnd}
-                  draggable={!isDrawingMode}
+                  draggable={isMoveMode}
                   lines={lines}
                   x={x}
                   y={y}
