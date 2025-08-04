@@ -1,13 +1,19 @@
 "use client";
+// TODO: Make aliases uniforms / cleanup
 import { useRef, useState, useCallback, createRef } from "react";
-import { Stage as StageComponent, Line as KonvaLine, Layer as KonvaLayer } from "react-konva";
+import {
+  Stage as StageComponent,
+  Line as KonvaLine,
+  Layer as KonvaLayerComponent,
+  Rect as KonvaRect,
+} from "react-konva";
+
 import KonvaEventObject from "konva";
 import Stage from "konva";
 import { LayerComponent } from "./Layer";
 import { LayerControlsComponent } from "./LayerControls";
 import { LayerState, CanvasState } from "./types";
 import { projectFromJSON, projectToJSON } from "./serialization";
-import { log } from "console";
 import { Vector2d } from "konva/lib/types";
 
 const utils = require("./utils.ts");
@@ -106,7 +112,47 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     setLayers((prev) => [...prev.slice(0, i), newLayer, ...prev.slice(i + 1)]);
   };
 
-  const handleDragEnd = (e) => {
+  const handleStageDragStart = (e: KonvaMouseEvent) => {
+    if (e.evt.button !== 1) {
+      return;
+    }
+    if (!isMoveMode) {
+      return;
+    }
+
+    isMovingCanvas.current = true;
+
+    setStageState((prev) => {
+      return {
+        ...prev,
+        offset: {
+          x: e.target.x(),
+          y: e.target.y(),
+        },
+      };
+    });
+  };
+
+  const handleStageDragEnd = (e: KonvaMouseEvent) => {
+    if (e.evt.button !== 1) {
+      return;
+    }
+    if (!isMoveMode) {
+      return;
+    }
+
+    setStageState((prev) => {
+      return {
+        ...prev,
+        offset: {
+          x: e.target.x(),
+          y: e.target.y(),
+        },
+      };
+    });
+  };
+
+  const handleDragEnd = (e: KonvaMouseEvent) => {
     const id = e.target.id();
     const [i, _] = findLayer(id);
 
@@ -216,15 +262,6 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     setIsDrawingMode((prev) => !prev);
   };
 
-  const handleMouseMiddleDown = (e: KonvaMouseEvent) => {
-    if (!isMoveMode) {
-      return;
-    }
-
-    isMovingCanvas.current = true;
-  }
-
-
   const getPointerPosition = useCallback(() => {
     const stagePosition = stageRef?.current?.getPointerPosition();
     if (!stagePosition) {
@@ -236,9 +273,15 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       x: (stagePosition.x - offset.x) / scale,
       y: (stagePosition.y - offset.y) / scale,
     };
-  },
-    [stageState]);
+  }, [stageState]);
 
+  const handleMouseMiddleDown = (e: KonvaMouseEvent) => {
+    if (!isMoveMode) {
+      return;
+    }
+
+    isMovingCanvas.current = true;
+  };
 
   const handleMouseDown = (e: KonvaMouseEvent) => {
     // Scroll click (The number is different from regular HTML events)
@@ -271,7 +314,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     });
   };
 
-  const handleMiddleMouseMove = (e: KonvaMouseEvent) => { };
+  const handleMiddleMouseMove = (e: KonvaMouseEvent) => {};
 
   const handleMouseMove = (e: KonvaMouseEvent) => {
     if (isMovingCanvas.current) {
@@ -348,18 +391,19 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       direction = -direction;
     }
 
-    const scaleBy = 1.10;
+    const scaleBy = 1.1;
 
     setStageState(({ scale, offset }) => {
       const newScale = direction > 0 ? scale * scaleBy : scale / scaleBy;
       return {
         scale: newScale,
         offset: {
-          x: pointer.x - pos.x * scale, y: pointer.y - pos.y * scale
-        }
+          x: pointer.x - pos.x * scale,
+          y: pointer.y - pos.y * scale,
+        },
       };
-    })
-  }
+    });
+  };
 
   return (
     <div className="m-2">
@@ -410,7 +454,12 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
         })}
       </div>
       <div id="canvas-div" className="bg-purple-200">
-        <div className="inline-block border-2 " id="stage-div">
+        <div
+          className={
+            /* `inline-block border-2 scale-[${stageState.scale}]`*/ ""
+          }
+          id="stage-div"
+        >
           <StageComponent
             draw
             ref={stageRef}
@@ -421,6 +470,8 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
             onWheel={handleScroll}
+            draggable={isMovingCanvas.current}
+            onDragEnd={handleStageDragEnd}
             scale={{ x: stageState.scale, y: stageState.scale }}
             offset={stageState.offset}
           >
@@ -448,6 +499,16 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
                 />
               ),
             )}
+            {/* Canvas outline, TODO: Is it possible to use a dashed line? */}
+            <KonvaLayerComponent>
+              <KonvaRect
+                height={height}
+                width={width}
+                stroke={"black"}
+                strokeWidth={2}
+                strokeEnabled={true /* TODO: Link with editor setting */}
+              />
+            </KonvaLayerComponent>
           </StageComponent>
         </div>
       </div>
