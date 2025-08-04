@@ -20,9 +20,9 @@ export const UiPreview = () => {
         Feature rich software with a pleasant interface
       </p>
 
-      <div className="grid h-xl grid-flow-row grid-rows-8 grid-cols-1 lg:grid-rows-2 lg:grid-cols-8 gap-4">
-        <div className="bg-gray-600 rounded-2xl flex row-span-4 flex-col lg:flex-row lg:flex-1 lg:row-span-7 lg:col-span-5 p-4 items-center">
-          <div className=" bg-gray-800 rounded-2xl overflow-hidden w-full max-w-xs mx-auto lg:mx-0">
+      <div className="flex flex-col lg:flex-row gap-4 mb-6">
+        <div className="bg-gray-600 rounded-2xl flex flex-row w-full lg:w-1/2 items-center p-4">
+          <div className="w-1/2 bg-gray-800 rounded-2xl">
             <Image
               src="/landing_page/layers_panel.png"
               alt="Layers panel overview"
@@ -32,7 +32,7 @@ export const UiPreview = () => {
               className="w-full h-auto rounded-2xl border-4 border-violet-300"
             />
           </div>
-          <div className="text-xl content-center w-full px-4">
+          <div className="w-1/2">
             <TextCard>
               Compose images to make complex scenes with layers.
             </TextCard>
@@ -41,9 +41,8 @@ export const UiPreview = () => {
             </TextCard>
           </div>
         </div>
-
-        <div className="bg-gray-600 rounded-2xl p-4 row-span-3 lg:row-span-7 lg:col-span-3">
-          <div className=" bg-gray-800 rounded-2xl mb-2 overflow-hidden">
+        <div className="bg-gray-600 rounded-2xl flex flex-col w-full lg:w-1/2 items-center p-4">
+          <div className="bg-gray-800 rounded-2xl flex flex-col">
             <Image
               src="/landing_page/toolbar.png"
               alt="Toolbar overview"
@@ -53,7 +52,7 @@ export const UiPreview = () => {
               className="w-full h-auto rounded-2xl border-4 border-violet-300"
             />
           </div>
-          <div className="w-full max-w-lg row-span-1 p-4">
+          <div className="flex flex-col">
             <TextCard>
               Comprehensive set of tools for easy manipulation and editing of
               images.
@@ -64,24 +63,25 @@ export const UiPreview = () => {
             </TextCard>
           </div>
         </div>
+      </div>
 
-        <div className="bg-gray-600 rounded-2xl p-4 lg:row-span-1 lg:col-span-8">
-          <div className="md:row-start-2 bg-gray-600 flex md:flex-col lg:flex-row items-center">
-            <div className="text-center overflow-hidden">
-              <TextCard>
-                Easily fix mistakes or undo bad ideas. Securely save projects
-                with the click of a button.
-              </TextCard>
-            </div>
-            <div className="bg-gray-800 rounded-2xl overflow-hidden">
-              <Image
-                src="/landing_page/undo_redo.png"
-                alt="Undo / Redo overview"
-                width={418}
-                height={144}
-                className="h-full max-w-3xs w-auto rounded-2xl border-4 border-violet-300"
-              />
-            </div>
+      <div className="bg-gray-600 rounded-2xl flex flex-row w-full items-center">
+        <div className="w-4/5">
+          <TextCard>
+            Easily fix mistakes or undo bad ideas. Securely save projects with
+            the click of a button.
+          </TextCard>
+        </div>
+        <div className="w-1/5">
+          <div className="p-6">
+            <Image
+              src="/landing_page/undo_redo.png"
+              alt="Undo / Redo overview"
+              width={0}
+              height={0}
+              sizes="100vw"
+              className="w-full h-auto rounded-2xl border-4 border-violet-300"
+            />
           </div>
         </div>
       </div>
