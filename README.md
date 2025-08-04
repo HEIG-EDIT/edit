@@ -1,5 +1,13 @@
 # HEIG-EDIT
 
+## About
+
+EDIT (Easy Digital Image Toolkit) is an web based image editor with cloud storage
+and user management.
+
+The project uses NestJS and Next.js. The code is written in Typescript and Tailwind is used for
+the frontend styling.
+
 ## Pre-requisites
 
 - npm
