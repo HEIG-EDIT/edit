@@ -16,7 +16,7 @@ export default function LandingPage() {
           <div>
             <QuickSummary />
           </div>
-          <div className="max-w-1/2 pl-0 pt-4 lg:pl-20">
+          <div className="max-w-1/2 pl-0 lg:pl-20">
             <Emojis />
           </div>
         </div>
