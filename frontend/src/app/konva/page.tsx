@@ -6,13 +6,34 @@ import { LoadImageButton } from "../../components/konva/loadImageButton";
 import { ToolSelector } from "../../components/konva/toolSelector";
 import { OutsideCard } from "../../components/outsideCard";
 
-import { MoveTool } from "../../components/konva/tools/move";
-import { CropTool } from "../../components/konva/tools/crop";
-import { PaintTool } from "../../components/konva/tools/paint";
-import { EraseTool } from "../../components/konva/tools/erase";
-import { PaintBucketTool } from "../../components/konva/tools/paint-bucket";
-import { SelectCursorTool } from "../../components/konva/tools/select-cursor";
-import { AdjustTool } from "../../components/konva/tools/adjust";
+import {
+  MoveTool,
+  MoveToolConfiguration,
+} from "../../components/konva/tools/move";
+import {
+  CropTool,
+  CropToolConfiguration,
+} from "../../components/konva/tools/crop";
+import {
+  SelectCursorTool,
+  SelectCursorToolConfiguration,
+} from "../../components/konva/tools/select-cursor";
+import {
+  PaintTool,
+  PaintToolConfiguration,
+} from "../../components/konva/tools/paint";
+import {
+  EraseTool,
+  EraseToolConfiguration,
+} from "../../components/konva/tools/erase";
+import {
+  PaintBucketTool,
+  PaintBucketToolConfiguration,
+} from "../../components/konva/tools/paint-bucket";
+import {
+  AdjustTool,
+  AdjustToolConfiguration,
+} from "../../components/konva/tools/adjust";
 
 const Canvas = dynamic(() => import("../../components/konva/canvas"), {
   ssr: false,
@@ -28,29 +49,54 @@ export type LoadedImage = {
   rotation: number;
 };
 
+type ToolConfiguration =
+  | MoveToolConfiguration
+  | CropToolConfiguration
+  | SelectCursorToolConfiguration
+  | PaintToolConfiguration
+  | EraseToolConfiguration
+  | PaintBucketToolConfiguration
+  | AdjustToolConfiguration;
+
 export interface Tool {
   name: string;
   iconPath: string;
-  configurationComponent: ReactNode;
+  initialConfiguration: ToolConfiguration;
+  configurationComponent: React.FC<{
+    configuration: ToolConfiguration;
+    setConfiguration: (config: ToolConfiguration) => void;
+  }>;
 }
 
 export const Tools: Record<string, Tool> = {
   [MoveTool.name]: MoveTool,
   [CropTool.name]: CropTool,
+  [SelectCursorTool.name]: SelectCursorTool,
   [PaintTool.name]: PaintTool,
   [EraseTool.name]: EraseTool,
   [PaintBucketTool.name]: PaintBucketTool,
-  [SelectCursorTool.name]: SelectCursorTool,
   [AdjustTool.name]: AdjustTool,
 };
 
 export default function EditorPage() {
   const [images, setImages] = useState<LoadedImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedTool, setSelectedTool] = useState<Tool>(Tools.move);
+  const [selectedTool, setSelectedTool] = useState<Tool>(MoveTool);
+
+  const [toolsConfiguration, setToolsConfiguration] = useState<
+    Record<string, ToolConfiguration>
+  >({
+    [MoveTool.name]: MoveTool.initialConfiguration,
+    [CropTool.name]: CropTool.initialConfiguration,
+    [SelectCursorTool.name]: SelectCursorTool.initialConfiguration,
+    [PaintTool.name]: PaintTool.initialConfiguration,
+    [EraseTool.name]: EraseTool.initialConfiguration,
+    [PaintBucketTool.name]: PaintBucketTool.initialConfiguration,
+    [AdjustTool.name]: AdjustTool.initialConfiguration,
+  });
 
   // TODO : remove after all ok
-  useEffect(() => console.log(selectedTool), [selectedTool]);
+  useEffect(() => console.log(toolsConfiguration), [toolsConfiguration]);
 
   return (
     <main className="bg-gray-900 min-h-screen">
@@ -58,7 +104,17 @@ export default function EditorPage() {
         <div className="col-span-1">
           <div className="p-4">
             <LoadImageButton setImages={setImages} />
-            <OutsideCard>{selectedTool.configurationComponent}</OutsideCard>
+            <OutsideCard>
+              <selectedTool.configurationComponent
+                configuration={toolsConfiguration[selectedTool.name]}
+                setConfiguration={(config) =>
+                  setToolsConfiguration((prev) => ({
+                    ...prev,
+                    [selectedTool.name]: config,
+                  }))
+                }
+              />
+            </OutsideCard>
             <OutsideCard>TODO : layers</OutsideCard>
           </div>
         </div>

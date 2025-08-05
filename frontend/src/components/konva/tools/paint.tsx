@@ -1,33 +1,48 @@
 // use https://casesandberg.github.io/react-color/
 
-"use client";
-
-import { useState } from "react";
+import { SliderPicker } from "react-color";
 import { Tool } from "../../../app/konva/page";
 
-import { SliderPicker } from "react-color";
+export interface PaintToolConfiguration {
+  radius: number;
+  color: string;
+}
 
-const PaintToolConfiguration = () => {
-  const [radius, setRadius] = useState<number>(10);
-  const [color, setColor] = useState<string>("#FF00FFFF");
+interface PaintToolConfigurationProps {
+  configuration: PaintToolConfiguration;
+  setConfiguration: (config: PaintToolConfiguration) => void;
+}
+
+const PaintToolConfiguration: React.FC<PaintToolConfigurationProps> = ({
+  configuration,
+  setConfiguration,
+}) => {
   return (
     <div>
-      <label htmlFor="radius" className="font-bold">
-        Radius:<br></br>
-      </label>
+      <p className="text-violet-50 text-lg">
+        Radius :<br></br>
+      </p>
       <input
         type="range"
-        id="radius"
-        name="radius"
         min="1"
         max="100"
-        value={radius}
-        onChange={(e) => setRadius(Number(e.target.value))}
+        value={configuration.radius}
+        onChange={(e) => {
+          setConfiguration({
+            ...configuration,
+            radius: Number(e.target.value),
+          });
+        }}
       />
-      <span>{radius}</span>
+      <span className="text-violet-50 text-lg"> {configuration.radius}</span>
+      <p className="text-violet-50 text-lg">
+        Color :<br></br>
+      </p>
       <SliderPicker
-        color={color}
-        onChangeComplete={(color) => setColor(color)}
+        color={configuration.color}
+        onChangeComplete={(color) => {
+          setConfiguration({ ...configuration, color: color.hex });
+        }}
       />
     </div>
   );
@@ -36,5 +51,6 @@ const PaintToolConfiguration = () => {
 export const PaintTool: Tool = {
   name: "paint",
   iconPath: "/editor/toolbar/paint.svg",
-  configurationComponent: <PaintToolConfiguration />,
+  initialConfiguration: { radius: 59, color: "#799ed2" },
+  configurationComponent: PaintToolConfiguration,
 };
