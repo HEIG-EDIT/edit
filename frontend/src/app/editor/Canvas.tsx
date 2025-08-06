@@ -11,6 +11,7 @@ import {
 
 import KonvaEventObject from "konva";
 import Stage from "konva";
+import Layer from "konva";
 import Group from "konva";
 import { LayerComponent } from "./Layer";
 import { LayerControlsComponent } from "./LayerControls";
@@ -23,7 +24,7 @@ const utils = require("./utils.ts");
 // Left
 const TOOL_APPLY_BUTTON = 0;
 // Right
-const CANVAS_DRAG_BUTTON = 2;
+const CANVAS_DRAG_BUTTON = 1;
 
 type Event<T> = React.ChangeEvent<T>;
 type KonvaMouseEvent = KonvaEventObject.KonvaEventObject<MouseEvent>;
@@ -35,7 +36,7 @@ interface CanvasProps {
 
 interface CanvasState {
   scale: number;
-  offset: Vector2d;
+  position: Vector2d;
 }
 
 export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
@@ -55,7 +56,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
 
   const [canvasState, setCanvasState] = useState<CanvasState>({
     scale: 1,
-    offset: { x: 0, y: 0 },
+    position: { x: 0, y: 0 },
   });
 
   const [isDrawingMode, setIsDrawingMode] = useState(false);
@@ -66,6 +67,8 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   const isMovingLayer = useRef(false);
 
   const stageRef = useRef<Stage.Stage>(null);
+  const canvasRef = useRef<Layer.Layer>(null);
+
   const projectInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -121,20 +124,20 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   };
 
   const handleCanvasDragEnd = (e: KonvaMouseEvent) => {
-    if (e.evt.button !== 1) {
+    if (e.evt.button !== CANVAS_DRAG_BUTTON) {
       return;
     }
 
-    console.log("Pointer position", getCanvasPointerPosition())
+    console.log("Pointer position", getCanvasPointerPosition());
     console.log("Target position", {
       x: e.target.x(),
       y: e.target.y(),
-    })
+    });
 
     setCanvasState((prev) => {
       return {
         ...prev,
-        offset: {
+        position: {
           x: e.target.x(),
           y: e.target.y(),
         },
@@ -259,8 +262,14 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       throw new Error("Could not get the stage pointer position");
     }
 
-    return stagePosition;
-  }, [stageRef]);
+    const state = canvasState;
+    console.log("Canvas state: ", canvasState);
+
+    return {
+      x: (stagePosition.x - state.position.x) / state.scale,
+      y: (stagePosition.y - state.position.y) / state.scale,
+    };
+  }, [stageRef, canvasState]);
 
   const handleCanvasDragStart = (e: KonvaMouseEvent) => {
     if (!isMoveMode) {
@@ -270,22 +279,24 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     isMovingCanvas.current = true;
   };
 
-  const handleMouseDown = (e: KonvaMouseEvent) => {
-    e.evt.preventDefault();
-    if (e.evt.button === CANVAS_DRAG_BUTTON) {
-      return handleCanvasDragStart(e);
-    }
+  const handleStageMouseUp = (e: KonvaMouseEvent) => {};
 
-    else if (e.evt.button !== TOOL_APPLY_BUTTON) {
+  const handleStageMouseDown = (e: KonvaMouseEvent) => {};
+
+  const handleMouseDown = (e: KonvaMouseEvent) => {
+    console.log("Button: ", e.evt.button);
+    if (e.evt.button == CANVAS_DRAG_BUTTON) {
+      return handleCanvasDragStart(e);
+    } else if (e.evt.button != TOOL_APPLY_BUTTON) {
       return;
     }
 
     if (isMoveMode) {
       isMovingLayer.current = true;
-    }
-
-    else if (isDrawingMode) {
+    } else if (isDrawingMode) {
+      console.log("is Drawing");
       const pos = getCanvasPointerPosition();
+      console.log("Drawing position: ", pos);
       isDrawing.current = true;
 
       setVirtualLayers((prev: Array<LayerState>) => {
@@ -295,6 +306,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
             lines: layer.lines.concat([
               {
                 // Subtract layer position to account for offset
+                // TODO: Maybe account for layer scale as well
                 points: [pos.x - layer.x, pos.y - layer.y],
                 color: "#FF00FFFF",
                 width: 3,
@@ -309,12 +321,12 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
 
   const handleMiddleMouseMove = (e: KonvaMouseEvent) => {
     const point = getCanvasPointerPosition();
-    setCanvasState(prev => {
+    setCanvasState((prev) => {
       return {
         ...prev,
-        offset: point
+        position: point,
       };
-    })
+    });
   };
 
   const handleMouseMove = (e: KonvaMouseEvent) => {
@@ -379,12 +391,17 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   const handleScroll = (e: any) => {
     e.evt.preventDefault();
 
-    const pointer = stageRef?.current?.getPointerPosition();
+    console.log("Scroll event:", e.evt);
+
+    if (e.evt.buttons == 4) {
+      return;
+    }
+
+    const pointer = getCanvasPointerPosition();
     if (!pointer) {
       return;
     }
 
-    const pos = getCanvasPointerPosition();
     // In or out
     let direction = e.evt.deltaY > 0 ? 1 : -1;
 
@@ -394,13 +411,14 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
 
     const scaleBy = 1.1;
 
-    setCanvasState(({ scale, offset }) => {
+    setCanvasState(({ scale, position }) => {
       const newScale = direction > 0 ? scale * scaleBy : scale / scaleBy;
+      console.log("New scale: ", newScale);
       return {
         scale: newScale,
-        offset: {
-          x: pointer.x - pos.x * scale,
-          y: pointer.y - pos.y * scale,
+        position: {
+          x: (pointer.x - position.x) * scale,
+          y: (pointer.y - position.y) * scale,
         },
       };
     });
@@ -461,20 +479,24 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
           height={1000}
           ref={stageRef}
           draggable={false}
+          onWheel={handleScroll}
+          // onMouseDown={handleStageMouseDown}
+          // onMouseUp={handleStageMouseUp}
         >
           {/* Using a layer as the canvas */}
           <KonvaLayerComponent
+            ref={canvasRef}
             className="border-1"
             width={width}
             height={height}
             onMouseDown={handleMouseDown}
             onDragEnd={handleCanvasDragEnd}
             // onMouseMove={handleMouseMove}
-            onWheel={handleScroll}
             // FIXME: Moving the canvas around is inverted
-            draggable={isMovingCanvas.current}
+            // draggable={isMovingCanvas.current}
             scale={{ x: canvasState.scale, y: canvasState.scale }}
-            offset={canvasState.offset}
+            x={canvasState.position.x}
+            y={canvasState.position.y}
           >
             {layers?.map(
               ({
@@ -492,7 +514,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
                   image={image}
                   onMouseDown={handleMouseDown}
                   onDragEnd={handleLayerDragEnd}
-                  draggable={isMovingLayer.current}
+                  // draggable={isMovingLayer.current}
                   lines={lines}
                   x={x}
                   y={y}
@@ -502,14 +524,14 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
               ),
             )}
             {/* Canvas outline, TODO: Is it possible to use a dashed line? */}
-            // <KonvaRect
-            //   draggable={false}
-            //   height={height}
-            //   width={width}
-            //   stroke={"black"}
-            //   strokeWidth={2}
-            //   strokeEnabled={true /* TODO: Link with editor setting */}
-            // />
+            <KonvaRect
+              draggable={false}
+              height={height}
+              width={width}
+              stroke={"black"}
+              strokeWidth={2}
+              strokeEnabled={true /* TODO: Link with editor setting */}
+            />
           </KonvaLayerComponent>
         </StageComponent>
       </div>
