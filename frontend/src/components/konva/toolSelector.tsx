@@ -3,18 +3,18 @@ import { Dispatch, SetStateAction } from "react";
 import Image from "next/image";
 
 type ToolSelectorProps = {
-  selectedTool: Tool;
-  setSelectedTool: Dispatch<SetStateAction<Tool>>;
+  nameSelectedTool: string;
+  setNameSelectedTool: Dispatch<SetStateAction<string>>;
 };
 
 export const ToolSelector = ({
-  selectedTool,
-  setSelectedTool,
+  nameSelectedTool,
+  setNameSelectedTool,
 }: ToolSelectorProps) => {
   return (
     <div className="flex gap-2">
       {Object.keys(Tools).map((key) => {
-        const isSelected = Tools[key] === selectedTool;
+        const isSelected = Tools[key].name === nameSelectedTool;
         const style = isSelected
           ? "bg-violet-500 border-violet-50"
           : "bg-gray-900 border-violet-500";
@@ -23,7 +23,7 @@ export const ToolSelector = ({
           <button
             className={`rounded-xl border-2 p-2 ${style}`}
             key={key}
-            onClick={() => setSelectedTool(Tools[key])}
+            onClick={() => setNameSelectedTool(Tools[key].name)}
           >
             <Image
               src={Tools[key].iconPath}

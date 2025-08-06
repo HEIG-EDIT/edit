@@ -81,7 +81,9 @@ export const Tools: Record<string, Tool> = {
 export default function EditorPage() {
   const [images, setImages] = useState<LoadedImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedTool, setSelectedTool] = useState<Tool>(MoveTool);
+  const [nameSelectedTool, setNameSelectedTool] = useState<string>(
+    MoveTool.name,
+  );
 
   const [toolsConfiguration, setToolsConfiguration] = useState<
     Record<string, ToolConfiguration>
@@ -98,6 +100,9 @@ export default function EditorPage() {
   // TODO : remove after all ok
   useEffect(() => console.log(toolsConfiguration), [toolsConfiguration]);
 
+  const ToolConfigurationComponent =
+    Tools[nameSelectedTool].configurationComponent;
+
   return (
     <main className="bg-gray-900 min-h-screen">
       <div className="grid grid-cols-5">
@@ -105,12 +110,12 @@ export default function EditorPage() {
           <div className="p-4">
             <LoadImageButton setImages={setImages} />
             <OutsideCard>
-              <selectedTool.configurationComponent
-                configuration={toolsConfiguration[selectedTool.name]}
-                setConfiguration={(config) =>
+              <ToolConfigurationComponent
+                configuration={toolsConfiguration[nameSelectedTool]}
+                setConfiguration={(config: ToolConfiguration) =>
                   setToolsConfiguration((prev) => ({
                     ...prev,
-                    [selectedTool.name]: config,
+                    [nameSelectedTool]: config,
                   }))
                 }
               />
@@ -124,13 +129,13 @@ export default function EditorPage() {
             setImages={setImages}
             selectedImage={selectedImage}
             setSelectedImage={setSelectedImage}
-            selectedTool={selectedTool}
+            nameSelectedTool={nameSelectedTool}
           />
           <div className="py-6 flex justify-center">
             <OutsideCard>
               <ToolSelector
-                selectedTool={selectedTool}
-                setSelectedTool={setSelectedTool}
+                nameSelectedTool={nameSelectedTool}
+                setNameSelectedTool={setNameSelectedTool}
               />
             </OutsideCard>
           </div>

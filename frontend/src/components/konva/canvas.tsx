@@ -13,7 +13,7 @@ type CanvasProps = {
   setImages: React.Dispatch<React.SetStateAction<LoadedImage[]>>;
   selectedImage: string | null;
   setSelectedImage: React.Dispatch<React.SetStateAction<string | null>>;
-  selectedTool: Tool;
+  nameSelectedTool: string;
 };
 
 export const Canvas = ({
@@ -21,7 +21,7 @@ export const Canvas = ({
   setImages,
   selectedImage,
   setSelectedImage,
-  selectedTool,
+  nameSelectedTool,
 }: CanvasProps) => {
   const transformerRef = useRef<any>(null);
   const imageRefs = useRef<Map<string, Konva.Image>>(new Map());
