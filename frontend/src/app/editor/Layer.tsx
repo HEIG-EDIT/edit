@@ -4,6 +4,7 @@ const reactConva = require("react-konva");
 import {
   Image as KonvaImage,
   Layer as KonvaLayer,
+  Group as KonvaGroup,
   Line as KonvaLine,
 } from "react-konva";
 import { Line } from "./types";
@@ -32,7 +33,7 @@ export const LayerComponent = forwardRef((props, ref) => {
     visible,
   }: Partial<LayerProps> = props;
   return (
-    <KonvaLayer
+    <KonvaGroup
       x={x}
       y={y}
       width={image.width}
@@ -56,6 +57,6 @@ export const LayerComponent = forwardRef((props, ref) => {
           globalCompositeOperation={"source-over"}
         />
       ))}
-    </KonvaLayer>
+    </KonvaGroup>
   );
 });
