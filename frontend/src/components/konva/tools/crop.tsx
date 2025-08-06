@@ -1,4 +1,4 @@
-import { Tool } from "../../../app/konva/page";
+import { Tool, ToolConfiguration } from "../../../app/konva/page";
 
 export interface CropToolConfiguration {}
 
@@ -23,5 +23,8 @@ export const CropTool: Tool = {
   name: "crop",
   iconPath: "/editor/toolbar/crop.svg",
   initialConfiguration: {},
-  configurationComponent: CropToolConfiguration,
+  configurationComponent: CropToolConfiguration as React.FC<{
+    configuration: ToolConfiguration;
+    setConfiguration: (config: ToolConfiguration) => void;
+  }>,
 };

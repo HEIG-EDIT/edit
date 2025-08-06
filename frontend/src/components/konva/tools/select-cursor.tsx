@@ -1,4 +1,4 @@
-import { Tool } from "../../../app/konva/page";
+import { Tool, ToolConfiguration } from "../../../app/konva/page";
 
 export interface SelectCursorToolConfiguration {}
 
@@ -24,5 +24,8 @@ export const SelectCursorTool: Tool = {
   name: "select-cursor",
   iconPath: "/editor/toolbar/select-cursor.svg",
   initialConfiguration: {},
-  configurationComponent: SelectCursorToolConfiguration,
+  configurationComponent: SelectCursorToolConfiguration as React.FC<{
+    configuration: ToolConfiguration;
+    setConfiguration: (config: ToolConfiguration) => void;
+  }>,
 };

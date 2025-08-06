@@ -1,4 +1,4 @@
-import { Tool } from "../../../app/konva/page";
+import { Tool, ToolConfiguration } from "../../../app/konva/page";
 
 export interface EraseToolConfiguration {
   radius: number;
@@ -39,5 +39,8 @@ export const EraseTool: Tool = {
   name: "erase",
   iconPath: "/editor/toolbar/erase.svg",
   initialConfiguration: { radius: 10 },
-  configurationComponent: EraseToolConfiguration,
+  configurationComponent: EraseToolConfiguration as React.FC<{
+    configuration: ToolConfiguration;
+    setConfiguration: (config: ToolConfiguration) => void;
+  }>,
 };

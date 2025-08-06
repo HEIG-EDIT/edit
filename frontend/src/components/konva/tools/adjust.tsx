@@ -1,4 +1,4 @@
-import { Tool } from "../../../app/konva/page";
+import { Tool, ToolConfiguration } from "../../../app/konva/page";
 
 const filtersName = ["test", "Mono", "Sepia", "wip", "..."];
 export interface AdjustToolConfiguration {
@@ -41,5 +41,8 @@ export const AdjustTool: Tool = {
   name: "adjust",
   iconPath: "/editor/toolbar/adjust.svg",
   initialConfiguration: { filter: filtersName[0] },
-  configurationComponent: AdjustToolConfiguration,
+  configurationComponent: AdjustToolConfiguration as React.FC<{
+    configuration: ToolConfiguration;
+    setConfiguration: (config: ToolConfiguration) => void;
+  }>,
 };

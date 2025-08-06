@@ -1,4 +1,4 @@
-import { Tool } from "../../../app/konva/page";
+import { Tool, ToolConfiguration } from "../../../app/konva/page";
 
 export interface MoveToolConfiguration {}
 
@@ -11,14 +11,6 @@ const MoveToolConfiguration: React.FC<MoveToolConfigurationProps> = ({
   configuration,
   setConfiguration,
 }) => {
-  const handleRadiusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setConfiguration({ ...configuration, radius: Number(e.target.value) });
-  };
-
-  const handleColorChange = (color: any) => {
-    setConfiguration({ ...configuration, color: color.hex });
-  };
-
   return (
     <div>
       <p className="text-violet-50 text-lg">
@@ -33,5 +25,8 @@ export const MoveTool: Tool = {
   name: "move",
   iconPath: "/editor/toolbar/move.svg",
   initialConfiguration: {},
-  configurationComponent: MoveToolConfiguration,
+  configurationComponent: MoveToolConfiguration as React.FC<{
+    configuration: ToolConfiguration;
+    setConfiguration: (config: ToolConfiguration) => void;
+  }>,
 };

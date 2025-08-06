@@ -49,7 +49,7 @@ export type LoadedImage = {
   rotation: number;
 };
 
-type ToolConfiguration =
+export type ToolConfiguration =
   | MoveToolConfiguration
   | CropToolConfiguration
   | SelectCursorToolConfiguration
@@ -58,13 +58,13 @@ type ToolConfiguration =
   | PaintBucketToolConfiguration
   | AdjustToolConfiguration;
 
-export interface Tool {
+export interface Tool<T extends ToolConfiguration = ToolConfiguration> {
   name: string;
   iconPath: string;
-  initialConfiguration: ToolConfiguration;
+  initialConfiguration: T;
   configurationComponent: React.FC<{
-    configuration: ToolConfiguration;
-    setConfiguration: (config: ToolConfiguration) => void;
+    configuration: T;
+    setConfiguration: (config: T) => void;
   }>;
 }
 
