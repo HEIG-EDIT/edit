@@ -6,7 +6,7 @@ export const Emojis = () => {
       <DevDescription
         name="Alessio"
         imagePath="/landing_page/emojis/alessio.png"
-        quote="TODO"
+        quote="If you spend a lot of time configuring your developper tools, you will save time when editing your tools' config."
         role="Frontend"
       />
       <DevDescription
