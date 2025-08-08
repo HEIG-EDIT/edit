@@ -5,8 +5,7 @@
 import React, { useRef, useEffect } from "react";
 import { Stage, Layer, Image, Transformer } from "react-konva";
 import Konva from "konva";
-import { LoadedImage } from "../../app/konva/page";
-import { Tool } from "../../app/konva/page";
+import { LoadedImage } from "@/app/editor/page";
 
 type CanvasProps = {
   images: LoadedImage[];

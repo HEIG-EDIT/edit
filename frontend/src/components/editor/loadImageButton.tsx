@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
-import { LoadedImage } from "../../app/konva/page";
+import { LoadedImage } from "@/app/editor/page";
 
 type Props = {
   setImages: React.Dispatch<React.SetStateAction<LoadedImage[]>>;

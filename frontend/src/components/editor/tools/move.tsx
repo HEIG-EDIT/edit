@@ -1,13 +1,13 @@
-import { Tool, ToolConfiguration } from "../../../app/konva/page";
+import { Tool, ToolConfiguration } from "@/app/editor/page";
 
 export interface MoveToolConfiguration {}
 
-interface MoveToolConfigurationProps {
+interface Props {
   configuration: MoveToolConfiguration;
   setConfiguration: (config: MoveToolConfiguration) => void;
 }
 
-const MoveToolConfiguration: React.FC<MoveToolConfigurationProps> = ({
+const MoveToolConfigurationComponent: React.FC<Props> = ({
   configuration,
   setConfiguration,
 }) => {
@@ -22,10 +22,10 @@ const MoveToolConfiguration: React.FC<MoveToolConfigurationProps> = ({
 };
 
 export const MoveTool: Tool = {
-  name: "move",
+  name: "Move",
   iconPath: "/editor/toolbar/move.svg",
   initialConfiguration: {},
-  configurationComponent: MoveToolConfiguration as React.FC<{
+  configurationComponent: MoveToolConfigurationComponent as React.FC<{
     configuration: ToolConfiguration;
     setConfiguration: (config: ToolConfiguration) => void;
   }>,

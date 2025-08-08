@@ -1,4 +1,4 @@
-import { Tools, Tool } from "../../app/konva/page";
+import { Tools } from "@/app/editor/page";
 import { Dispatch, SetStateAction } from "react";
 import Image from "next/image";
 

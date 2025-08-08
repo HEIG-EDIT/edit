@@ -1,18 +1,19 @@
 import { SliderPicker } from "react-color";
-import { Tool, ToolConfiguration } from "../../../app/konva/page";
+import { Tool, ToolConfiguration } from "@/app/editor/page";
 
 export interface PaintBucketToolConfiguration {
   color: string;
 }
 
-interface PaintBucketToolConfigurationProps {
+interface Props {
   configuration: PaintBucketToolConfiguration;
   setConfiguration: (config: PaintBucketToolConfiguration) => void;
 }
 
-const PaintBucketToolConfiguration: React.FC<
-  PaintBucketToolConfigurationProps
-> = ({ configuration, setConfiguration }) => {
+const PaintBucketToolConfigurationComponent: React.FC<Props> = ({
+  configuration,
+  setConfiguration,
+}) => {
   return (
     <div>
       <p className="text-violet-50 text-lg">
@@ -29,10 +30,10 @@ const PaintBucketToolConfiguration: React.FC<
 };
 
 export const PaintBucketTool: Tool = {
-  name: "paint-bucket",
+  name: "Paint-bucket",
   iconPath: "/editor/toolbar/paint-bucket.svg",
   initialConfiguration: { color: "#e6b3b3" },
-  configurationComponent: PaintBucketToolConfiguration as React.FC<{
+  configurationComponent: PaintBucketToolConfigurationComponent as React.FC<{
     configuration: ToolConfiguration;
     setConfiguration: (config: ToolConfiguration) => void;
   }>,

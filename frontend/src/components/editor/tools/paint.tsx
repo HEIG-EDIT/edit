@@ -1,19 +1,19 @@
 // use https://casesandberg.github.io/react-color/
 
 import { ChromePicker } from "react-color";
-import { Tool, ToolConfiguration } from "../../../app/konva/page";
+import { Tool, ToolConfiguration } from "@/app/editor/page";
 
 export interface PaintToolConfiguration {
   radius: number;
   color: string;
 }
 
-interface PaintToolConfigurationProps {
+interface Props {
   configuration: PaintToolConfiguration;
   setConfiguration: (config: PaintToolConfiguration) => void;
 }
 
-const PaintToolConfiguration: React.FC<PaintToolConfigurationProps> = ({
+const PaintToolConfigurationComponent: React.FC<Props> = ({
   configuration,
   setConfiguration,
 }) => {
@@ -50,10 +50,10 @@ const PaintToolConfiguration: React.FC<PaintToolConfigurationProps> = ({
 };
 
 export const PaintTool: Tool = {
-  name: "paint",
+  name: "Paint",
   iconPath: "/editor/toolbar/paint.svg",
   initialConfiguration: { radius: 59, color: "#799ed2" },
-  configurationComponent: PaintToolConfiguration as React.FC<{
+  configurationComponent: PaintToolConfigurationComponent as React.FC<{
     configuration: ToolConfiguration;
     setConfiguration: (config: ToolConfiguration) => void;
   }>,
