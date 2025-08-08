@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { OutsideCard } from "../outsideCard";
 import { TextCard } from "./textCard";
+import { OutsideCard } from "@/components/outsideCard";
 
 export const ProjectSelection = () => {
   return (

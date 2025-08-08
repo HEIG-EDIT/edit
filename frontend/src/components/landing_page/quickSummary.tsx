@@ -1,5 +1,5 @@
-import { StartButton } from "./startButton";
-import { OutsideCard } from "../outsideCard";
+import { StartButton } from "@/components/landing_page/startButton";
+import { OutsideCard } from "@/components/outsideCard";
 
 export const QuickSummary = () => {
   return (
