@@ -1,19 +1,16 @@
 import { SliderPicker } from "react-color";
-import { Tool, ToolConfiguration } from "@/app/editor/page";
+import { Tool } from "@/models/editor/tools/tool";
+import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
+import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
 
-export interface PaintBucketToolConfiguration {
+export interface PaintBucketToolConfiguration extends ToolConfiguration {
   color: string;
 }
 
-interface Props {
-  configuration: PaintBucketToolConfiguration;
-  setConfiguration: (config: PaintBucketToolConfiguration) => void;
-}
-
-const PaintBucketToolConfigurationComponent: React.FC<Props> = ({
+export const PaintBucketToolConfigurationComponent = ({
   configuration,
   setConfiguration,
-}) => {
+}: ToolConfigurationProps<PaintBucketToolConfiguration>) => {
   return (
     <div>
       <p className="text-violet-50 text-lg">
@@ -29,12 +26,9 @@ const PaintBucketToolConfigurationComponent: React.FC<Props> = ({
   );
 };
 
-export const PaintBucketTool: Tool = {
+export const PAINT_BUCKET_TOOL: Tool<PaintBucketToolConfiguration> = {
   name: "Paint-bucket",
   iconPath: "/editor/toolbar/paint-bucket.svg",
   initialConfiguration: { color: "#e6b3b3" },
-  configurationComponent: PaintBucketToolConfigurationComponent as React.FC<{
-    configuration: ToolConfiguration;
-    setConfiguration: (config: ToolConfiguration) => void;
-  }>,
+  configurationComponent: PaintBucketToolConfigurationComponent,
 };

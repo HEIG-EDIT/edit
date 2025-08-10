@@ -9,41 +9,22 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import ConstructionRoundedIcon from "@mui/icons-material/ConstructionRounded";
 
-import {
-  MoveTool,
-  MoveToolConfiguration,
-} from "@/components/editor/tools/move";
-import {
-  CropTool,
-  CropToolConfiguration,
-} from "@/components/editor/tools/crop";
-import {
-  SelectCursorTool,
-  SelectCursorToolConfiguration,
-} from "@/components/editor/tools/select-cursor";
-import {
-  PaintTool,
-  PaintToolConfiguration,
-} from "@/components/editor/tools/paint";
-import {
-  EraseTool,
-  EraseToolConfiguration,
-} from "@/components/editor/tools/erase";
-import {
-  PaintBucketTool,
-  PaintBucketToolConfiguration,
-} from "@/components/editor/tools/paint-bucket";
-import {
-  AdjustTool,
-  AdjustToolConfiguration,
-} from "@/components/editor/tools/adjust";
+import { MOVE_TOOL } from "@/components/editor/tools/move";
+import { CROP_TOOL } from "@/components/editor/tools/crop";
+import { SELECT_CURSOR_TOOL } from "@/components/editor/tools/select-cursor";
+import { PAINT_TOOL } from "@/components/editor/tools/paint";
+import { ERASE_TOOL } from "@/components/editor/tools/erase";
+import { PAINT_BUCKET_TOOL } from "@/components/editor/tools/paint-bucket";
+import { ADJUST_TOOL } from "@/components/editor/tools/adjust";
 import { LayersManagment } from "@/components/editor/layers/layersManagment";
+import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
+import { Tool } from "@/models/editor/tools/tool";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
 });
 
-export type LoadedImage = {
+export interface LoadedImage {
   id: string;
   image: HTMLImageElement;
   x: number;
@@ -51,65 +32,39 @@ export type LoadedImage = {
   width: number;
   height: number;
   rotation: number;
-};
-
-// TODO : mettre tous les type / interface ailleurs sous types.tsx ?
-
-export type ToolConfiguration =
-  | MoveToolConfiguration
-  | CropToolConfiguration
-  | SelectCursorToolConfiguration
-  | PaintToolConfiguration
-  | EraseToolConfiguration
-  | PaintBucketToolConfiguration
-  | AdjustToolConfiguration;
-
-export interface Tool<T extends ToolConfiguration = ToolConfiguration> {
-  name: string;
-  iconPath: string;
-  initialConfiguration: T;
-  configurationComponent: React.FC<{
-    configuration: T;
-    setConfiguration: (config: T) => void;
-  }>;
 }
 
-export const Tools: Record<string, Tool> = {
-  [MoveTool.name]: MoveTool,
-  [CropTool.name]: CropTool,
-  [SelectCursorTool.name]: SelectCursorTool,
-  [PaintTool.name]: PaintTool,
-  [EraseTool.name]: EraseTool,
-  [PaintBucketTool.name]: PaintBucketTool,
-  [AdjustTool.name]: AdjustTool,
+export const TOOLS: Record<string, Tool<any>> = {
+  [MOVE_TOOL.name]: MOVE_TOOL,
+  [CROP_TOOL.name]: CROP_TOOL,
+  [SELECT_CURSOR_TOOL.name]: SELECT_CURSOR_TOOL,
+  [PAINT_TOOL.name]: PAINT_TOOL,
+  [ERASE_TOOL.name]: ERASE_TOOL,
+  [PAINT_BUCKET_TOOL.name]: PAINT_BUCKET_TOOL,
+  [ADJUST_TOOL.name]: ADJUST_TOOL,
 };
+
+const TOOLS_INITIAL_STATE: Record<string, ToolConfiguration> = {};
+
+for (let tool of Object.values(TOOLS)) {
+  TOOLS_INITIAL_STATE[tool.name] = tool.initialConfiguration;
+}
 
 export default function EditorPage() {
   const [images, setImages] = useState<LoadedImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [nameSelectedTool, setNameSelectedTool] = useState<string>(
-    MoveTool.name,
+    MOVE_TOOL.name,
   );
-
-  const [toolsConfiguration, setToolsConfiguration] = useState<
-    Record<string, ToolConfiguration>
-  >({
-    [MoveTool.name]: MoveTool.initialConfiguration,
-    [CropTool.name]: CropTool.initialConfiguration,
-    [SelectCursorTool.name]: SelectCursorTool.initialConfiguration,
-    [PaintTool.name]: PaintTool.initialConfiguration,
-    [EraseTool.name]: EraseTool.initialConfiguration,
-    [PaintBucketTool.name]: PaintBucketTool.initialConfiguration,
-    [AdjustTool.name]: AdjustTool.initialConfiguration,
-  });
-
+  const [toolsConfiguration, setToolsConfiguration] =
+    useState<Record<string, ToolConfiguration>>(TOOLS_INITIAL_STATE);
   const [menuState, setMenuState] = useState<boolean>(false);
 
   // TODO : a supprimer des que gestion du state global ok
   useEffect(() => console.log(toolsConfiguration), [toolsConfiguration]);
 
   const ToolConfigurationComponent =
-    Tools[nameSelectedTool].configurationComponent;
+    TOOLS[nameSelectedTool].configurationComponent;
 
   return (
     <main className="bg-gray-900 min-h-screen">

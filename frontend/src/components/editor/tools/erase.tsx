@@ -1,18 +1,15 @@
-import { Tool, ToolConfiguration } from "@/app/editor/page";
+import { Tool } from "@/models/editor/tools/tool";
+import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
+import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
 
-export interface EraseToolConfiguration {
+export interface EraseToolConfiguration extends ToolConfiguration {
   radius: number;
 }
 
-interface Props {
-  configuration: EraseToolConfiguration;
-  setConfiguration: (config: EraseToolConfiguration) => void;
-}
-
-const EraseToolConfigurationComponent: React.FC<Props> = ({
+export const EraseToolConfigurationComponent = ({
   configuration,
   setConfiguration,
-}) => {
+}: ToolConfigurationProps<EraseToolConfiguration>) => {
   return (
     <div>
       <p className="text-violet-50 text-lg">
@@ -35,12 +32,9 @@ const EraseToolConfigurationComponent: React.FC<Props> = ({
   );
 };
 
-export const EraseTool: Tool = {
+export const ERASE_TOOL: Tool<EraseToolConfiguration> = {
   name: "Erase",
   iconPath: "/editor/toolbar/erase.svg",
   initialConfiguration: { radius: 10 },
-  configurationComponent: EraseToolConfigurationComponent as React.FC<{
-    configuration: ToolConfiguration;
-    setConfiguration: (config: ToolConfiguration) => void;
-  }>,
+  configurationComponent: EraseToolConfigurationComponent,
 };

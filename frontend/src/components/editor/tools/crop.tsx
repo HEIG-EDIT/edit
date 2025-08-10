@@ -1,16 +1,13 @@
-import { Tool, ToolConfiguration } from "@/app/editor/page";
+import { Tool } from "@/models/editor/tools/tool";
+import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
+import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
 
-export interface CropToolConfiguration {}
+export interface CropToolConfiguration extends ToolConfiguration {}
 
-interface Props {
-  configuration: CropToolConfiguration;
-  setConfiguration: (config: CropToolConfiguration) => void;
-}
-
-const CropToolConfigurationComponent: React.FC<Props> = ({
+export const CropToolConfigurationComponent = ({
   configuration,
   setConfiguration,
-}) => {
+}: ToolConfigurationProps<CropToolConfiguration>) => {
   return (
     <p className="text-violet-50 text-lg">
       {" "}
@@ -19,12 +16,9 @@ const CropToolConfigurationComponent: React.FC<Props> = ({
   );
 };
 
-export const CropTool: Tool = {
+export const CROP_TOOL: Tool<CropToolConfiguration> = {
   name: "Crop",
   iconPath: "/editor/toolbar/crop.svg",
   initialConfiguration: {},
-  configurationComponent: CropToolConfigurationComponent as React.FC<{
-    configuration: ToolConfiguration;
-    setConfiguration: (config: ToolConfiguration) => void;
-  }>,
+  configurationComponent: CropToolConfigurationComponent,
 };

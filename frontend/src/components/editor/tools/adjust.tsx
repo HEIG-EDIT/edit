@@ -1,58 +1,56 @@
 import { OutsideCard } from "@/components/outsideCard";
-import { Tool, ToolConfiguration } from "@/app/editor/page";
-import { useState } from "react";
+import { Tool } from "@/models/editor/tools/tool";
+import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
+import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
+import { SubToolConfiguration } from "@/models/editor/tools/subToolConfiguration";
+import { SubToolConfigurationProps } from "@/models/editor/tools/subToolConfigurationProps";
+import { SubTool } from "@/models/editor/tools/subTool";
 
-// TODO : gerer les states et mettre les difnitions des types ailleurs
+export interface BlackWhiteConfiguration extends SubToolConfiguration {}
 
-interface BlackWhiteConfiguration {}
-
-interface GaussianBlurConfiguration {
+export interface GaussianBlurConfiguration extends SubToolConfiguration {
   blurAmount: number;
 }
 
-interface ColorAndToneConfiguration {
+export interface ColorAndToneConfiguration extends SubToolConfiguration {
   saturation: number;
   brightness: number;
   contrast: number;
   hue: number;
 }
 
-interface InvertConfiguration {}
+export interface InvertConfiguration extends SubToolConfiguration {}
 
-interface PixelateConfiguration {
+export interface PixelateConfiguration extends SubToolConfiguration {
   amount: number;
 }
 
-// TODO : definir une liste de types possibles (horizontal, vertical ou none) quelque part accessible par parent ?!
-interface FlipConfiguration {
+// TODO : definir plusieurs attributs avec boolean
+export interface FlipConfiguration extends SubToolConfiguration {
   type: string;
 }
 
-interface ThresholdConfiguration {}
+export interface ThresholdConfiguration extends SubToolConfiguration {}
 
-interface SharpenConfiguration {}
+export interface SharpenConfiguration extends SubToolConfiguration {}
 
-type AdjustToolSubconfiguration =
-  | BlackWhiteConfiguration
-  | GaussianBlurConfiguration
-  | ColorAndToneConfiguration
-  | InvertConfiguration
-  | PixelateConfiguration
-  | FlipConfiguration
-  | ThresholdConfiguration
-  | SharpenConfiguration;
-
-const BlackWhiteConfigurationSubcomponent: React.FC<{
-  configuration: BlackWhiteConfiguration;
-  setConfiguration: (config: BlackWhiteConfiguration) => void;
-}> = ({ configuration, setConfiguration }) => {
-  return <div>BlackWhite</div>;
+export const BlackWhiteConfigurationSubcomponent = ({
+  configuration,
+  setConfiguration,
+}: SubToolConfigurationProps<BlackWhiteConfiguration>) => {
+  return <div>Black/white</div>;
 };
 
-const GaussianBlurConfigurationSubcomponent: React.FC<{
-  configuration: GaussianBlurConfiguration;
-  setConfiguration: (config: GaussianBlurConfiguration) => void;
-}> = ({ configuration, setConfiguration }) => {
+export const BlackWhite: SubTool<BlackWhiteConfiguration> = {
+  name: "Black/white",
+  initialConfiguration: {},
+  configurationComponent: BlackWhiteConfigurationSubcomponent,
+};
+
+export const GaussianBlurConfigurationSubcomponent = ({
+  configuration,
+  setConfiguration,
+}: SubToolConfigurationProps<GaussianBlurConfiguration>) => {
   return (
     <div>
       <p className="text-violet-50 text-lg">
@@ -78,31 +76,57 @@ const GaussianBlurConfigurationSubcomponent: React.FC<{
   );
 };
 
-const ColorAndToneConfigurationSubcomponent: React.FC<{
-  configuration: ColorAndToneConfiguration;
-  setConfiguration: (config: ColorAndToneConfiguration) => void;
-}> = ({ configuration, setConfiguration }) => {
+export const GaussianBlur: SubTool<GaussianBlurConfiguration> = {
+  name: "Gaussian blur",
+  initialConfiguration: { blurAmount: 10 },
+  configurationComponent: GaussianBlurConfigurationSubcomponent,
+};
+
+export const ColorAndToneConfigurationSubcomponent = ({
+  configuration,
+  setConfiguration,
+}: SubToolConfigurationProps<ColorAndToneConfiguration>) => {
   return <div>ColorAndTone</div>;
 };
 
-const InvertConfigurationSubcomponent: React.FC<{
-  configuration: InvertConfiguration;
-  setConfiguration: (config: InvertConfiguration) => void;
-}> = ({ configuration, setConfiguration }) => {
+export const ColorAndTone: SubTool<ColorAndToneConfiguration> = {
+  name: "Color & tone",
+  initialConfiguration: { saturation: 1, brightness: 2, contrast: 3, hue: 4 },
+  configurationComponent: ColorAndToneConfigurationSubcomponent,
+};
+
+export const InvertConfigurationSubcomponent = ({
+  configuration,
+  setConfiguration,
+}: SubToolConfigurationProps<InvertConfiguration>) => {
   return <div>Invert</div>;
 };
 
-const PixelateConfigurationSubcomponent: React.FC<{
-  configuration: PixelateConfiguration;
-  setConfiguration: (config: PixelateConfiguration) => void;
-}> = ({ configuration, setConfiguration }) => {
+export const Invert: SubTool<InvertConfiguration> = {
+  name: "Invert",
+  initialConfiguration: {},
+  configurationComponent: InvertConfigurationSubcomponent,
+};
+
+export const PixelateConfigurationSubcomponent = ({
+  configuration,
+  setConfiguration,
+}: SubToolConfigurationProps<PixelateConfiguration>) => {
   return <div>Pixelate</div>;
 };
 
-const FlipConfigurationSubcomponent: React.FC<{
-  configuration: FlipConfiguration;
-  setConfiguration: (config: FlipConfiguration) => void;
-}> = ({ configuration, setConfiguration }) => {
+export const Pixelate: SubTool<PixelateConfiguration> = {
+  name: "Pixelate",
+  initialConfiguration: {
+    amount: 5,
+  },
+  configurationComponent: PixelateConfigurationSubcomponent,
+};
+
+export const FlipConfigurationSubcomponent = ({
+  configuration,
+  setConfiguration,
+}: SubToolConfigurationProps<FlipConfiguration>) => {
   const flipTypes = ["Vertical", "Horizontal", "None"];
 
   return (
@@ -132,127 +156,69 @@ const FlipConfigurationSubcomponent: React.FC<{
   );
 };
 
-const ThresholdConfigurationSubcomponent: React.FC<{
-  configuration: ThresholdConfiguration;
-  setConfiguration: (config: ThresholdConfiguration) => void;
-}> = ({ configuration, setConfiguration }) => {
+export const Flip: SubTool<FlipConfiguration> = {
+  name: "Flip (mirror)",
+  initialConfiguration: {
+    type: "None",
+  },
+  configurationComponent: FlipConfigurationSubcomponent,
+};
+
+export const ThresholdConfigurationSubcomponent = ({
+  configuration,
+  setConfiguration,
+}: SubToolConfigurationProps<ThresholdConfiguration>) => {
   return <div>Threshold</div>;
 };
 
-const SharpenConfigurationSubcomponent: React.FC<{
-  configuration: SharpenConfiguration;
-  setConfiguration: (config: SharpenConfiguration) => void;
-}> = ({ configuration, setConfiguration }) => {
+export const Threshold: SubTool<ThresholdConfiguration> = {
+  name: "Threshold",
+  initialConfiguration: {},
+  configurationComponent: ThresholdConfigurationSubcomponent,
+};
+
+export const SharpenConfigurationSubcomponent = ({
+  configuration,
+  setConfiguration,
+}: SubToolConfigurationProps<SharpenConfiguration>) => {
   return <div>Sharpen</div>;
 };
 
-const BlackWhiteConfiguration: AdjustToolConfiguration<BlackWhiteConfiguration> =
-  {
-    filterName: "Black/white",
-    initialConfiguration: {},
-    configurationSubcomponent: BlackWhiteConfigurationSubcomponent,
-  };
-
-const GaussianBlurConfiguration: AdjustToolConfiguration<GaussianBlurConfiguration> =
-  {
-    filterName: "Gaussian blur",
-    initialConfiguration: { blurAmount: 3 },
-    configurationSubcomponent: GaussianBlurConfigurationSubcomponent,
-  };
-
-const ColorAndToneConfiguration: AdjustToolConfiguration<ColorAndToneConfiguration> =
-  {
-    filterName: "Color & tone",
-    initialConfiguration: { saturation: 1, brightness: 1, contrast: 1, hue: 1 },
-    configurationSubcomponent: ColorAndToneConfigurationSubcomponent,
-  };
-
-const InvertConfiguration: AdjustToolConfiguration<InvertConfiguration> = {
-  filterName: "Invert",
+export const Sharpen: SubTool<SharpenConfiguration> = {
+  name: "Sharpen",
   initialConfiguration: {},
-  configurationSubcomponent: InvertConfigurationSubcomponent,
+  configurationComponent: SharpenConfigurationSubcomponent,
 };
 
-const PixelateConfiguration: AdjustToolConfiguration<PixelateConfiguration> = {
-  filterName: "Pixelate",
-  initialConfiguration: { amount: 10 },
-  configurationSubcomponent: PixelateConfigurationSubcomponent,
+export const ADJUST_SUB_TOOLS: Record<string, SubTool<any>> = {
+  [BlackWhite.name]: BlackWhite,
+  [GaussianBlur.name]: GaussianBlur,
+  [ColorAndTone.name]: ColorAndTone,
+  [Invert.name]: Invert,
+  [Pixelate.name]: Pixelate,
+  [Flip.name]: Flip,
+  [Threshold.name]: Threshold,
+  [Sharpen.name]: Sharpen,
 };
 
-const FlipConfiguration: AdjustToolConfiguration<FlipConfiguration> = {
-  filterName: "Flip (mirror)",
-  initialConfiguration: { type: "None" },
-  configurationSubcomponent: FlipConfigurationSubcomponent,
-};
+const ADJUST_INITIAL_CONFIGURATION: Record<string, SubToolConfiguration> = {};
 
-const ThresholdConfiguration: AdjustToolConfiguration<ThresholdConfiguration> =
-  {
-    filterName: "Threshold",
-    initialConfiguration: {},
-    configurationSubcomponent: ThresholdConfigurationSubcomponent,
-  };
-
-const SharpenConfiguration: AdjustToolConfiguration<SharpenConfiguration> = {
-  filterName: "Sharpen",
-  initialConfiguration: {},
-  configurationSubcomponent: SharpenConfigurationSubcomponent,
-};
-
-export interface AdjustToolConfiguration<
-  T extends AdjustToolSubconfiguration = AdjustToolSubconfiguration,
-> {
-  filterName: string;
-  initialConfiguration: T;
-  configurationSubcomponent: React.FC<{
-    configuration: T;
-    setConfiguration: (config: T) => void;
-  }>;
+for (let subTool of Object.values(ADJUST_SUB_TOOLS)) {
+  ADJUST_INITIAL_CONFIGURATION[subTool.name] = subTool.initialConfiguration;
 }
 
-interface Props {
-  configuration: AdjustToolConfiguration;
-  setConfiguration: (config: AdjustToolConfiguration) => void;
+export interface AdjustToolConfiguration extends ToolConfiguration {
+  filterType: string;
+  subConfigurations: Record<string, SubToolConfiguration>;
 }
 
-const FiltersConfiguration: Record<string, any> = {
-  [BlackWhiteConfiguration.filterName]: BlackWhiteConfiguration,
-  [GaussianBlurConfiguration.filterName]: GaussianBlurConfiguration,
-  [ColorAndToneConfiguration.filterName]: ColorAndToneConfiguration,
-  [InvertConfiguration.filterName]: InvertConfiguration,
-  [PixelateConfiguration.filterName]: PixelateConfiguration,
-  [FlipConfiguration.filterName]: FlipConfiguration,
-  [ThresholdConfiguration.filterName]: ThresholdConfiguration,
-  [SharpenConfiguration.filterName]: SharpenConfiguration,
-};
-
-const AdjustToolConfigurationComponent: React.FC<Props> = ({
+// TODO : ajouter un bouton pour save sous-configuration et pop up si chgmt de filtre alors que sous-configuration pas save
+export const AdjustToolConfigurationComponent = ({
   configuration,
   setConfiguration,
-}) => {
-  const [nameSelectedFilterConfiguration, setNameSelectedFilterConfiguration] =
-    useState<string>(BlackWhiteConfiguration.filterName);
-  const [filtersConfiguration, setFiltersConfiguration] = useState<
-    Record<string, AdjustToolSubconfiguration>
-  >({
-    [BlackWhiteConfiguration.filterName]:
-      BlackWhiteConfiguration.initialConfiguration,
-    [GaussianBlurConfiguration.filterName]:
-      GaussianBlurConfiguration.initialConfiguration,
-    [ColorAndToneConfiguration.filterName]:
-      ColorAndToneConfiguration.initialConfiguration,
-    [InvertConfiguration.filterName]: InvertConfiguration.initialConfiguration,
-    [PixelateConfiguration.filterName]:
-      PixelateConfiguration.initialConfiguration,
-    [FlipConfiguration.filterName]: FlipConfiguration.initialConfiguration,
-    [ThresholdConfiguration.filterName]:
-      ThresholdConfiguration.initialConfiguration,
-    [SharpenConfiguration.filterName]:
-      SharpenConfiguration.initialConfiguration,
-  });
-
+}: ToolConfigurationProps<AdjustToolConfiguration>) => {
   const AdjustToolConfigurationSubcomponent =
-    FiltersConfiguration[nameSelectedFilterConfiguration]
-      .configurationSubcomponent;
+    ADJUST_SUB_TOOLS[configuration.filterType].configurationComponent;
 
   return (
     <div>
@@ -261,28 +227,28 @@ const AdjustToolConfigurationComponent: React.FC<Props> = ({
       </span>
       <select
         className="bg-violet-500 text-violet-50 text-lg rounded p-2"
-        value={
-          nameSelectedFilterConfiguration
-        } /* TODO : a modifer une fois que ok */
+        value={configuration.filterType}
         onChange={(e) => {
-          /* TODO : a modifer une fois que ok */
-          const selected = e.target.value;
-          setNameSelectedFilterConfiguration(selected);
-          setConfiguration(FiltersConfiguration[selected]);
+          setConfiguration({ ...configuration, filterType: e.target.value });
         }}
       >
-        {Object.keys(FiltersConfiguration).map((filterName) => (
+        {Object.keys(ADJUST_SUB_TOOLS).map((filterName) => (
           <option key={filterName}>{filterName}</option>
         ))}
       </select>
       <OutsideCard>
         <AdjustToolConfigurationSubcomponent
-          configuration={filtersConfiguration[nameSelectedFilterConfiguration]}
-          setConfiguration={(newConfig: any) => {
-            setFiltersConfiguration((prev) => ({
-              ...prev,
-              [nameSelectedFilterConfiguration]: newConfig,
-            }));
+          configuration={
+            configuration.subConfigurations[configuration.filterType]
+          }
+          setConfiguration={(config: SubToolConfiguration) => {
+            setConfiguration({
+              ...configuration,
+              subConfigurations: {
+                ...configuration.subConfigurations,
+                [configuration.filterType]: config,
+              },
+            });
           }}
         />
       </OutsideCard>
@@ -290,12 +256,12 @@ const AdjustToolConfigurationComponent: React.FC<Props> = ({
   );
 };
 
-export const AdjustTool: Tool = {
+export const ADJUST_TOOL: Tool<AdjustToolConfiguration> = {
   name: "Adjust",
   iconPath: "/editor/toolbar/adjust.svg",
-  initialConfiguration: { filter: FiltersConfiguration[0] },
-  configurationComponent: AdjustToolConfigurationComponent as React.FC<{
-    configuration: ToolConfiguration;
-    setConfiguration: (config: ToolConfiguration) => void;
-  }>,
+  initialConfiguration: {
+    filterType: Object.keys(ADJUST_SUB_TOOLS)[0],
+    subConfigurations: ADJUST_INITIAL_CONFIGURATION,
+  },
+  configurationComponent: AdjustToolConfigurationComponent,
 };

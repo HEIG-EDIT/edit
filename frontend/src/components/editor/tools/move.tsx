@@ -1,16 +1,13 @@
-import { Tool, ToolConfiguration } from "@/app/editor/page";
+import { Tool } from "@/models/editor/tools/tool";
+import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
+import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
 
-export interface MoveToolConfiguration {}
+export interface MoveToolConfiguration extends ToolConfiguration {}
 
-interface Props {
-  configuration: MoveToolConfiguration;
-  setConfiguration: (config: MoveToolConfiguration) => void;
-}
-
-const MoveToolConfigurationComponent: React.FC<Props> = ({
+export const MoveToolConfigurationComponent = ({
   configuration,
   setConfiguration,
-}) => {
+}: ToolConfigurationProps<MoveToolConfiguration>) => {
   return (
     <div>
       <p className="text-violet-50 text-lg">
@@ -21,12 +18,9 @@ const MoveToolConfigurationComponent: React.FC<Props> = ({
   );
 };
 
-export const MoveTool: Tool = {
+export const MOVE_TOOL: Tool<MoveToolConfiguration> = {
   name: "Move",
   iconPath: "/editor/toolbar/move.svg",
   initialConfiguration: {},
-  configurationComponent: MoveToolConfigurationComponent as React.FC<{
-    configuration: ToolConfiguration;
-    setConfiguration: (config: ToolConfiguration) => void;
-  }>,
+  configurationComponent: MoveToolConfigurationComponent,
 };
