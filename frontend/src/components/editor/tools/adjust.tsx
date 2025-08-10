@@ -27,7 +27,8 @@ export interface PixelateConfiguration extends SubToolConfiguration {
 
 // TODO : definir plusieurs attributs avec boolean
 export interface FlipConfiguration extends SubToolConfiguration {
-  type: string;
+  horizontal_flip: boolean;
+  vertical_flip: boolean;
 }
 
 export interface ThresholdConfiguration extends SubToolConfiguration {}
@@ -127,31 +128,34 @@ export const FlipConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
 }: SubToolConfigurationProps<FlipConfiguration>) => {
-  const flipTypes = ["Vertical", "Horizontal", "None"];
-
   return (
-    <div className="flex flex-col">
-      {flipTypes.map((type) => {
-        const isSelected = type === configuration.type;
-        const style = isSelected
-          ? "bg-violet-500 border-violet-50"
-          : "bg-gray-900 border-violet-500";
-        return (
-          <button
-            className={`rounded-xl border-2 p-2 ${style} text-violet-50 text-lg`}
-            key={type}
-            value={type}
-            onClick={(e) => {
-              setConfiguration({
-                ...configuration,
-                type: e.currentTarget.value,
-              });
-            }}
-          >
-            {type}
-          </button>
-        );
-      })}
+    <div>
+      <label>
+        Horizontal:{" "}
+        <input
+          type="checkbox"
+          checked={configuration.horizontal_flip}
+          onChange={(e) => {
+            setConfiguration({
+              ...configuration,
+              horizontal_flip: e.target.checked,
+            });
+          }}
+        />
+      </label>
+      <label>
+        Vertical:{" "}
+        <input
+          type="checkbox"
+          checked={configuration.vertical_flip}
+          onChange={(e) => {
+            setConfiguration({
+              ...configuration,
+              vertical_flip: e.target.checked,
+            });
+          }}
+        />
+      </label>
     </div>
   );
 };
@@ -159,7 +163,8 @@ export const FlipConfigurationSubcomponent = ({
 export const Flip: SubTool<FlipConfiguration> = {
   name: "Flip (mirror)",
   initialConfiguration: {
-    type: "None",
+    horizontal_flip: false,
+    vertical_flip: false,
   },
   configurationComponent: FlipConfigurationSubcomponent,
 };
