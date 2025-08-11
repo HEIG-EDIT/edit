@@ -1,13 +1,14 @@
 import { Vector2d } from "konva/lib/types";
+import { createRef } from "react";
 
 // Matches Konva's way of storing points: x coordinates on even indices, and y
 // on odd indices.
-type Point = Array<number>;
+type Points = Array<number>;
 
 export type LayerId = string;
 
 export interface Line {
-  points: Array<Point>;
+  points: Points;
   color: string;
   width: number;
   tool: string | null;
@@ -18,12 +19,21 @@ export class Layer {
   id: LayerId; // UUID
   imageData: ImageData | null = null;
   image: HTMLImageElement;
+  isSelected: boolean = false;
 
-  layerRef: any; // Ref to the Konva Layer underlying object
+  // Refs to the underlying Konva components
+  groupRef: any;
+  // FIXME: Check if useful
+  imageRef: any;
+
   visible: boolean = true;
   position: Vector2d = {
     x: 0,
     y: 0,
+  };
+  scale: Vector2d = {
+    x: 1,
+    y: 1,
   };
   rotation: number = 0;
   lines: Array<Line> = []; // Lines drawn free-hand on a Layer
@@ -35,6 +45,8 @@ export class Layer {
     height: number = 0,
   ) {
     this.id = crypto.randomUUID();
+    this.groupRef = createRef();
+    this.imageRef = createRef();
 
     if (name) {
       this.name = name;

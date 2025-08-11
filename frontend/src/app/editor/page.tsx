@@ -1,7 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  Dispatch,
+  SetStateAction,
+} from "react";
 import { LoadImageButton } from "@/components/editor/loadImageButton";
 import { ToolSelector } from "@/components/editor/toolSelector";
 import { OutsideCard } from "@/components/outsideCard";
@@ -69,11 +75,39 @@ export default function EditorPage() {
   const ToolConfigurationComponent =
     TOOLS[nameSelectedTool].configurationComponent;
 
+  /// Find the layer's state and it's index in the list from it's id
+  const findLayer = useCallback(
+    (layerId: string): [number, Layer] => {
+      for (const [i, layer] of layers.entries()) {
+        if (layer.id === layerId) {
+          return [i, layer];
+        }
+      }
+
+      throw Error(`Could not find layer with id ${layerId}`);
+    },
+    [layers],
+  );
+
+  const updateLayer = useCallback(
+    (layerId: LayerId, callback: (layer: Layer) => Layer) => {
+      const [i, layer] = findLayer(layerId);
+      const newLayer = callback(layer);
+
+      setLayers((prev) => [
+        ...prev.slice(0, i),
+        newLayer,
+        ...prev.slice(i + 1),
+      ]);
+    },
+    [findLayer, setLayers],
+  );
+
   return (
     <main className="bg-gray-900 min-h-screen">
       <div className="grid grid-cols-5">
         <div className="col-span-1 flex flex-col gap-4 px-4">
-          <LoadImageButton setImages={setLayers} />
+          <LoadImageButton setLayers={setLayers} />
           {/* TODO : mettre dans nouveau composant ToolsManagment mais state ko ensuite... */}
           <div className="bg-gray-800 rounded-2xl">
             <div className="bg-violet-300 rounded-2xl p-2 flex flex-row gap-4 mb-2">
@@ -107,9 +141,13 @@ export default function EditorPage() {
           <Canvas
             layers={layers}
             setLayers={setLayers}
+            updateLayer={updateLayer}
             selectedLayer={selectedLayer}
             setSelectedLayer={setSelectedLayer}
             nameSelectedTool={nameSelectedTool}
+            // TODO: Add a way to choose the size
+            width={1000}
+            height={1000}
           />
           <div className="py-6 flex justify-center">
             <OutsideCard>
