@@ -24,7 +24,7 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
 
   /// Public function to update the state while keeping the history
   const setStatePublic = useCallback(
-    (newState: T) => {
+    (newState: T | ((prev: T) => T)) => {
       const func = typeof newState === "function" ? newState : () => newState;
       setState((prev) => {
         let { stateHistory, index } = prev;
@@ -87,7 +87,7 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
   }, [setState]);
 
   const canUndo =
-    state.stateHistory.getStartIndex() > 0 &&
+    state.stateHistory.getStartIndex() >= 0 &&
     state.index > state.stateHistory.getStartIndex();
   const canRedo = state.index < state.stateHistory.length - 1;
 
