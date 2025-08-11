@@ -13,6 +13,8 @@ import { ToolSelector } from "@/components/editor/toolSelector";
 import { OutsideCard } from "@/components/outsideCard";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import UndoRoundedIcon from "@mui/icons-material/UndoRounded";
+import RedoRoundedIcon from "@mui/icons-material/RedoRounded";
 import ConstructionRoundedIcon from "@mui/icons-material/ConstructionRounded";
 
 import { MOVE_TOOL } from "@/components/editor/tools/move";
@@ -26,7 +28,8 @@ import { LayersManagment } from "@/components/editor/layers/layersManagment";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { Tool } from "@/models/editor/tools/tool";
 
-import { Layer, LayerId } from "@/components/editor/types";
+import { Layer, LayerId, LayerUpdateCallback } from "@/components/editor/types";
+import { useUndoRedo } from "@/components/editor/undoRedo";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
@@ -59,7 +62,16 @@ for (let tool of Object.values(TOOLS)) {
 }
 
 export default function EditorPage() {
-  const [layers, setLayers] = useState<Layer[]>([]);
+  const {
+    state: layers,
+    setState: setLayers,
+    setVirtualState: setVirtualLayers,
+    commitVirtualState: commitVirtualLayers,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useUndoRedo(Array<Layer>());
   const [selectedLayer, setSelectedLayer] = useState<LayerId | null>(null);
 
   const [nameSelectedTool, setNameSelectedTool] = useState<string>(
@@ -90,11 +102,11 @@ export default function EditorPage() {
   );
 
   const updateLayer = useCallback(
-    (layerId: LayerId, callback: (layer: Layer) => Layer) => {
+    (layerId: LayerId, callback: LayerUpdateCallback) => {
       const [i, layer] = findLayer(layerId);
       const newLayer = callback(layer);
 
-      setLayers((prev) => [
+      setLayers((prev: Layer[]) => [
         ...prev.slice(0, i),
         newLayer,
         ...prev.slice(i + 1),
@@ -155,6 +167,31 @@ export default function EditorPage() {
                 nameSelectedTool={nameSelectedTool}
                 setNameSelectedTool={setNameSelectedTool}
               />
+              {/* TODO: Refactor to a separate component */}
+              <button
+                className={`rounded-xl p-2
+                  ${canUndo ? "bg-violet-300" : "bg-gray-500"}
+                  `}
+                key={"undo"}
+                onClick={undo}
+                disabled={!canUndo}
+              >
+                <UndoRoundedIcon
+                  htmlColor={`${canUndo ? "black" : "#4A5565"}`}
+                />
+              </button>
+              <button
+                className={`rounded-xl p-2
+                  ${canRedo ? "bg-violet-300" : "bg-gray-500"}
+                `}
+                key={"redo"}
+                onClick={redo}
+                disabled={!canRedo}
+              >
+                <RedoRoundedIcon
+                  htmlColor={`${canRedo ? "black" : "#4A5565"}`}
+                />
+              </button>
               {/* TODO : gerer le style du bouton et creer un composant bouton stylise */}
               <button
                 className="rounded-xl border-2 p-2"
