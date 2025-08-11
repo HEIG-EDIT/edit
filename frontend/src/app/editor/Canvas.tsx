@@ -304,7 +304,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       return {
         ...prev,
         position: newPos,
-      }
+      };
     });
   };
 
@@ -415,6 +415,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   const handleScroll = (e: any) => {
     e.evt.preventDefault();
 
+    // Avoid accidental scrolling when moving aroung
     if (e.evt.buttons == 4) {
       return;
     }
@@ -425,21 +426,14 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     const scaleBy = direction > 0 ? scaleFactor : 1 / scaleFactor;
 
     setCanvasState(({ scale, position }) => {
-      // Get the pointer position relative to the canvas container (in screen/DOM coordinates)
-      const pointerPosition = getCanvasPointerPosition();
-
-      // Convert pointer position to world coordinates BEFORE scaling
-      const worldPoint = {
-        x: (pointerPosition.x - position.x) / scale,
-        y: (pointerPosition.y - position.y) / scale
-      };
+      const stagePointerPosition = stageRef.current?.getPointerPosition();
+      const canvasPointerPosition = getCanvasPointerPosition();
 
       const newScale = scale * scaleBy;
 
-      // Calculate new position so that the world point under the cursor remains the same
       const newPos = {
-        x: pointerPosition.x - worldPoint.x * newScale,
-        y: pointerPosition.y - worldPoint.y * newScale
+        x: stagePointerPosition.x - canvasPointerPosition.x * newScale,
+        y: stagePointerPosition.y - canvasPointerPosition.y * newScale,
       };
 
       return {
@@ -505,8 +499,8 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
           ref={stageRef}
           draggable={false}
           onWheel={handleScroll}
-        // onMouseDown={handleStageMouseDown}
-        // onMouseUp={handleStageMouseUp}
+          // onMouseDown={handleStageMouseDown}
+          // onMouseUp={handleStageMouseUp}
         >
           {/* Using a layer as the canvas */}
           <KonvaLayerComponent
