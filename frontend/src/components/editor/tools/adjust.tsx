@@ -5,6 +5,7 @@ import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationP
 import { SubToolConfiguration } from "@/models/editor/tools/subToolConfiguration";
 import { SubToolConfigurationProps } from "@/models/editor/tools/subToolConfigurationProps";
 import { SubTool } from "@/models/editor/tools/subTool";
+import ContrastRoundedIcon from "@mui/icons-material/ContrastRounded";
 
 export interface BlackWhiteConfiguration extends SubToolConfiguration {}
 
@@ -263,7 +264,7 @@ export const AdjustToolConfigurationComponent = ({
 
 export const ADJUST_TOOL: Tool<AdjustToolConfiguration> = {
   name: "Adjust",
-  iconPath: "/editor/toolbar/adjust.svg",
+  icon: <ContrastRoundedIcon style={{ color: "white" }} />,
   initialConfiguration: {
     filterType: Object.keys(ADJUST_SUB_TOOLS)[0],
     subConfigurations: ADJUST_INITIAL_CONFIGURATION,

@@ -1,6 +1,7 @@
 import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
+import OpenWithRoundedIcon from "@mui/icons-material/OpenWithRounded";
 
 export interface MoveToolConfiguration extends ToolConfiguration {}
 
@@ -20,7 +21,7 @@ export const MoveToolConfigurationComponent = ({
 
 export const MOVE_TOOL: Tool<MoveToolConfiguration> = {
   name: "Move",
-  iconPath: "/editor/toolbar/move.svg",
+  icon: <OpenWithRoundedIcon style={{ color: "white" }} />,
   initialConfiguration: {},
   configurationComponent: MoveToolConfigurationComponent,
 };
