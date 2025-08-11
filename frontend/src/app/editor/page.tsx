@@ -1,12 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
+import React, { useState, useEffect } from "react";
 import { LoadImageButton } from "@/components/editor/loadImageButton";
-import { ToolSelector } from "@/components/editor/toolSelector";
-import { OutsideCard } from "@/components/outsideCard";
-import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import ConstructionRoundedIcon from "@mui/icons-material/ConstructionRounded";
 
 import { MOVE_TOOL } from "@/components/editor/tools/move";
@@ -19,6 +15,8 @@ import { ADJUST_TOOL } from "@/components/editor/tools/adjust";
 import { LayersManagment } from "@/components/editor/layers/layersManagment";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { Tool } from "@/models/editor/tools/tool";
+import { Menu } from "@/components/editor/menu/menu";
+import { Toolbar } from "@/components/editor/toolbar/toolbar";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
@@ -58,7 +56,7 @@ export default function EditorPage() {
   );
   const [toolsConfiguration, setToolsConfiguration] =
     useState<Record<string, ToolConfiguration>>(TOOLS_INITIAL_STATE);
-  const [menuState, setMenuState] = useState<boolean>(false);
+  const [menuDisplay, setMenuDisplay] = useState<boolean>(false);
 
   // TODO : a supprimer des que gestion du state global ok
   useEffect(() => console.log(toolsConfiguration), [toolsConfiguration]);
@@ -101,68 +99,25 @@ export default function EditorPage() {
           <LayersManagment />
         </div>
         <div className="col-span-4">
-          <Canvas
-            images={images}
-            setImages={setImages}
-            selectedImage={selectedImage}
-            setSelectedImage={setSelectedImage}
-            nameSelectedTool={nameSelectedTool}
-          />
-          <div className="py-6 flex justify-center">
-            <OutsideCard>
-              <ToolSelector
-                nameSelectedTool={nameSelectedTool}
-                setNameSelectedTool={setNameSelectedTool}
-              />
-              {/* TODO : gerer le style du bouton et creer un composant bouton stylise */}
-              <button
-                className="rounded-xl border-2 p-2"
-                key={"burger"}
-                onClick={() => setMenuState(true)}
-              >
-                <MenuRoundedIcon />
-              </button>
-            </OutsideCard>
+          <div className="mb-6">
+            <Canvas
+              images={images}
+              setImages={setImages}
+              selectedImage={selectedImage}
+              setSelectedImage={setSelectedImage}
+              nameSelectedTool={nameSelectedTool}
+            />
+          </div>
+          <div className="mb-6 flex justify-center items-center">
+            <Toolbar
+              nameSelectedTool={nameSelectedTool}
+              setNameSelectedTool={setNameSelectedTool}
+              setMenuDisplay={setMenuDisplay}
+            />
           </div>
         </div>
-        {menuState && <Menu setMenuState={setMenuState} />}
+        {menuDisplay && <Menu setMenuDisplay={setMenuDisplay} />}
       </div>
     </main>
   );
 }
-
-// TODO : creer un composant ailleurs et gerer le state
-const Menu = ({
-  setMenuState,
-}: {
-  setMenuState: Dispatch<SetStateAction<boolean>>;
-}) => {
-  return (
-    <div>
-      <div className="fixed inset-0 bg-black opacity-80 z-50" />
-
-      {/* TODO : configurer pop up */}
-      <div className="fixed inset-0 flex justify-center items-center z-100">
-        <div className="relative bg-gray-600 rounded-2xl border border-violet-300 p-2 w-2/3 h-2/3">
-          <div className="flex flex-row gap-6 p-4 h-full">
-            <div className="rounded-2xl bg-gray-900 w-1/3">PLOP</div>
-            <div className="w-2/3">
-              <UserSettings />
-            </div>
-          </div>
-
-          <div className="absolute top-4 right-4">
-            <button onClick={() => setMenuState(false)}>
-              <CloseRoundedIcon style={{ color: "white", fontSize: "large" }} />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// TODO : creer un composant ailleurs et gerer le state
-const UserSettings = () => {
-  return <div className="">Hello user</div>;
-};
