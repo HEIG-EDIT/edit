@@ -20,7 +20,11 @@ export class CircularBuffer<T> {
   };
 
   public get = (index: number) => {
-    if (index < this.getStartIndex() || index >= this.length) {
+    if (
+      this.length === 0 ||
+      index < this.getStartIndex() ||
+      index >= this.length
+    ) {
       throw new RangeError(`The requested index ${index} is out of bounds`);
     }
 
