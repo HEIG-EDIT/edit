@@ -2,6 +2,7 @@ import { SliderPicker } from "react-color";
 import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
+import FormatColorFillRoundedIcon from "@mui/icons-material/FormatColorFillRounded";
 
 export interface PaintBucketToolConfiguration extends ToolConfiguration {
   color: string;
@@ -28,7 +29,7 @@ export const PaintBucketToolConfigurationComponent = ({
 
 export const PAINT_BUCKET_TOOL: Tool<PaintBucketToolConfiguration> = {
   name: "Paint-bucket",
-  iconPath: "/editor/toolbar/paint-bucket.svg",
+  icon: <FormatColorFillRoundedIcon style={{ color: "white" }} />,
   initialConfiguration: { color: "#e6b3b3" },
   configurationComponent: PaintBucketToolConfigurationComponent,
 };

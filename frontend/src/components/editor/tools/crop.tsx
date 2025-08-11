@@ -1,6 +1,7 @@
 import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
+import CropRoundedIcon from "@mui/icons-material/CropRounded";
 
 export interface CropToolConfiguration extends ToolConfiguration {}
 
@@ -18,7 +19,7 @@ export const CropToolConfigurationComponent = ({
 
 export const CROP_TOOL: Tool<CropToolConfiguration> = {
   name: "Crop",
-  iconPath: "/editor/toolbar/crop.svg",
+  icon: <CropRoundedIcon style={{ color: "white" }} />,
   initialConfiguration: {},
   configurationComponent: CropToolConfigurationComponent,
 };

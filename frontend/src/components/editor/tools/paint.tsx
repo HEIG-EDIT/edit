@@ -4,6 +4,7 @@ import { ChromePicker } from "react-color";
 import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
+import BrushRoundedIcon from "@mui/icons-material/BrushRounded";
 
 export interface PaintToolConfiguration extends ToolConfiguration {
   radius: number;
@@ -48,7 +49,7 @@ export const PaintToolConfigurationComponent = ({
 
 export const PAINT_TOOL: Tool<PaintToolConfiguration> = {
   name: "Paint",
-  iconPath: "/editor/toolbar/paint.svg",
+  icon: <BrushRoundedIcon style={{ color: "white" }} />,
   initialConfiguration: { radius: 59, color: "#799ed2" },
   configurationComponent: PaintToolConfigurationComponent,
 };
