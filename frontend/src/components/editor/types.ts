@@ -26,7 +26,7 @@ export class Layer {
   // FIXME: Check if useful
   imageRef: any;
 
-  visible: boolean = true;
+  isVisible: boolean = true;
   position: Vector2d = {
     x: 0,
     y: 0,
@@ -61,3 +61,5 @@ export class Layer {
     }
   }
 }
+
+export type LayerUpdateCallback = (layer: Layer) => Layer;

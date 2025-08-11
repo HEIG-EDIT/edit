@@ -14,7 +14,7 @@ interface LayerProps {
   rotation: number;
   scale: Vector2d;
   image: HTMLImageElement;
-  visible: boolean;
+  isVisible: boolean;
   lines: Line[];
 
   onDragEnd: any;
@@ -28,7 +28,7 @@ export const LayerComponent = forwardRef((props: LayerProps, ref) => {
     rotation,
     scale,
     image,
-    visible,
+    isVisible,
     lines,
 
     onDragEnd,
@@ -47,7 +47,7 @@ export const LayerComponent = forwardRef((props: LayerProps, ref) => {
       // FIXME: This will probably not work when moving multiple layers
       draggable
       ref={ref}
-      visible={visible}
+      visible={isVisible}
       onDragEnd={onDragEnd}
       onTransformEnd={onTransformEnd}
     >

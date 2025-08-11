@@ -135,7 +135,7 @@ export default function EditorPage() {
               </div>
             </div>
           </div>
-          <LayersManagment />
+          <LayersManagment layers={layers} updateLayer={updateLayer} />
         </div>
         <div className="col-span-4">
           <Canvas
