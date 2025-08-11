@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useRef } from "react";
-import { LoadedImage } from "@/app/editor/page";
+import { Layer } from "@/components/editor/types";
 
 type Props = {
-  setImages: React.Dispatch<React.SetStateAction<LoadedImage[]>>;
+  setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
 };
 
-export const LoadImageButton = ({ setImages }: Props) => {
+export const LoadImageButton = ({ setLayers: setLayers }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUploadClick = () => {
@@ -23,18 +23,7 @@ export const LoadImageButton = ({ setImages }: Props) => {
       const img = new window.Image();
       img.src = reader.result as string;
       img.onload = () => {
-        setImages((prev) => [
-          ...prev,
-          {
-            id: `${Date.now()}-${Math.random()}`,
-            image: img,
-            x: 0,
-            y: 0,
-            width: img.width,
-            height: img.height,
-            rotation: 0,
-          },
-        ]);
+        setLayers((prev) => [...prev, new Layer(file.name, img)]);
       };
     };
     reader.readAsDataURL(file);

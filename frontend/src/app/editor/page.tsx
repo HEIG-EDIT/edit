@@ -20,6 +20,8 @@ import { LayersManagment } from "@/components/editor/layers/layersManagment";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { Tool } from "@/models/editor/tools/tool";
 
+import { Layer, LayerId } from "@/components/editor/types";
+
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
 });
@@ -51,8 +53,9 @@ for (let tool of Object.values(TOOLS)) {
 }
 
 export default function EditorPage() {
-  const [images, setImages] = useState<LoadedImage[]>([]);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [layers, setLayers] = useState<Layer[]>([]);
+  const [selectedLayer, setSelectedLayer] = useState<LayerId | null>(null);
+
   const [nameSelectedTool, setNameSelectedTool] = useState<string>(
     MOVE_TOOL.name,
   );
@@ -70,7 +73,7 @@ export default function EditorPage() {
     <main className="bg-gray-900 min-h-screen">
       <div className="grid grid-cols-5">
         <div className="col-span-1 flex flex-col gap-4 px-4">
-          <LoadImageButton setImages={setImages} />
+          <LoadImageButton setImages={setLayers} />
           {/* TODO : mettre dans nouveau composant ToolsManagment mais state ko ensuite... */}
           <div className="bg-gray-800 rounded-2xl">
             <div className="bg-violet-300 rounded-2xl p-2 flex flex-row gap-4 mb-2">
@@ -102,10 +105,10 @@ export default function EditorPage() {
         </div>
         <div className="col-span-4">
           <Canvas
-            images={images}
-            setImages={setImages}
-            selectedImage={selectedImage}
-            setSelectedImage={setSelectedImage}
+            layers={layers}
+            setLayers={setLayers}
+            selectedLayer={selectedLayer}
+            setSelectedLayer={setSelectedLayer}
             nameSelectedTool={nameSelectedTool}
           />
           <div className="py-6 flex justify-center">

@@ -3,23 +3,24 @@
 "use client";
 
 import React, { useRef, useEffect } from "react";
-import { Stage, Layer, Image, Transformer } from "react-konva";
+import { Stage, Layer as KonvaLayer, Image, Transformer } from "react-konva";
 import Konva from "konva";
 import { LoadedImage } from "@/app/editor/page";
+import { Layer } from "./types";
 
 type CanvasProps = {
-  images: LoadedImage[];
-  setImages: React.Dispatch<React.SetStateAction<LoadedImage[]>>;
-  selectedImage: string | null;
-  setSelectedImage: React.Dispatch<React.SetStateAction<string | null>>;
+  layers: Layer[];
+  setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
+  selectedLayer: string | null;
+  setSelectedLayer: React.Dispatch<React.SetStateAction<string | null>>;
   nameSelectedTool: string;
 };
 
 export const Canvas = ({
-  images,
-  setImages,
-  selectedImage,
-  setSelectedImage,
+  layers: layers,
+  setLayers: setLayers,
+  selectedLayer: selectedLayer,
+  setSelectedLayer: setSelectedLayer,
   nameSelectedTool,
 }: CanvasProps) => {
   const transformerRef = useRef<any>(null);
@@ -28,26 +29,26 @@ export const Canvas = ({
   // Update transformer (blue bounding box around the image) when selection changes
   useEffect(() => {
     if (transformerRef.current) {
-      if (selectedImage) {
-        const node = imageRefs.current.get(selectedImage);
+      if (selectedLayer) {
+        const node = imageRefs.current.get(selectedLayer);
         transformerRef.current.nodes([node]);
       } else {
         transformerRef.current.nodes([]);
       }
       transformerRef.current.getLayer()?.batchDraw();
     }
-  }, [selectedImage]);
+  }, [selectedLayer]);
 
   // Click handler for stage
   const handleStageClick = (e: any) => {
     if (e.target === e.target.getStage()) {
-      setSelectedImage(null);
+      setSelectedLayer(null);
       return;
     }
 
     if (e.target.hasName("image")) {
       const clickedId = e.target.id();
-      setSelectedImage(clickedId);
+      setSelectedLayer(clickedId);
       return;
     }
   };
@@ -57,14 +58,16 @@ export const Canvas = ({
     const node = e.target;
     const id = node.id();
 
-    setImages((prevImages) => {
+    setLayers((prevImages) => {
       const newImages = [...prevImages];
       const index = newImages.findIndex((img) => img.id === id);
       if (index !== -1) {
         newImages[index] = {
           ...newImages[index],
-          x: node.x(),
-          y: node.y(),
+          position: {
+            x: node.x(),
+            y: node.y(),
+          },
         };
       }
       return newImages;
@@ -82,7 +85,7 @@ export const Canvas = ({
     node.scaleX(1);
     node.scaleY(1);
 
-    setImages((prevImages) => {
+    setLayers((prevImages) => {
       const newImages = [...prevImages];
       const index = newImages.findIndex((img) => img.id === id);
 
@@ -92,9 +95,12 @@ export const Canvas = ({
 
         newImages[index] = {
           ...newImages[index],
-          x: node.x(),
-          y: node.y(),
+          position: {
+            x: node.x(),
+            y: node.y(),
+          },
           rotation: node.rotation(),
+          // FIXME
           width: Math.max(5, originalWidth * scaleX),
           height: Math.max(5, originalHeight * scaleY),
         };
@@ -112,22 +118,22 @@ export const Canvas = ({
         height={window.innerHeight}
         onClick={handleStageClick}
       >
-        <Layer>
-          {images.map((img) => (
+        <KonvaLayer>
+          {layers.map((layer) => (
             <Image
-              key={img.id}
-              id={img.id}
+              key={layer.id}
+              id={layer.id}
               name={"image"}
-              x={img.x}
-              y={img.y}
-              image={img.image}
-              width={img.width}
-              height={img.height}
-              rotation={img.rotation}
+              x={layer.position.x}
+              y={layer.position.y}
+              image={layer.image}
+              width={layer.image.width}
+              height={layer.image.height}
+              rotation={layer.rotation}
               draggable
               ref={(node) => {
                 if (node) {
-                  imageRefs.current.set(img.id, node);
+                  imageRefs.current.set(layer.id, node);
                 }
               }}
               onDragEnd={handleDragEnd}
@@ -144,7 +150,7 @@ export const Canvas = ({
               return newBox;
             }}
           />
-        </Layer>
+        </KonvaLayer>
       </Stage>
     </div>
   );
