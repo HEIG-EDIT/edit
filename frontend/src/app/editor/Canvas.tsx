@@ -24,7 +24,7 @@ const utils = require("./utils.ts");
 
 // Left
 const TOOL_APPLY_BUTTON = 0;
-// Right
+// Scrollwheel click
 const CANVAS_DRAG_BUTTON = 1;
 
 type Event<T> = React.ChangeEvent<T>;
@@ -64,7 +64,6 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const isDrawing = useRef(false);
 
-  const [isMoveMode, setIsMoveMode] = useState(false);
   const isMovingCanvas = useRef(false);
   const isMovingLayer = useRef(false);
 
@@ -106,7 +105,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     }
 
     const newImageData = new ImageData(newPixels, width, height);
-    changeLayer(i, () => {
+    updateLayer(i, () => {
       return {
         ...layer,
         imageData: newImageData,
@@ -115,7 +114,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     });
   };
 
-  const changeLayer = (
+  const updateLayer = (
     i: number,
     callback: (layerState: LayerState) => LayerState,
   ) => {
@@ -125,39 +124,10 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     setLayers((prev) => [...prev.slice(0, i), newLayer, ...prev.slice(i + 1)]);
   };
 
-  const handleCanvasDragEnd = (e: KonvaMouseEvent) => {
-    if (e.evt.button !== CANVAS_DRAG_BUTTON) {
-      return;
-    }
-
-    setCanvasState((prev) => {
-      return {
-        ...prev,
-        position: {
-          x: e.target.x(),
-          y: e.target.y(),
-        },
-      };
-    });
-    isMovingCanvas.current = false;
-  };
-
-  const handleLayerDragEnd = (e: KonvaMouseEvent) => {
-    const id = e.target.id();
-    const [i, _] = findLayer(id);
-
-    changeLayer(i, (layer) => {
-      let newLayer: LayerState = {
-        ...layer,
-        x: e.target.x(),
-        y: e.target.y(),
-      };
-      return newLayer;
-    });
-  };
-
   const draw = () => {
-    // editLayer(0)
+    if (layers.length) {
+      editLayer(layers[0].id);
+    }
   };
 
   const addLayer = (layer: LayerState) => {
@@ -244,10 +214,6 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     reader.readAsText(file);
   };
 
-  const handleMoveMode = () => {
-    setIsMoveMode((prev) => !prev);
-  };
-
   const handleDrawMode = () => {
     setIsDrawingMode((prev) => !prev);
   };
@@ -267,26 +233,16 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
     };
   };
 
-  const handleCanvasDragStart = (e: KonvaMouseEvent) => {
-    if (!isMoveMode) {
-      return;
-    }
-
-    isMovingCanvas.current = true;
-  };
-
   const handleCanvasMouseDown = (e: KonvaMouseEvent) => {
-    if (isMoveMode) {
-      isMovingCanvas.current = true;
-      setDragStart({
-        x: e.evt.clientX - canvasState.position.x,
-        y: e.evt.clientY - canvasState.position.y,
-      });
-    }
+    isMovingCanvas.current = true;
+    setDragStart({
+      x: e.evt.clientX - canvasState.position.x,
+      y: e.evt.clientY - canvasState.position.y,
+    });
   };
 
   const handleCanvasMouseMove = (e: KonvaMouseEvent) => {
-    if (!isMoveMode || !isMovingCanvas.current) {
+    if (!isMovingCanvas.current) {
       return;
     }
     // Handle case when we leave window with button pressed
@@ -315,57 +271,48 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       return;
     }
 
-    if (isMoveMode) {
-      isMovingLayer.current = true;
-    } else if (isDrawingMode) {
-      console.log("is Drawing");
-      const pos = getCanvasPointerPosition();
-      console.log("Drawing position: ", pos);
-      isDrawing.current = true;
-
-      setVirtualLayers((prev: Array<LayerState>) => {
-        return prev.map((layer: LayerState) => {
-          return {
-            ...layer,
-            lines: layer.lines.concat([
-              {
-                // Subtract layer position to account for offset
-                // TODO: Maybe account for layer scale as well
-                points: [pos.x - layer.x, pos.y - layer.y],
-                color: "#FF00FFFF",
-                width: 3,
-                tool: null,
-              },
-            ]),
-          };
-        });
-      });
+    if (!isDrawingMode) {
+      return;
     }
-  };
 
-  const handleMiddleMouseMove = (e: KonvaMouseEvent) => {
-    const point = getCanvasPointerPosition();
-    setCanvasState((prev) => {
-      return {
-        ...prev,
-        position: point,
-      };
+    const pos = getCanvasPointerPosition();
+    isDrawing.current = true;
+
+    // TODO: Handle layer selection
+    // TODO: Restrict drawing to inside the Layer only
+    setVirtualLayers((prev: Array<LayerState>) => {
+      return prev.map((layer: LayerState) => {
+        return {
+          ...layer,
+          lines: layer.lines.concat([
+            {
+              // Subtract layer position to account for offset
+              // TODO: Maybe account for layer scale as well
+              points: [pos.x - layer.x, pos.y - layer.y],
+              color: "#FF00FFFF",
+              width: 3,
+              tool: null,
+            },
+          ]),
+        };
+      });
     });
   };
 
   const handleMouseMove = (e: KonvaMouseEvent) => {
     if (isMovingCanvas.current) {
       console.log("Is movin");
-      return handleMiddleMouseMove(e);
+      return handleCanvasMouseMove(e);
     }
 
-    // no drawing - skipping
     if (!isDrawing.current) {
       return;
     }
 
     const point = getCanvasPointerPosition();
 
+    // TODO: Handle Layer selection
+    // TODO: Restrict drawing to inside the layer
     setVirtualLayers((prev: Array<LayerState>) => {
       return prev.map((layer: LayerState) => {
         let lines = layer.lines.slice();
@@ -403,7 +350,7 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
   const handleVisibilityToggle = (layerId: string) => {
     return () => {
       const [i, layerState] = findLayer(layerId);
-      changeLayer(i, (_) => {
+      updateLayer(i, (_) => {
         return {
           ...layerState,
           visible: !layerState.visible,
@@ -476,9 +423,6 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
       <label>
         Draw: <input onChange={handleDrawMode} type="checkbox" />
       </label>
-      <label>
-        Move: <input onChange={handleMoveMode} type="checkbox" />
-      </label>
       <div className="bg-red-200">
         {layers.map(({ name, visible, id }: Partial<LayerState>) => {
           return (
@@ -499,24 +443,19 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
           ref={stageRef}
           draggable={false}
           onWheel={handleScroll}
-          // onMouseDown={handleStageMouseDown}
-          // onMouseUp={handleStageMouseUp}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
         >
           {/* Using a layer as the canvas */}
           <KonvaLayerComponent
             ref={canvasRef}
+            // Don't smooth pixels when zooming, we want to see the precise
+            // pixel outline, not a blurry one
+            imageSmoothingEnabled={false}
             className="border-1"
             width={width}
             height={height}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onMouseMove={handleCanvasMouseMove}
-            // onDragEnd={handleCanvasDragEnd}
-            // draggable={isMovingCanvas.current}
-            // onMouseUp={handleCanvasMouseUp}
-            // onMouseMove={handleMouseMove}
-            // FIXME: Moving the canvas around is inverted
-            // draggable={isMovingCanvas.current}
             scale={{ x: canvasState.scale, y: canvasState.scale }}
             x={canvasState.position.x}
             y={canvasState.position.y}
@@ -535,9 +474,6 @@ export const Canvas = ({ initialWidth, initialHeight }: CanvasProps) => {
                   key={id}
                   id={id}
                   image={image}
-                  // onMouseDown={handleMouseDown}
-                  // onDragEnd={handleLayerDragEnd}
-                  // draggable={isMovingLayer.current}
                   lines={lines}
                   x={x}
                   y={y}
