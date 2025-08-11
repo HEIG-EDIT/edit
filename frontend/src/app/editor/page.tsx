@@ -22,7 +22,7 @@ import { PAINT_TOOL } from "@/components/editor/tools/paint";
 import { ERASE_TOOL } from "@/components/editor/tools/erase";
 import { PAINT_BUCKET_TOOL } from "@/components/editor/tools/paint-bucket";
 import { ADJUST_TOOL } from "@/components/editor/tools/adjust";
-import { LayersManagment } from "@/components/editor/layers/layersManagment";
+import { LayersManagement } from "@/components/editor/layers/layersManagement";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { Tool } from "@/models/editor/tools/tool";
 
@@ -60,7 +60,6 @@ for (let tool of Object.values(TOOLS)) {
 
 export default function EditorPage() {
   const [layers, setLayers] = useState<Layer[]>([]);
-  const [selectedLayer, setSelectedLayer] = useState<LayerId | null>(null);
 
   const [nameSelectedTool, setNameSelectedTool] = useState<string>(
     MOVE_TOOL.name,
@@ -108,7 +107,7 @@ export default function EditorPage() {
       <div className="grid grid-cols-5">
         <div className="col-span-1 flex flex-col gap-4 px-4">
           <LoadImageButton setLayers={setLayers} />
-          {/* TODO : mettre dans nouveau composant ToolsManagment mais state ko ensuite... */}
+          {/* TODO : mettre dans nouveau composant ToolsManagement mais state ko ensuite... */}
           <div className="bg-gray-800 rounded-2xl">
             <div className="bg-violet-300 rounded-2xl p-2 flex flex-row gap-4 mb-2">
               <ConstructionRoundedIcon />
@@ -135,15 +134,13 @@ export default function EditorPage() {
               </div>
             </div>
           </div>
-          <LayersManagment layers={layers} updateLayer={updateLayer} />
+          <LayersManagement layers={layers} updateLayer={updateLayer} />
         </div>
         <div className="col-span-4">
           <Canvas
             layers={layers}
             setLayers={setLayers}
             updateLayer={updateLayer}
-            selectedLayer={selectedLayer}
-            setSelectedLayer={setSelectedLayer}
             nameSelectedTool={nameSelectedTool}
             // TODO: Add a way to choose the size
             width={1000}

@@ -15,7 +15,7 @@ type LayersManagementProps = {
 // FIXME: Maybe pass only required information
 // I don't know if this impacts performance, I think the component is re-rendered
 // whenever an attribute of Layer is updated, even if it's not used in here.
-export const LayersManagment = ({
+export const LayersManagement = ({
   layers,
   updateLayer,
 }: LayersManagementProps) => {

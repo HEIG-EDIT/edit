@@ -20,8 +20,6 @@ type CanvasProps = {
   layers: Layer[];
   setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
   updateLayer: (id: LayerId, callback: (layer: Layer) => Layer) => null;
-  selectedLayer: string | null;
-  setSelectedLayer: React.Dispatch<React.SetStateAction<string | null>>;
   nameSelectedTool: string;
   height: number;
   width: number;
