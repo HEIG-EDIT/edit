@@ -1,40 +1,31 @@
 import { TOOLS } from "@/app/editor/page";
+import { ActionButton } from "./actionButton";
 import { Dispatch, SetStateAction } from "react";
-import Image from "next/image";
 
-type ToolSelectorProps = {
+export interface ToolSelectorProps {
   nameSelectedTool: string;
   setNameSelectedTool: Dispatch<SetStateAction<string>>;
-};
+}
 
 export const ToolSelector = ({
   nameSelectedTool,
   setNameSelectedTool,
 }: ToolSelectorProps) => {
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-4">
       {Object.keys(TOOLS).map((key) => {
         const isSelected = TOOLS[key].name === nameSelectedTool;
         const style = isSelected
           ? "bg-violet-500 border-violet-50"
           : "bg-gray-900 border-violet-500";
-
         return (
-          <button
-            className={`rounded-xl border-2 p-2 ${style}`}
-            key={key}
-            onClick={() => setNameSelectedTool(TOOLS[key].name)}
-          >
-            {/* TODO : utiliser icon et pas Image */}
-            <Image
-              src={TOOLS[key].iconPath}
-              alt={`Icon of tool ${TOOLS[key].name}`}
-              width={0}
-              height={0}
-              sizes="100vw"
-              className="w-full h-auto"
+          <div key={TOOLS[key].name}>
+            <ActionButton
+              icon={TOOLS[key].icon}
+              onClick={() => setNameSelectedTool(TOOLS[key].name)}
+              style={style}
             />
-          </button>
+          </div>
         );
       })}
     </div>
