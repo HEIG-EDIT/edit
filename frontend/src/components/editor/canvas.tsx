@@ -108,8 +108,8 @@ export const Canvas = ({
     <div>
       <Stage
         className="bg-violet-200"
-        width={window.innerWidth}
-        height={window.innerHeight}
+        // TODO : voir avec code d'Alessio si taille respectée et plus modifier la taille du canvas
+        height={400}
         onClick={handleStageClick}
       >
         <Layer>
