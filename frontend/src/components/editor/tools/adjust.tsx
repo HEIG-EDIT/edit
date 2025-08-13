@@ -18,6 +18,7 @@ export interface ColorAndToneConfiguration extends SubToolConfiguration {
   brightness: number;
   contrast: number;
   hue: number;
+  opacity: number;
 }
 
 export interface InvertConfiguration extends SubToolConfiguration {}
@@ -90,7 +91,13 @@ export const ColorAndToneConfigurationSubcomponent = ({
 
 export const ColorAndTone: SubTool<ColorAndToneConfiguration> = {
   name: "Color & tone",
-  initialConfiguration: { saturation: 1, brightness: 2, contrast: 3, hue: 4 },
+  initialConfiguration: {
+    saturation: 1,
+    brightness: 2,
+    contrast: 3,
+    hue: 4,
+    opacity: 5,
+  },
   configurationComponent: ColorAndToneConfigurationSubcomponent,
 };
 
