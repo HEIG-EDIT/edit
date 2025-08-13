@@ -22,7 +22,7 @@ export const SelectCursorToolConfigurationComponent = ({
 
         return (
           <button
-            className={`rounded-2xl border-2 p-2 ${style} text-violet-50 text-lg`}
+            className={`rounded-2xl border-2 p-2 ${style} text-violet-50`}
             key={type}
             value={type}
             onClick={(e) => {

@@ -21,18 +21,16 @@ export const ToolsManagement = ({
 
   return (
     <div className="bg-gray-800 rounded-2xl">
-      <div className="bg-violet-300 rounded-2xl p-2 flex flex-row gap-4 mb-2">
+      <div className="bg-violet-300 rounded-2xl p-2 flex flex-row gap-2 mb-2">
         <ConstructionRoundedIcon />
-        <p className="text-grey-800 font-semibold text-xl">
-          Tool configuration
-        </p>
+        <p className="text-grey-800 font-semibold">Tool configuration</p>
       </div>
       <div className="p-4">
         <div className="bg-gray-600 rounded-2xl">
-          <p className="text-violet-50 font-bold flex justify-center text-xl py-2">
+          <p className="text-violet-50 font-bold flex justify-center pt-2">
             {nameSelectedTool}
           </p>
-          <div className="p-4">
+          <div className="p-2">
             <ToolConfigurationComponent
               configuration={toolsConfiguration[nameSelectedTool]}
               setConfiguration={(config: ToolConfiguration) =>

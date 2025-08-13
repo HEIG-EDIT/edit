@@ -17,7 +17,7 @@ export const PaintToolConfigurationComponent = ({
 }: ToolConfigurationProps<PaintToolConfiguration>) => {
   return (
     <div>
-      <p className="text-violet-50 text-lg">
+      <p className="text-violet-50">
         Radius :<br></br>
       </p>
       <input
@@ -32,8 +32,8 @@ export const PaintToolConfigurationComponent = ({
           });
         }}
       />
-      <span className="text-violet-50 text-lg"> {configuration.radius}</span>
-      <p className="text-violet-50 text-lg">
+      <span className="text-violet-50"> {configuration.radius}</span>
+      <p className="text-violet-50">
         Color :<br></br>
       </p>
       <ChromePicker

@@ -11,7 +11,7 @@ export const MoveToolConfigurationComponent = ({
 }: ToolConfigurationProps<MoveToolConfiguration>) => {
   return (
     <div>
-      <p className="text-violet-50 text-lg">
+      <p className="text-violet-50">
         {" "}
         No configuration available for this tool!
       </p>

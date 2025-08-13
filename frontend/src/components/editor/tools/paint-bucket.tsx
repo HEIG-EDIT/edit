@@ -14,7 +14,7 @@ export const PaintBucketToolConfigurationComponent = ({
 }: ToolConfigurationProps<PaintBucketToolConfiguration>) => {
   return (
     <div>
-      <p className="text-violet-50 text-lg">
+      <p className="text-violet-50">
         Color :<br></br>
       </p>
       <SliderPicker
