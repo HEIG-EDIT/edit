@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import React, { useState, useEffect } from "react";
 import { LoadImageButton } from "@/components/editor/loadImageButton";
-import ConstructionRoundedIcon from "@mui/icons-material/ConstructionRounded";
 
 import { MOVE_TOOL } from "@/components/editor/tools/move";
 import { CROP_TOOL } from "@/components/editor/tools/crop";
@@ -12,9 +11,13 @@ import { PAINT_TOOL } from "@/components/editor/tools/paint";
 import { ERASE_TOOL } from "@/components/editor/tools/erase";
 import { PAINT_BUCKET_TOOL } from "@/components/editor/tools/paint-bucket";
 import { ADJUST_TOOL } from "@/components/editor/tools/adjust";
+
+import { ToolsManagement } from "@/components/editor/tools/toolsManagement";
 import { LayersManagment } from "@/components/editor/layers/layersManagment";
-import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
+
 import { Tool } from "@/models/editor/tools/tool";
+import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
+
 import { Menu } from "@/components/editor/menu/menu";
 import { Toolbar } from "@/components/editor/toolbar/toolbar";
 
@@ -61,45 +64,28 @@ export default function EditorPage() {
   // TODO : a supprimer des que gestion du state global ok
   useEffect(() => console.log(toolsConfiguration), [toolsConfiguration]);
 
-  const ToolConfigurationComponent =
-    TOOLS[nameSelectedTool].configurationComponent;
-
   return (
     <main className="bg-gray-900 min-h-screen">
-      <div className="grid grid-cols-5">
-        <div className="col-span-1 flex flex-col gap-4 px-4">
-          <LoadImageButton setImages={setImages} />
-          {/* TODO : mettre dans nouveau composant ToolsManagment mais state ko ensuite... */}
-          <div className="bg-gray-800 rounded-2xl">
-            <div className="bg-violet-300 rounded-2xl p-2 flex flex-row gap-4 mb-2">
-              <ConstructionRoundedIcon />
-              <p className="text-grey-800 font-semibold text-xl">
-                Tool configuration
-              </p>
+      <div className="flex flex-row">
+        <div className="flex-1">
+          <div className="flex flex-col p-4">
+            <div className="mb-6 flex items-center justify-center">
+              <LoadImageButton setImages={setImages} />
             </div>
-            <div className="p-4">
-              <div className="bg-gray-600 rounded-2xl">
-                <p className="text-violet-50 font-bold flex justify-center text-xl py-2">
-                  {nameSelectedTool}
-                </p>
-                <div className="p-4">
-                  <ToolConfigurationComponent
-                    configuration={toolsConfiguration[nameSelectedTool]}
-                    setConfiguration={(config: ToolConfiguration) =>
-                      setToolsConfiguration((prev) => ({
-                        ...prev,
-                        [nameSelectedTool]: config,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
+            <div className="mb-6">
+              <ToolsManagement
+                nameSelectedTool={nameSelectedTool}
+                toolsConfiguration={toolsConfiguration}
+                setToolsConfiguration={setToolsConfiguration}
+              />
+            </div>
+            <div>
+              <LayersManagment />
             </div>
           </div>
-          <LayersManagment />
         </div>
-        <div className="col-span-4">
-          <div className="mb-6">
+        <div className="flex-3">
+          <div className="mb-6 mr-4">
             <Canvas
               images={images}
               setImages={setImages}
@@ -108,7 +94,7 @@ export default function EditorPage() {
               nameSelectedTool={nameSelectedTool}
             />
           </div>
-          <div className="mb-6 flex justify-center items-center">
+          <div className="flex items-center justify-center">
             <Toolbar
               nameSelectedTool={nameSelectedTool}
               setNameSelectedTool={setNameSelectedTool}
@@ -116,8 +102,8 @@ export default function EditorPage() {
             />
           </div>
         </div>
-        {menuDisplay && <Menu setMenuDisplay={setMenuDisplay} />}
       </div>
+      {menuDisplay && <Menu setMenuDisplay={setMenuDisplay} />}
     </main>
   );
 }
