@@ -6,14 +6,14 @@ export const UndoRedoSelector = () => {
   return (
     <div className="flex gap-4">
       <ActionButton
-        icon={<UndoRoundedIcon style={{ color: "black" }} />}
+        icon={<UndoRoundedIcon style={{ color: "white" }} />}
         onClick={() => {}} // TODO : remplacer fonction pour gerer logique undo
-        style="bg-violet-300 border-gray-800"
+        style="bg-gray-900 border-violet-500"
       />
       <ActionButton
-        icon={<RedoRoundedIcon style={{ color: "black" }} />}
+        icon={<RedoRoundedIcon style={{ color: "white" }} />}
         onClick={() => {}} // TODO : remplacer fonction pour gerer logique redo
-        style="bg-violet-300 border-gray-800"
+        style="bg-gray-900 border-violet-500"
       />
     </div>
   );

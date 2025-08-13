@@ -8,9 +8,9 @@ import { ConfigurationButton } from "@/components/editor/layers/configurationBut
 export const LayersManagment = () => {
   return (
     <div className="bg-gray-800 rounded-2xl">
-      <div className="bg-violet-300 rounded-2xl p-2 flex flex-row gap-4 mb-2">
+      <div className="bg-violet-300 rounded-2xl p-2 flex flex-row gap-2 mb-2">
         <LayersRoundedIcon />
-        <p className="text-grey-800 font-semibold text-xl">Layers</p>
+        <p className="text-grey-800 font-semibold">Layers</p>
       </div>
       <div className="p-4">
         <div className="bg-gray-600 rounded-2xl">

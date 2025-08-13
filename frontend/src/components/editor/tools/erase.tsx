@@ -12,7 +12,7 @@ export const EraseToolConfigurationComponent = ({
 }: ToolConfigurationProps<EraseToolConfiguration>) => {
   return (
     <div>
-      <p className="text-violet-50 text-lg">
+      <p className="text-violet-50">
         Radius :<br></br>
       </p>
       <input
@@ -27,7 +27,7 @@ export const EraseToolConfigurationComponent = ({
           });
         }}
       />
-      <span className="text-violet-50 text-lg"> {configuration.radius}</span>
+      <span className="text-violet-50"> {configuration.radius}</span>
     </div>
   );
 };

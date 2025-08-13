@@ -55,7 +55,7 @@ export const GaussianBlurConfigurationSubcomponent = ({
 }: SubToolConfigurationProps<GaussianBlurConfiguration>) => {
   return (
     <div>
-      <p className="text-violet-50 text-lg">
+      <p className="text-violet-50">
         Blur amount :<br></br>
       </p>
       <input
@@ -70,10 +70,7 @@ export const GaussianBlurConfigurationSubcomponent = ({
           });
         }}
       />
-      <span className="text-violet-50 text-lg">
-        {" "}
-        {configuration.blurAmount}
-      </span>
+      <span className="text-violet-50"> {configuration.blurAmount}</span>
     </div>
   );
 };
@@ -228,11 +225,11 @@ export const AdjustToolConfigurationComponent = ({
 
   return (
     <div>
-      <span className="text-violet-50 text-lg">
+      <span className="text-violet-50">
         Filters : <br />
       </span>
       <select
-        className="bg-violet-500 text-violet-50 text-lg rounded p-2"
+        className="bg-violet-500 text-violet-50 rounded p-2"
         value={configuration.filterType}
         onChange={(e) => {
           setConfiguration({ ...configuration, filterType: e.target.value });

@@ -10,10 +10,7 @@ export const CropToolConfigurationComponent = ({
   setConfiguration,
 }: ToolConfigurationProps<CropToolConfiguration>) => {
   return (
-    <p className="text-violet-50 text-lg">
-      {" "}
-      No configuration available for this tool!
-    </p>
+    <p className="text-violet-50"> No configuration available for this tool!</p>
   );
 };
 
