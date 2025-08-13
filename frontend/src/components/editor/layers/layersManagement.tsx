@@ -5,7 +5,20 @@ import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
 import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import { ConfigurationButton } from "@/components/editor/layers/configurationButton";
 
-export const LayersManagment = () => {
+import { Layer, LayerId, LayerUpdateCallback } from "@/components/editor/types";
+
+type LayersManagementProps = {
+  layers: Layer[];
+  updateLayer: (id: LayerId, callback: LayerUpdateCallback) => void;
+};
+
+// FIXME: Maybe pass only required information
+// I don't know if this impacts performance, I think the component is re-rendered
+// whenever an attribute of Layer is updated, even if it's not used in here.
+export const LayersManagement = ({
+  layers,
+  updateLayer,
+}: LayersManagementProps) => {
   return (
     <div className="bg-gray-800 rounded-2xl">
       <div className="bg-violet-300 rounded-2xl p-2 flex flex-row gap-2 mb-2">
@@ -20,8 +33,17 @@ export const LayersManagment = () => {
             <ConfigurationButton icon={DeleteForeverRoundedIcon} />
           </div>
           <div className="flex flex-col gap-2 p-2">
-            <LayerConfiguration name="layer1" />
-            <LayerConfiguration name="layer2" />
+            {layers.map((layer: Layer) => (
+              <LayerConfiguration
+                name={layer.name}
+                key={layer.id}
+                updateLayer={(callback: LayerUpdateCallback) => {
+                  updateLayer(layer.id, callback);
+                }}
+                isSelected={layer.isSelected}
+                isVisible={layer.isVisible}
+              />
+            ))}
           </div>
         </div>
       </div>

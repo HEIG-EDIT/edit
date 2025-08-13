@@ -1,7 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  Dispatch,
+  SetStateAction,
+} from "react";
 import { LoadImageButton } from "@/components/editor/loadImageButton";
 
 import { MOVE_TOOL } from "@/components/editor/tools/move";
@@ -13,13 +19,16 @@ import { PAINT_BUCKET_TOOL } from "@/components/editor/tools/paint-bucket";
 import { ADJUST_TOOL } from "@/components/editor/tools/adjust";
 
 import { ToolsManagement } from "@/components/editor/tools/toolsManagement";
-import { LayersManagment } from "@/components/editor/layers/layersManagment";
+import { LayersManagement } from "@/components/editor/layers/layersManagement";
 
 import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 
 import { Menu } from "@/components/editor/menu/menu";
 import { Toolbar } from "@/components/editor/toolbar/toolbar";
+
+import { Layer, LayerId, LayerUpdateCallback } from "@/components/editor/types";
+import { useUndoRedo } from "@/components/editor/undoRedo";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
@@ -52,8 +61,17 @@ for (let tool of Object.values(TOOLS)) {
 }
 
 export default function EditorPage() {
-  const [images, setImages] = useState<LoadedImage[]>([]);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const {
+    state: layers,
+    setState: setLayers,
+    setVirtualState: setVirtualLayers,
+    commitVirtualState: commitVirtualLayers,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useUndoRedo(Array<Layer>());
+
   const [nameSelectedTool, setNameSelectedTool] = useState<string>(
     MOVE_TOOL.name,
   );
@@ -64,13 +82,41 @@ export default function EditorPage() {
   // TODO : a supprimer des que gestion du state global ok
   useEffect(() => console.log(toolsConfiguration), [toolsConfiguration]);
 
+  /// Find the layer's state and it's index in the list from it's id
+  const findLayer = useCallback(
+    (layerId: string): [number, Layer] => {
+      for (const [i, layer] of layers.entries()) {
+        if (layer.id === layerId) {
+          return [i, layer];
+        }
+      }
+
+      throw Error(`Could not find layer with id ${layerId}`);
+    },
+    [layers],
+  );
+
+  const updateLayer = useCallback(
+    (layerId: LayerId, callback: LayerUpdateCallback) => {
+      const [i, layer] = findLayer(layerId);
+      const newLayer = callback(layer);
+
+      setLayers((prev: Layer[]) => [
+        ...prev.slice(0, i),
+        newLayer,
+        ...prev.slice(i + 1),
+      ]);
+    },
+    [findLayer, setLayers],
+  );
+
   return (
     <main className="bg-gray-900 min-h-screen">
       <div className="flex flex-row">
         <div className="flex-1">
           <div className="flex flex-col p-4">
             <div className="mb-6 flex items-center justify-center">
-              <LoadImageButton setImages={setImages} />
+              <LoadImageButton setLayers={setLayers} />
             </div>
             <div className="mb-6">
               <ToolsManagement
@@ -80,22 +126,27 @@ export default function EditorPage() {
               />
             </div>
             <div>
-              <LayersManagment />
+              <LayersManagement layers={layers} updateLayer={updateLayer} />
             </div>
           </div>
         </div>
         <div className="flex-3">
           <div className="mb-6 mr-4">
             <Canvas
-              images={images}
-              setImages={setImages}
-              selectedImage={selectedImage}
-              setSelectedImage={setSelectedImage}
+              layers={layers}
+              setLayers={setLayers}
+              updateLayer={updateLayer}
               nameSelectedTool={nameSelectedTool}
+              height={1000}
+              width={1000}
             />
           </div>
           <div className="flex items-center justify-center">
             <Toolbar
+              undo={undo}
+              canUndo={canUndo}
+              redo={redo}
+              canRedo={canRedo}
               nameSelectedTool={nameSelectedTool}
               setNameSelectedTool={setNameSelectedTool}
               setMenuDisplay={setMenuDisplay}
