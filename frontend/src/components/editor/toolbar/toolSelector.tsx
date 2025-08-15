@@ -1,5 +1,5 @@
 import { TOOLS } from "@/models/editor/utils/tools";
-import { ActionButton } from "./actionButton";
+import { ActionButton } from "@/components/actionButton";
 import { Dispatch, SetStateAction } from "react";
 
 export interface ToolSelectorProps {

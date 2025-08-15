@@ -2,7 +2,7 @@ import { ToolSelector } from "@/components/editor/toolbar/toolSelector";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import { Dispatch, SetStateAction } from "react";
-import { ActionButton } from "./actionButton";
+import { ActionButton } from "@/components/actionButton";
 import { UndoRedoSelector } from "./undoRedoSelector";
 
 export interface ToolBarProps {
