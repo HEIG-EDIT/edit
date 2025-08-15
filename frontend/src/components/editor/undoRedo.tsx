@@ -25,7 +25,10 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
   /// Public function to update the state while keeping the history
   const setStatePublic = useCallback(
     (newState: T | ((prev: T) => T)) => {
-      const func = typeof newState === "function" ? newState : () => newState;
+      const func =
+        typeof newState === "function"
+          ? (newState as (prev: T) => T)
+          : () => newState;
       setState((prev) => {
         const { stateHistory, index } = prev;
         const newHistory = stateHistory.getCopy();
@@ -47,7 +50,10 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
   /// virtual state.
   const setVirtualState = useCallback(
     (newState: T) => {
-      const func = typeof newState === "function" ? newState : () => newState;
+      const func =
+        typeof newState === "function"
+          ? (newState as (prev: T) => T)
+          : () => newState;
       setState((prev) => {
         return {
           ...prev,

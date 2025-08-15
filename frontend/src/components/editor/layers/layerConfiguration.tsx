@@ -24,7 +24,7 @@ export const LayerConfiguration = ({
         <Checkbox
           checked={isSelected}
           style={{ color: "#8b5cf6" }}
-          onChange={(event: react.ChangeEvent) => {
+          onChange={(event: react.ChangeEvent<HTMLInputElement>) => {
             updateLayer((layer) => {
               return {
                 ...layer,
