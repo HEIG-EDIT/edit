@@ -29,7 +29,7 @@ export const LayersManagement = ({
             <ConfigurationButton icon={DeleteForeverRoundedIcon} />
           </div>
           <div className="flex flex-col gap-2 p-2">
-            {layers.map((layer: Layer) => (
+            {layers.toReversed().map((layer: Layer) => (
               <LayerConfiguration
                 name={layer.name}
                 key={layer.id}
