@@ -26,7 +26,7 @@ export const LayersManagement = ({
 
   const handleClickOutside = useCallback(() => {
     setIsNewLayerDisplayed(false);
-  }, []);
+  }, [setIsNewLayerDisplayed]);
 
   useOnClickOutside(containerRef, handleClickOutside);
 
