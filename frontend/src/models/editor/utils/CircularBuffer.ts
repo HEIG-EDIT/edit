@@ -32,7 +32,7 @@ export class CircularBuffer<T> {
   };
 
   public getCopy = () => {
-    let result = new CircularBuffer<T>(this.elements.length);
+    const result = new CircularBuffer<T>(this.elements.length);
     result._length = this._length;
 
     for (let i = 0; i < this.elements.length; ++i) {

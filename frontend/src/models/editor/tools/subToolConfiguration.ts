@@ -1,3 +1,3 @@
 import { ToolConfiguration } from "./toolConfiguration";
 
-export interface SubToolConfiguration extends ToolConfiguration {}
+export type SubToolConfiguration = ToolConfiguration;

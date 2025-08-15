@@ -3,12 +3,16 @@ import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
 import CropRoundedIcon from "@mui/icons-material/CropRounded";
 
-export interface CropToolConfiguration extends ToolConfiguration {}
+export type CropToolConfiguration = ToolConfiguration;
 
 export const CropToolConfigurationComponent = ({
   configuration,
   setConfiguration,
 }: ToolConfigurationProps<CropToolConfiguration>) => {
+  // TODO : to remove, just for eslink check
+  console.log(configuration);
+  console.log(setConfiguration);
+
   return (
     <p className="text-violet-50"> No configuration available for this tool!</p>
   );

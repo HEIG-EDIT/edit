@@ -27,7 +27,7 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
     (newState: T | ((prev: T) => T)) => {
       const func = typeof newState === "function" ? newState : () => newState;
       setState((prev) => {
-        let { stateHistory, index } = prev;
+        const { stateHistory, index } = prev;
         const newHistory = stateHistory.getCopy();
         const newState = func(stateHistory.get(index));
 

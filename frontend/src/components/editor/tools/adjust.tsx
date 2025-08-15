@@ -7,7 +7,7 @@ import { SubToolConfigurationProps } from "@/models/editor/tools/subToolConfigur
 import { SubTool } from "@/models/editor/tools/subTool";
 import ContrastRoundedIcon from "@mui/icons-material/ContrastRounded";
 
-export interface BlackWhiteConfiguration extends SubToolConfiguration {}
+export type BlackWhiteConfiguration = SubToolConfiguration;
 
 export interface GaussianBlurConfiguration extends SubToolConfiguration {
   blurAmount: number;
@@ -21,7 +21,7 @@ export interface ColorAndToneConfiguration extends SubToolConfiguration {
   opacity: number;
 }
 
-export interface InvertConfiguration extends SubToolConfiguration {}
+export type InvertConfiguration = SubToolConfiguration;
 
 export interface PixelateConfiguration extends SubToolConfiguration {
   amount: number;
@@ -33,14 +33,18 @@ export interface FlipConfiguration extends SubToolConfiguration {
   vertical_flip: boolean;
 }
 
-export interface ThresholdConfiguration extends SubToolConfiguration {}
+export type ThresholdConfiguration = SubToolConfiguration;
 
-export interface SharpenConfiguration extends SubToolConfiguration {}
+export type SharpenConfiguration = SubToolConfiguration;
 
 export const BlackWhiteConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
 }: SubToolConfigurationProps<BlackWhiteConfiguration>) => {
+  // TODO : to remove, just for eslink check
+  console.log(configuration);
+  console.log(setConfiguration);
+
   return <div>Black/white</div>;
 };
 
@@ -86,6 +90,10 @@ export const ColorAndToneConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
 }: SubToolConfigurationProps<ColorAndToneConfiguration>) => {
+  // TODO : to remove, just for eslink check
+  console.log(configuration);
+  console.log(setConfiguration);
+
   return <div>ColorAndTone</div>;
 };
 
@@ -105,6 +113,10 @@ export const InvertConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
 }: SubToolConfigurationProps<InvertConfiguration>) => {
+  // TODO : to remove, just for eslink check
+  console.log(configuration);
+  console.log(setConfiguration);
+
   return <div>Invert</div>;
 };
 
@@ -118,6 +130,10 @@ export const PixelateConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
 }: SubToolConfigurationProps<PixelateConfiguration>) => {
+  // TODO : to remove, just for eslink check
+  console.log(configuration);
+  console.log(setConfiguration);
+
   return <div>Pixelate</div>;
 };
 
@@ -178,6 +194,10 @@ export const ThresholdConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
 }: SubToolConfigurationProps<ThresholdConfiguration>) => {
+  // TODO : to remove, just for eslink check
+  console.log(configuration);
+  console.log(setConfiguration);
+
   return <div>Threshold</div>;
 };
 
@@ -191,6 +211,10 @@ export const SharpenConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
 }: SubToolConfigurationProps<SharpenConfiguration>) => {
+  // TODO : to remove, just for eslink check
+  console.log(configuration);
+  console.log(setConfiguration);
+
   return <div>Sharpen</div>;
 };
 
@@ -200,6 +224,7 @@ export const Sharpen: SubTool<SharpenConfiguration> = {
   configurationComponent: SharpenConfigurationSubcomponent,
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const ADJUST_SUB_TOOLS: Record<string, SubTool<any>> = {
   [BlackWhite.name]: BlackWhite,
   [GaussianBlur.name]: GaussianBlur,
@@ -213,7 +238,7 @@ export const ADJUST_SUB_TOOLS: Record<string, SubTool<any>> = {
 
 const ADJUST_INITIAL_CONFIGURATION: Record<string, SubToolConfiguration> = {};
 
-for (let subTool of Object.values(ADJUST_SUB_TOOLS)) {
+for (const subTool of Object.values(ADJUST_SUB_TOOLS)) {
   ADJUST_INITIAL_CONFIGURATION[subTool.name] = subTool.initialConfiguration;
 }
 

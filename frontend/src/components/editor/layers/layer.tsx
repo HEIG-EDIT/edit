@@ -54,3 +54,5 @@ export const LayerComponent = forwardRef((props: LayerProps, ref) => {
     </KonvaGroup>
   );
 });
+
+LayerComponent.displayName = "LayerComponent";
