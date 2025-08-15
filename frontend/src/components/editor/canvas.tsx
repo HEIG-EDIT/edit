@@ -124,18 +124,18 @@ export const Canvas = ({
     const id = node.id();
 
     setLayers((prevLayers) => {
-      const newImages = [...prevLayers];
-      const index = newImages.findIndex((img) => img.id === id);
+      const newlayers = [...prevLayers];
+      const index = newlayers.findIndex((img) => img.id === id);
       if (index !== -1) {
-        newImages[index] = {
-          ...newImages[index],
+        newlayers[index] = {
+          ...newlayers[index],
           position: {
             x: node.x(),
             y: node.y(),
           },
         };
       }
-      return newImages;
+      return newlayers;
     });
   };
 
