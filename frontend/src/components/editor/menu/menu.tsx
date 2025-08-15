@@ -5,11 +5,12 @@ import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import { useRouter } from "next/navigation";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { Dispatch, SetStateAction, useRef, useState } from "react";
 import { MenuEntry } from "@/models/editor/menu/menuEntry";
 import { UserSettings } from "./userSettings";
 import { EditorSettings } from "./editorSettings";
 import { ProjectSettings } from "./projectSettings";
+import useOnClickOutside from "@/hooks/useOnClickOutside";
 
 export const Menu = ({
   setMenuDisplay,
@@ -17,6 +18,9 @@ export const Menu = ({
   setMenuDisplay: Dispatch<SetStateAction<boolean>>;
 }) => {
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useOnClickOutside(containerRef, () => setMenuDisplay(false));
 
   const MENU_ENTRIES: Record<string, MenuEntry> = {
     user: {
@@ -61,7 +65,10 @@ export const Menu = ({
     <div>
       <div className="fixed inset-0 bg-black opacity-80 z-50" />
       <div className="fixed inset-0 flex justify-center items-center z-100">
-        <div className="relative bg-gray-600 rounded-2xl border border-violet-300 p-2 w-2/3 h-2/3">
+        <div
+          className="relative bg-gray-600 rounded-2xl border border-violet-300 p-2 w-2/3 h-2/3"
+          ref={containerRef}
+        >
           <div className="flex flex-row gap-6 p-4 h-full">
             <div className="rounded-2xl bg-gray-900 w-1/3 p-6 flex flex-col justify-between">
               <div className="flex flex-col gap-4">

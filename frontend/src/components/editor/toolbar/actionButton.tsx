@@ -9,7 +9,7 @@ export interface ActionButtonProps {
 export const ActionButton = ({ icon, onClick, style }: ActionButtonProps) => {
   return (
     <button
-      className={`rounded-xl border-2 p-2 ${style}`}
+      className={`rounded-xl border-2 p-2 cursor-pointer ${style}`}
       onClick={() => onClick()}
     >
       {icon}

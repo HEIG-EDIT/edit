@@ -15,7 +15,7 @@ export const EntryButton = ({
 }: EntryButtonProps) => {
   return (
     <button
-      className={`${style} rounded-xl p-2 w-full flex items-center justify-start gap-2`}
+      className={`${style} rounded-2xl p-2 w-full flex items-center justify-start gap-2 cursor-pointer`}
       onClick={onClick}
     >
       {icon}
