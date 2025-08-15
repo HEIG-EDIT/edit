@@ -123,8 +123,8 @@ export const Canvas = ({
     const node = e.target;
     const id = node.id();
 
-    setLayers((prevImages) => {
-      const newImages = [...prevImages];
+    setLayers((prevLayers) => {
+      const newImages = [...prevLayers];
       const index = newImages.findIndex((img) => img.id === id);
       if (index !== -1) {
         newImages[index] = {
