@@ -8,7 +8,14 @@ import {
 
 import { LayerProps } from "@/models/editor/layers/layerProps";
 
-export const LayerComponent = forwardRef((props: LayerProps, ref) => {
+// TODO : replace "any" to another type due to :
+/* Type error: Type 'ForwardedRef<unknown>' is not assignable to type 'Ref<Group> | undefined'.
+#11 17.90   Type 'RefObject<unknown>' is not assignable to type 'Ref<Group> | undefined'.
+#11 17.90     Type 'RefObject<unknown>' is not assignable to type 'RefObject<Group | null>'.
+#11 17.90       Type 'unknown' is not assignable to type 'Group | null'.*/
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const LayerComponent = forwardRef((props: LayerProps, ref: any) => {
   const {
     id,
     position,
