@@ -1,4 +1,4 @@
-import { TOOLS } from "@/app/editor/page";
+import { TOOLS } from "@/models/editor/utils/tools";
 import { ActionButton } from "./actionButton";
 import { Dispatch, SetStateAction } from "react";
 

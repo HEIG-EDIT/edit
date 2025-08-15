@@ -1,4 +1,4 @@
-import { TOOLS } from "@/app/editor/page";
+import { TOOLS } from "@/models/editor/utils/tools";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import ConstructionRoundedIcon from "@mui/icons-material/ConstructionRounded";
 import { Dispatch, SetStateAction } from "react";
