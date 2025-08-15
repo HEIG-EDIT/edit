@@ -27,8 +27,8 @@ export const Menu = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const handleClickOutside = useCallback(() => {
-    () => setMenuDisplay(false);
-  }, []);
+    setMenuDisplay(false);
+  }, [setMenuDisplay]);
 
   useOnClickOutside(containerRef, handleClickOutside);
 
