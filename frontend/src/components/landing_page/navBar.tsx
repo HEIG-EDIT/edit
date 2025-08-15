@@ -1,4 +1,4 @@
-import { StartButton } from "./startButton";
+import { StartButton } from "@/components/landing_page/startButton";
 
 export const NavBar = () => {
   return (

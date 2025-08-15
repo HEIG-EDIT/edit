@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { OutsideCard } from "../outsideCard";
+import { OutsideCard } from "@/components/outsideCard";
 import { TextCard } from "./textCard";
 
 export const UiPreview = () => {
