@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { CircularBuffer } from "./utils/CircularBuffer";
+import { CircularBuffer } from "@/models/editor/utils/CircularBuffer";
 
 /// Hook to store state with undo / redo capabilities.
 /// It has the ability to group multiple smaller modifications into one.

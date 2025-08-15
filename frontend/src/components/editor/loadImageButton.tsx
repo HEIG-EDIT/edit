@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
-import { Layer } from "@/components/editor/types";
+import { Layer } from "@/models/editor/layers/layer";
 
 type Props = {
   setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;

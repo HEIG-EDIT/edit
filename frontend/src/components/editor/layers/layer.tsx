@@ -5,21 +5,8 @@ import {
   Group as KonvaGroup,
   Line as KonvaLine,
 } from "react-konva";
-import { Line, Layer, LayerId } from "../types";
-import { Vector2d } from "konva/lib/types";
 
-interface LayerProps {
-  id: LayerId;
-  position: Vector2d;
-  rotation: number;
-  scale: Vector2d;
-  image: HTMLImageElement;
-  isVisible: boolean;
-  lines: Line[];
-
-  onDragEnd: any;
-  onTransformEnd: any;
-}
+import { LayerProps } from "@/models/editor/layers/layerProps";
 
 export const LayerComponent = forwardRef((props: LayerProps, ref) => {
   const {

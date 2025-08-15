@@ -12,7 +12,11 @@ import {
 } from "react-konva";
 import Konva from "konva";
 import KonvaEventObject from "konva";
-import { Layer, LayerId, LayerUpdateCallback } from "./types";
+import {
+  Layer,
+  LayerId,
+  LayerUpdateCallback,
+} from "@/models/editor/layers/layer";
 import { LayerComponent } from "./layers/layer";
 import { Vector2d } from "konva/lib/types";
 

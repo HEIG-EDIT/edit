@@ -4,14 +4,7 @@ import ViewCompactRoundedIcon from "@mui/icons-material/ViewCompactRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
 
-import { LayerUpdateCallback } from "@/components/editor/types";
-
-type LayerConfigurationProps = {
-  name: string;
-  isSelected: boolean;
-  isVisible: boolean;
-  updateLayer: (callback: LayerUpdateCallback) => void;
-};
+import { LayerConfigurationProps } from "@/models/editor/layers/layerConfigurationProps";
 
 // TODO : ajouter logique (modifier icone quand bouton clique et ajouter fonctions logiques)
 export const LayerConfiguration = ({

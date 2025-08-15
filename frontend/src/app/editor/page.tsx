@@ -27,7 +27,11 @@ import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { Menu } from "@/components/editor/menu/menu";
 import { Toolbar } from "@/components/editor/toolbar/toolbar";
 
-import { Layer, LayerId, LayerUpdateCallback } from "@/components/editor/types";
+import {
+  Layer,
+  LayerId,
+  LayerUpdateCallback,
+} from "@/models/editor/layers/layer";
 import { useUndoRedo } from "@/components/editor/undoRedo";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {

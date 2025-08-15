@@ -5,12 +5,8 @@ import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
 import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import { ConfigurationButton } from "@/components/editor/layers/configurationButton";
 
-import { Layer, LayerId, LayerUpdateCallback } from "@/components/editor/types";
-
-type LayersManagementProps = {
-  layers: Layer[];
-  updateLayer: (id: LayerId, callback: LayerUpdateCallback) => void;
-};
+import { LayersManagementProps } from "@/models/editor/layers/layerManagementProps";
+import { Layer, LayerUpdateCallback } from "@/models/editor/layers/layer";
 
 // FIXME: Maybe pass only required information
 // I don't know if this impacts performance, I think the component is re-rendered

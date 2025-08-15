@@ -1,18 +1,8 @@
 import { Vector2d } from "konva/lib/types";
 import { createRef } from "react";
-
-// Matches Konva's way of storing points: x coordinates on even indices, and y
-// on odd indices.
-type Points = Array<number>;
+import { Line } from "./line";
 
 export type LayerId = string;
-
-export interface Line {
-  points: Points;
-  color: string;
-  width: number;
-  tool: string | null;
-}
 
 export class Layer {
   name: string;

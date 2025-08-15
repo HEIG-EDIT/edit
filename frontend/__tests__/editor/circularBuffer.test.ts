@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { CircularBuffer } from "@/components/editor/utils/CircularBuffer";
+import { CircularBuffer } from "@/models/editor/utils/CircularBuffer";
 
 test("Size of < 0 throws", () => {
   expect(() => {
