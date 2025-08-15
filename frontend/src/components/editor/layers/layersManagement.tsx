@@ -4,7 +4,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
 import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
 import { ConfigurationButton } from "@/components/editor/layers/configurationButton";
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useCallback, useRef, useState } from "react";
 import AddToPhotosRoundedIcon from "@mui/icons-material/AddToPhotosRounded";
 import CollectionsRoundedIcon from "@mui/icons-material/CollectionsRounded";
 import { EntryButton } from "../menu/entryButton";
@@ -24,7 +24,11 @@ export const LayersManagement = ({
     useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  useOnClickOutside(containerRef, () => setIsNewLayerDisplayed(false));
+  const handleClickOutside = useCallback(() => {
+    setIsNewLayerDisplayed(false);
+  }, []);
+
+  useOnClickOutside(containerRef, handleClickOutside);
 
   const displayLayers = (
     <Fragment>

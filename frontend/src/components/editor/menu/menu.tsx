@@ -5,7 +5,13 @@ import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import { useRouter } from "next/navigation";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import React, { Dispatch, SetStateAction, useRef, useState } from "react";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useRef,
+  useState,
+} from "react";
 import { MenuEntry } from "@/models/editor/menu/menuEntry";
 import { UserSettings } from "./userSettings";
 import { EditorSettings } from "./editorSettings";
@@ -20,7 +26,11 @@ export const Menu = ({
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  useOnClickOutside(containerRef, () => setMenuDisplay(false));
+  const handleClickOutside = useCallback(() => {
+    () => setMenuDisplay(false);
+  }, []);
+
+  useOnClickOutside(containerRef, handleClickOutside);
 
   const MENU_ENTRIES: Record<string, MenuEntry> = {
     user: {

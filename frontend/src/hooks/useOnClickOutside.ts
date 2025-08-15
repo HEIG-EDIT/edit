@@ -21,5 +21,5 @@ export default function useOnClickOutside(
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  }, []);
+  }, [containerRef, onClickOutside]);
 }

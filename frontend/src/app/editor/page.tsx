@@ -5,18 +5,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { LoadImageButton } from "@/components/editor/loadImageButton";
 
 import { MOVE_TOOL } from "@/components/editor/tools/move";
-import { CROP_TOOL } from "@/components/editor/tools/crop";
-import { SELECT_CURSOR_TOOL } from "@/components/editor/tools/select-cursor";
-import { PAINT_TOOL } from "@/components/editor/tools/paint";
-import { ERASE_TOOL } from "@/components/editor/tools/erase";
-import { PAINT_BUCKET_TOOL } from "@/components/editor/tools/paint-bucket";
-import { ADJUST_TOOL } from "@/components/editor/tools/adjust";
+import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 
 import { ToolsManagement } from "@/components/editor/tools/toolsManagement";
 import { LayersManagement } from "@/components/editor/layers/layersManagement";
-
-import { Tool } from "@/models/editor/tools/tool";
-import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 
 import { Menu } from "@/components/editor/menu/menu";
 import { Toolbar } from "@/components/editor/toolbar/toolbar";
@@ -27,6 +19,7 @@ import {
   LayerUpdateCallback,
 } from "@/models/editor/layers/layer";
 import { useUndoRedo } from "@/components/editor/undoRedo";
+import { TOOLS, TOOLS_INITIAL_STATE } from "@/models/editor/utils/tools";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
@@ -41,19 +34,6 @@ export interface LoadedImage {
   height: number;
   rotation: number;
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const TOOLS: Record<string, Tool<any>> = {
-  [MOVE_TOOL.name]: MOVE_TOOL,
-  [CROP_TOOL.name]: CROP_TOOL,
-  [SELECT_CURSOR_TOOL.name]: SELECT_CURSOR_TOOL,
-  [PAINT_TOOL.name]: PAINT_TOOL,
-  [ERASE_TOOL.name]: ERASE_TOOL,
-  [PAINT_BUCKET_TOOL.name]: PAINT_BUCKET_TOOL,
-  [ADJUST_TOOL.name]: ADJUST_TOOL,
-};
-
-const TOOLS_INITIAL_STATE: Record<string, ToolConfiguration> = {};
 
 for (const tool of Object.values(TOOLS)) {
   TOOLS_INITIAL_STATE[tool.name] = tool.initialConfiguration;
