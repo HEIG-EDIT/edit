@@ -42,6 +42,7 @@ export interface LoadedImage {
   rotation: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const TOOLS: Record<string, Tool<any>> = {
   [MOVE_TOOL.name]: MOVE_TOOL,
   [CROP_TOOL.name]: CROP_TOOL,
@@ -50,7 +51,7 @@ export const TOOLS: Record<string, Tool<any>> = {
   [ERASE_TOOL.name]: ERASE_TOOL,
   [PAINT_BUCKET_TOOL.name]: PAINT_BUCKET_TOOL,
   [ADJUST_TOOL.name]: ADJUST_TOOL,
-}; // eslint-disable-line @typescript-eslint/no-explicit-any
+};
 
 const TOOLS_INITIAL_STATE: Record<string, ToolConfiguration> = {};
 
