@@ -11,6 +11,6 @@ export interface LayerProps {
   isVisible: boolean;
   lines: Line[];
 
-  onDragEnd: any;
-  onTransformEnd: any;
+  onDragEnd: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  onTransformEnd: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }

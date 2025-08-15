@@ -1,1 +1,1 @@
-export interface ToolConfiguration {}
+export type ToolConfiguration = object;

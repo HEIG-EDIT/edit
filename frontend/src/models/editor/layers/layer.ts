@@ -12,9 +12,9 @@ export class Layer {
   isSelected: boolean = false;
 
   // Refs to the underlying Konva components
-  groupRef: any;
+  groupRef: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   // FIXME: Check if useful
-  imageRef: any;
+  imageRef: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   isVisible: boolean = true;
   position: Vector2d = {

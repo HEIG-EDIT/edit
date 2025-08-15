@@ -1,13 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  Dispatch,
-  SetStateAction,
-} from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { LoadImageButton } from "@/components/editor/loadImageButton";
 
 import { MOVE_TOOL } from "@/components/editor/tools/move";
@@ -56,11 +50,11 @@ export const TOOLS: Record<string, Tool<any>> = {
   [ERASE_TOOL.name]: ERASE_TOOL,
   [PAINT_BUCKET_TOOL.name]: PAINT_BUCKET_TOOL,
   [ADJUST_TOOL.name]: ADJUST_TOOL,
-};
+}; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 const TOOLS_INITIAL_STATE: Record<string, ToolConfiguration> = {};
 
-for (let tool of Object.values(TOOLS)) {
+for (const tool of Object.values(TOOLS)) {
   TOOLS_INITIAL_STATE[tool.name] = tool.initialConfiguration;
 }
 
@@ -75,6 +69,10 @@ export default function EditorPage() {
     canUndo,
     canRedo,
   } = useUndoRedo(Array<Layer>());
+
+  // TODO : to remove, usefull to pass deployment with eslint check (" x is assigned a value but never used.  @typescript-eslint/no-unused-vars")
+  console.log(setVirtualLayers);
+  console.log(commitVirtualLayers);
 
   const [nameSelectedTool, setNameSelectedTool] = useState<string>(
     MOVE_TOOL.name,

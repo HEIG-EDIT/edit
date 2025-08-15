@@ -1,5 +1,5 @@
 import { SubToolConfiguration } from "./subToolConfiguration";
 import { ToolConfigurationProps } from "./toolConfigurationProps";
 
-export interface SubToolConfigurationProps<T extends SubToolConfiguration>
-  extends ToolConfigurationProps<T> {}
+export type SubToolConfigurationProps<T extends SubToolConfiguration> =
+  ToolConfigurationProps<T>;
