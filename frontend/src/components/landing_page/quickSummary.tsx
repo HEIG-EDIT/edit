@@ -1,5 +1,6 @@
 import { StartButton } from "@/components/landing_page/startButton";
 import { OutsideCard } from "@/components/outsideCard";
+import { TextCard } from "./textCard";
 
 export const QuickSummary = () => {
   return (
@@ -13,15 +14,15 @@ export const QuickSummary = () => {
             Design, modify, combine and improve images right in your browser
           </p>
         </div>
-        <p className="text-violet-50 px-8 py-4 font-thin text-lg">
+        <TextCard>
           Let your imagination loose and easily create professional grade (or
           not) illustrations in minutes. Store projects on the cloud and work
           from anywhere.
-          <br />
-          <br />
+        </TextCard>
+        <TextCard>
           Easily import images in various formats into multiple layers and
           export compositions with a configurable size.
-        </p>
+        </TextCard>
       </div>
       <div className="flex justify-center pt-4">
         <StartButton />

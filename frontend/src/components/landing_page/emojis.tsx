@@ -1,14 +1,32 @@
-import Image from "next/image";
+import { DevDescription } from "../../components/landing_page/devDescription";
 
 export const Emojis = () => {
   return (
-    <Image
-      src="/landing_page/emojis.png"
-      alt="Emojis"
-      width={0}
-      height={0}
-      sizes="100vw"
-      className="w-full h-auto"
-    />
+    <div className="grid grid-cols-2 gap-6">
+      <DevDescription
+        name="Alessio"
+        imagePath="/landing_page/emojis/alessio.png"
+        quote="If you spend a lot of time configuring your developper tools, you will save time when editing your tools' config."
+        role="Frontend"
+      />
+      <DevDescription
+        name="Diana"
+        imagePath="/landing_page/emojis/diana.png"
+        quote="To keep calm when the compiler is not happy about my code, I like to see the world from the down facing dog."
+        role="Backend"
+      />
+      <DevDescription
+        name="Elbunita"
+        imagePath="/landing_page/emojis/elbunita.png"
+        quote="If you stare at Java Script long enough, the language stares back."
+        role="Backend"
+      />
+      <DevDescription
+        name="Saskya"
+        imagePath="/landing_page/emojis/saskya.png"
+        quote="The sun won't fix your code, but it will fix your focus."
+        role="Frontend"
+      />
+    </div>
   );
 };

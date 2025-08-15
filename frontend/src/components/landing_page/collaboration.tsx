@@ -8,8 +8,8 @@ export const Collaboration = () => {
       <p className="text-violet-50 font-bold text-2xl flex justify-center mb-8">
         Collaborate with your team by sharing projects
       </p>
-      <div className="flex flex-col lg:flex-row gap-4 items-center">
-        <div className="bg-gray-600 rounded-2xl p-4">
+      <div className="bg-gray-600 rounded-2xl p-4 flex flex-col lg:flex-row gap-4 items-center">
+        <div>
           <TextCard>
             Share projects with your team for easy collaboration. Manage roles
             of all authorized users to restrict edition access.
