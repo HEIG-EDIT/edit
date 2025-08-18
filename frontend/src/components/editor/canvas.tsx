@@ -176,6 +176,37 @@ export const Canvas = ({
     isDraggingCanvas.current = false;
   };
 
+  const handleScroll = (e: KonvaMouseEvent) => {
+    e.evt.preventDefault();
+
+    // Avoid accidental scrolling when moving aroung
+    if (e.evt.buttons == 4) {
+      return;
+    }
+
+    // In or out
+    const direction = e.evt.deltaY > 0 ? 1 : -1;
+    const scaleFactor = 1.1;
+    const scaleBy = direction > 0 ? scaleFactor : 1 / scaleFactor;
+
+    setCanvasState(({ scale }) => {
+      const stagePointerPosition = stageRef.current?.getPointerPosition();
+      const canvasPointerPosition = getCanvasPointerPosition();
+
+      const newScale = scale * scaleBy;
+
+      const newPos = {
+        x: stagePointerPosition.x - canvasPointerPosition.x * newScale,
+        y: stagePointerPosition.y - canvasPointerPosition.y * newScale,
+      };
+
+      return {
+        scale: newScale,
+        position: newPos,
+      };
+    });
+  };
+
   return (
     <div>
       <Stage
@@ -195,6 +226,7 @@ export const Canvas = ({
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
+          onWheel={handleScroll}
           imageSmoothingEnabled={false}
           width={width}
           height={height}
