@@ -74,10 +74,9 @@ export const Canvas = ({
   const handleStageClick = (e: KonvaMouseEvent) => {
     // TODO : to remove
     console.log(e);
-
     let hasClickedLayer = false;
 
-    for (const layer of layers) {
+    for (const layer of layers.toReversed()) {
       const targets = layer.groupRef.current.getAllIntersections(
         getCanvasPointerPosition(),
       );
