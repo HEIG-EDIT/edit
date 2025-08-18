@@ -30,9 +30,9 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
           ? (newState as (prev: T) => T)
           : () => newState;
       setState((prev) => {
-        const { stateHistory, index } = prev;
+        const { stateHistory, index, virtualState } = prev;
         const newHistory = stateHistory.getCopy();
-        const newState = func(stateHistory.get(index));
+        const newState = func(virtualState);
 
         newHistory.push(newState);
         return {
@@ -49,7 +49,7 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
   /// for calling commitVirtualState once all grouped changes are added to the
   /// virtual state.
   const setVirtualState = useCallback(
-    (newState: T) => {
+    (newState: T | ((prev: T) => T)) => {
       const func =
         typeof newState === "function"
           ? (newState as (prev: T) => T)

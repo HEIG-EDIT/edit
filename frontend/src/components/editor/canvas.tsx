@@ -17,8 +17,12 @@ import { MOVE_TOOL } from "@/components/editor/tools/move";
 
 type CanvasProps = {
   layers: Layer[];
-  setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
-  updateLayer: (id: LayerId, callback: LayerUpdateCallback) => void;
+  // setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
+  updateLayer: (
+    id: LayerId,
+    callback: LayerUpdateCallback,
+    virtual?: boolean,
+  ) => void;
   setVirtualLayers: (layer: Layer[] | ((layer: Layer[]) => Layer[])) => void;
   commitVirtualLayers: () => void;
   nameSelectedTool: string;
@@ -42,7 +46,7 @@ const CANVAS_DRAG_MOUSE_BUTTON = 1;
 
 export const Canvas = ({
   layers: layers,
-  setLayers: setLayers,
+  // setLayers: setLayers,
   setVirtualLayers,
   commitVirtualLayers,
   updateLayer,
@@ -97,7 +101,7 @@ export const Canvas = ({
   const handleLayerSelection = (e: KonvaMouseEvent) => {
     if (!e.evt.ctrlKey) {
       // Start by de-selecting all layers
-      setLayers((prev) => {
+      setVirtualLayers((prev) => {
         return prev.map((layer) => {
           return {
             ...layer,
@@ -119,12 +123,16 @@ export const Canvas = ({
       if (!layerId) {
         return;
       }
-      updateLayer(layerId, (prev) => {
-        return {
-          ...prev,
-          isSelected: true,
-        };
-      });
+      updateLayer(
+        layerId,
+        (prev) => {
+          return {
+            ...prev,
+            isSelected: true,
+          };
+        },
+        true,
+      );
     }
   };
 
@@ -146,7 +154,7 @@ export const Canvas = ({
       setLayerDragStartPosition(getCanvasPointerPosition());
       isHoldingPrimary.current = true;
 
-      setLayers((prev) => {
+      setVirtualLayers((prev) => {
         return prev.map((layer) => {
           if (!layer.isSelected) {
             return layer;
@@ -232,6 +240,7 @@ export const Canvas = ({
   const handleMouseUp = (e: KonvaMouseEvent) => {
     if (isTransforming.current) {
       isTransforming.current = false;
+      commitVirtualLayers();
       return;
     }
 

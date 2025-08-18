@@ -76,17 +76,23 @@ export default function EditorPage() {
   );
 
   const updateLayer = useCallback(
-    (layerId: LayerId, callback: LayerUpdateCallback) => {
+    (
+      layerId: LayerId,
+      callback: LayerUpdateCallback,
+      virtual: boolean = false,
+    ) => {
       const [i, layer] = findLayer(layerId);
       const newLayer = callback(layer);
 
-      setLayers((prev: Layer[]) => [
+      const fun = virtual ? setVirtualLayers : setLayers;
+
+      fun((prev: Layer[]) => [
         ...prev.slice(0, i),
         newLayer,
         ...prev.slice(i + 1),
       ]);
     },
-    [findLayer, setLayers],
+    [findLayer, setLayers, setVirtualLayers],
   );
 
   return (

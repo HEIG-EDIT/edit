@@ -48,8 +48,11 @@ export const LayersManagement = ({
           <LayerConfiguration
             name={layer.name}
             key={layer.id}
-            updateLayer={(callback: LayerUpdateCallback) => {
-              updateLayer(layer.id, callback);
+            updateLayer={(
+              callback: LayerUpdateCallback,
+              virtual: boolean = true,
+            ) => {
+              updateLayer(layer.id, callback, virtual);
             }}
             isSelected={layer.isSelected}
             isVisible={layer.isVisible}
