@@ -1,6 +1,7 @@
 import { Vector2d } from "konva/lib/types";
-import { createRef } from "react";
+import { createRef, RefObject } from "react";
 import { Line } from "./line";
+import Konva from "konva";
 
 export type LayerId = string;
 
@@ -12,9 +13,7 @@ export class Layer {
   isSelected: boolean = false;
 
   // Refs to the underlying Konva components
-  groupRef: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  // FIXME: Check if useful
-  imageRef: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  groupRef: RefObject<Konva.Group | null>;
 
   isVisible: boolean = true;
   position: Vector2d = {
@@ -36,7 +35,6 @@ export class Layer {
   ) {
     this.id = crypto.randomUUID();
     this.groupRef = createRef();
-    this.imageRef = createRef();
 
     if (name) {
       this.name = name;
