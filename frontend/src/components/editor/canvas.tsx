@@ -68,6 +68,8 @@ export const Canvas = ({
       y: 0,
     });
 
+  const isTransforming = useRef(false);
+
   const [canvasState, setCanvasState] = useState<CanvasState>({
     scale: 1,
     position: {
@@ -126,7 +128,7 @@ export const Canvas = ({
 
   const handleMouseDown = (e: KonvaMouseEvent) => {
     e.evt.preventDefault();
-    if (nameSelectedTool != MOVE_TOOL.name) {
+    if (nameSelectedTool != MOVE_TOOL.name || isTransforming.current) {
       // TODO: Other cases will need to be handled (e.g. tool application)
       return;
     }
@@ -171,6 +173,9 @@ export const Canvas = ({
   }, [canvasDragStartPosition, getCanvasPointerPosition]);
 
   const handleMouseMove = (e: KonvaMouseEvent) => {
+    if (isTransforming.current) {
+      return;
+    }
     if (isHoldingPrimary.current) {
       const positionDiff = getLayerDragPositionDiff();
 
@@ -223,6 +228,11 @@ export const Canvas = ({
   };
 
   const handleMouseUp = (e: KonvaMouseEvent) => {
+    if (isTransforming.current) {
+      isTransforming.current = false;
+      return;
+    }
+
     isDraggingCanvas.current = false;
     isHoldingPrimary.current = false;
 
@@ -317,6 +327,12 @@ export const Canvas = ({
                 isSelected={layer.isSelected}
                 lines={layer.lines}
                 ref={layer.groupRef}
+                updateLayer={(callback: LayerUpdateCallback) =>
+                  updateLayer(layer.id, callback)
+                }
+                setIsTransforming={(val: boolean) => {
+                  isTransforming.current = val;
+                }}
               />
             );
           })}

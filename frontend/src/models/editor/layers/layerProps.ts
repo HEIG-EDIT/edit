@@ -1,5 +1,5 @@
 import { Vector2d } from "konva/lib/types";
-import { LayerId } from "./layer";
+import { LayerId, LayerUpdateCallback } from "./layer";
 import { Line } from "./line";
 
 export interface LayerProps {
@@ -11,4 +11,6 @@ export interface LayerProps {
   isVisible: boolean;
   isSelected: boolean;
   lines: Line[];
+  updateLayer: (callback: LayerUpdateCallback) => void;
+  setIsTransforming: (val: boolean) => void;
 }

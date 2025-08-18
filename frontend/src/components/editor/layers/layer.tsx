@@ -9,6 +9,7 @@ import {
 } from "react-konva";
 import Konva from "konva";
 
+import { Layer } from "@/models/editor/layers/layer";
 import { LayerProps } from "@/models/editor/layers/layerProps";
 
 export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
@@ -22,6 +23,8 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       isVisible,
       isSelected,
       lines,
+      updateLayer,
+      setIsTransforming,
     }: Partial<LayerProps> = props;
     const transformerRef = useRef<Konva.Transformer>(null);
 
@@ -31,8 +34,42 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       }
     }, [isSelected, groupRef]);
 
+    const handleTransformEnd = () => {
+      const node = groupRef?.current;
+
+      updateLayer((layer: Layer) => {
+        return {
+          ...layer,
+          scale: {
+            x: node.scaleX(),
+            y: node.scaleY(),
+          },
+          rotation: node.rotation(),
+          position: {
+            x: node.x(),
+            y: node.y(),
+          },
+        };
+      });
+    };
+
     return (
       <>
+        {isSelected && isVisible && (
+          <KonvaTransformer
+            onTransformStart={() => {
+              setIsTransforming(true);
+            }}
+            onTransformEnd={handleTransformEnd}
+            ref={transformerRef}
+            boundBoxFunc={(oldBox, newBox) => {
+              if (newBox.width < 5 || newBox.height < 5) {
+                return oldBox;
+              }
+              return newBox;
+            }}
+          />
+        )}
         <KonvaGroup
           listening
           x={position.x}
@@ -66,18 +103,6 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
             />
           ))}
         </KonvaGroup>
-        {isSelected && isVisible && (
-          <KonvaTransformer
-            listening={false}
-            ref={transformerRef}
-            boundBoxFunc={(oldBox, newBox) => {
-              if (newBox.width < 5 || newBox.height < 5) {
-                return oldBox;
-              }
-              return newBox;
-            }}
-          />
-        )}
       </>
     );
   },
