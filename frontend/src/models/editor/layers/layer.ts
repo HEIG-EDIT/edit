@@ -20,6 +20,10 @@ export class Layer {
     x: 0,
     y: 0,
   };
+  positionBeforeDrag: Vector2d = {
+    x: 0,
+    y: 0,
+  };
   scale: Vector2d = {
     x: 1,
     y: 1,

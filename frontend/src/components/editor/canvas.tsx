@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import { Stage, Layer as KonvaLayer, Rect } from "react-konva";
 import Konva from "konva";
 import KonvaEventObject from "konva";
@@ -19,6 +19,8 @@ type CanvasProps = {
   layers: Layer[];
   setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
   updateLayer: (id: LayerId, callback: LayerUpdateCallback) => void;
+  setVirtualLayers: (layer: Layer[] | ((layer: Layer[]) => Layer[])) => void;
+  commitVirtualLayers: () => void;
   nameSelectedTool: string;
   height: number;
   width: number;
@@ -32,28 +34,39 @@ type CanvasState = {
 type KonvaMouseEvent = KonvaEventObject.KonvaEventObject<MouseEvent>;
 type KonvaScrollEvent = KonvaEventObject.KonvaEventObject<WheelEvent>;
 
+// Left click
+const PRIMARY_MOUSE_BUTTON = 0;
+
 // Middle click
 const CANVAS_DRAG_MOUSE_BUTTON = 1;
 
 export const Canvas = ({
   layers: layers,
   setLayers: setLayers,
+  setVirtualLayers,
+  commitVirtualLayers,
   updateLayer,
   nameSelectedTool,
   width,
   height,
 }: CanvasProps) => {
-  // TODO : to remove, usefull to pass deployment with eslint check ("'nameSelectedTool' is defined but never used.  @typescript-eslint/no-unused-vars")
-  console.log(nameSelectedTool);
-
   const stageRef = useRef<Konva.Stage>(null);
   const canvasRef = useRef<Konva.Layer>(null);
 
   const isDraggingCanvas = useRef(false);
-  const [dragStartPosition, setDragStartPosition] = useState<Vector2d>({
-    x: 0,
-    y: 0,
-  });
+  const [canvasDragStartPosition, setCanvasDragStartPosition] =
+    useState<Vector2d>({
+      x: 0,
+      y: 0,
+    });
+
+  const isDraggingLayers = useRef(false);
+  const isHoldingPrimary = useRef(false);
+  const [layerDragStartPosition, setLayerDragStartPosition] =
+    useState<Vector2d>({
+      x: 0,
+      y: 0,
+    });
 
   const [canvasState, setCanvasState] = useState<CanvasState>({
     scale: 1,
@@ -63,9 +76,6 @@ export const Canvas = ({
     },
   });
 
-  // TODO : to remove, usefull to pass deployment with eslint check ("'setCanvasState' is assigned a value but never used.  @typescript-eslint/no-unused-vars")
-  console.log(setCanvasState);
-
   const getCanvasPointerPosition = () => {
     const stagePosition = stageRef?.current?.getPointerPosition();
     if (!stagePosition) {
@@ -73,11 +83,11 @@ export const Canvas = ({
       throw new Error("Could not get the stage pointer position");
     }
 
-    const state = canvasState;
+    const canvas = canvasState;
 
     return {
-      x: (stagePosition.x - state.position.x) / state.scale,
-      y: (stagePosition.y - state.position.y) / state.scale,
+      x: (stagePosition.x - canvas.position.x) / canvas.scale,
+      y: (stagePosition.y - canvas.position.y) / canvas.scale,
     };
   };
 
@@ -121,28 +131,87 @@ export const Canvas = ({
       return;
     }
 
-    if (e.evt.button != CANVAS_DRAG_MOUSE_BUTTON) {
-      handleLayerSelection();
-    }
+    if (e.evt.button == CANVAS_DRAG_MOUSE_BUTTON) {
+      setCanvasDragStartPosition({
+        x: e.evt.clientX - canvasState.position.x,
+        y: e.evt.clientY - canvasState.position.y,
+      });
 
-    isDraggingCanvas.current = true;
-    setDragStartPosition({
-      x: e.evt.clientX - canvasState.position.x,
-      y: e.evt.clientY - canvasState.position.y,
-    });
+      isDraggingCanvas.current = true;
+    } else if (e.evt.button == PRIMARY_MOUSE_BUTTON) {
+      setLayerDragStartPosition(getCanvasPointerPosition());
+      isHoldingPrimary.current = true;
+
+      setLayers((prev) => {
+        return prev.map((layer) => {
+          if (!layer.isSelected) {
+            return layer;
+          }
+          return {
+            ...layer,
+            positionBeforeDrag: {
+              x: layer.position.x,
+              y: layer.position.y,
+            },
+          };
+        });
+      });
+    }
   };
 
+  // Determine whether or not the mouse is dragging across the canvas. The
+  // mouse needs to move past a certain threshold before the action is
+  // considered a drag and not a click.
+  const getLayerDragPositionDiff = useCallback(() => {
+    const canvasPosition = getCanvasPointerPosition();
+    return {
+      x: canvasPosition.x - layerDragStartPosition.x,
+      y: canvasPosition.y - layerDragStartPosition.y,
+    };
+  }, [canvasDragStartPosition, getCanvasPointerPosition]);
+
   const handleMouseMove = (e: KonvaMouseEvent) => {
-    if (!isDraggingCanvas.current) {
+    if (isHoldingPrimary.current) {
+      const positionDiff = getLayerDragPositionDiff();
+
+      // Not dragging
+      // FIXME: Maybe update threshold?
+      if (Math.hypot(positionDiff.x, positionDiff.y) < 2) {
+        return;
+      }
+
+      isDraggingLayers.current = true;
+
+      setVirtualLayers((prev: Layer[]) => {
+        return prev.map((layer) => {
+          if (!layer.isSelected) {
+            return layer;
+          }
+          return {
+            ...layer,
+            position: {
+              x: layer.positionBeforeDrag.x + positionDiff.x,
+              y: layer.positionBeforeDrag.y + positionDiff.y,
+            },
+          };
+        });
+      });
+
+      return;
+    }
+
+    if (!isDraggingCanvas.current && !isDraggingLayers.current) {
       // TODO: Handle other cases
       return;
     }
+
     if (e.evt.buttons != 4) {
       isDraggingCanvas.current = false;
     }
+
     const newPos = {
-      x: e.evt.clientX - dragStartPosition.x,
-      y: e.evt.clientY - dragStartPosition.y,
+      x: e.evt.clientX - canvasDragStartPosition.x,
+      y: e.evt.clientY - canvasDragStartPosition.y,
     };
 
     setCanvasState((prev: CanvasState) => {
@@ -153,8 +222,19 @@ export const Canvas = ({
     });
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: KonvaMouseEvent) => {
     isDraggingCanvas.current = false;
+    isHoldingPrimary.current = false;
+
+    if (e.evt.button != CANVAS_DRAG_MOUSE_BUTTON && !isDraggingLayers.current) {
+      handleLayerSelection();
+      return;
+    }
+
+    if (isDraggingLayers.current) {
+      commitVirtualLayers();
+      isDraggingLayers.current = false;
+    }
   };
 
   const handleScroll = (e: KonvaScrollEvent) => {
@@ -225,7 +305,6 @@ export const Canvas = ({
           y={canvasState.position.y}
         >
           {layers.map((layer) => {
-            console.log("Layer: ", layer);
             return (
               <LayerComponent
                 id={layer.id}

@@ -51,10 +51,6 @@ export default function EditorPage() {
     canRedo,
   } = useUndoRedo(Array<Layer>());
 
-  // TODO : to remove, usefull to pass deployment with eslint check (" x is assigned a value but never used.  @typescript-eslint/no-unused-vars")
-  console.log(setVirtualLayers);
-  console.log(commitVirtualLayers);
-
   const [nameSelectedTool, setNameSelectedTool] = useState<string>(
     MOVE_TOOL.name,
   );
@@ -118,6 +114,8 @@ export default function EditorPage() {
             <Canvas
               layers={layers}
               setLayers={setLayers}
+              setVirtualLayers={setVirtualLayers}
+              commitVirtualLayers={commitVirtualLayers}
               updateLayer={updateLayer}
               nameSelectedTool={nameSelectedTool}
               height={1000}
