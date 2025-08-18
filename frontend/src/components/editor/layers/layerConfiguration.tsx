@@ -30,7 +30,7 @@ export const LayerConfiguration = ({
                 ...layer,
                 isSelected: event.target.checked,
               };
-            });
+            }, true);
           }}
         />
         {name}
