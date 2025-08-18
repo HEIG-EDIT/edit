@@ -13,6 +13,7 @@ import {
 } from "@/models/editor/layers/layer";
 import { LayerComponent } from "./layers/layer";
 import { Vector2d } from "konva/lib/types";
+import { MOVE_TOOL } from "@/components/editor/tools/move";
 
 type CanvasProps = {
   layers: Layer[];
@@ -30,6 +31,9 @@ type CanvasState = {
 
 type KonvaMouseEvent = KonvaEventObject.KonvaEventObject<MouseEvent>;
 
+// Middle click
+const CANVAS_DRAG_MOUSE_BUTTON = 1;
+
 export const Canvas = ({
   layers: layers,
   setLayers: setLayers,
@@ -43,6 +47,12 @@ export const Canvas = ({
 
   const stageRef = useRef<Konva.Stage>(null);
   const canvasRef = useRef<Konva.Layer>(null);
+
+  const isDraggingCanvas = useRef(false);
+  const [dragStartPosition, setDragStartPosition] = useState<Vector2d>({
+    x: 0,
+    y: 0,
+  });
 
   const [canvasState, setCanvasState] = useState<CanvasState>({
     scale: 1,
@@ -124,6 +134,48 @@ export const Canvas = ({
     });
   };
 
+  const handleMouseDown = (e: KonvaMouseEvent) => {
+    e.evt.preventDefault();
+    if (
+      e.evt.button != CANVAS_DRAG_MOUSE_BUTTON ||
+      nameSelectedTool != MOVE_TOOL.name
+    ) {
+      // TODO: Other cases will need to be handled (e.g. tool application)
+      return;
+    }
+
+    isDraggingCanvas.current = true;
+    setDragStartPosition({
+      x: e.evt.clientX - canvasState.position.x,
+      y: e.evt.clientY - canvasState.position.y,
+    });
+  };
+
+  const handleMouseMove = (e: KonvaMouseEvent) => {
+    if (!isDraggingCanvas.current) {
+      // TODO: Handle other cases
+      return;
+    }
+    if (e.evt.buttons != 4) {
+      isDraggingCanvas.current = false;
+    }
+    const newPos = {
+      x: e.evt.clientX - dragStartPosition.x,
+      y: e.evt.clientY - dragStartPosition.y,
+    };
+
+    setCanvasState((prev: CanvasState) => {
+      return {
+        ...prev,
+        position: newPos,
+      };
+    });
+  };
+
+  const handleMouseUp = () => {
+    isDraggingCanvas.current = false;
+  };
+
   return (
     <div>
       <Stage
@@ -140,6 +192,9 @@ export const Canvas = ({
         <KonvaLayer
           ref={canvasRef}
           onClick={handleStageClick}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
           imageSmoothingEnabled={false}
           width={width}
           height={height}
