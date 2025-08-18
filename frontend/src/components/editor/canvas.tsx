@@ -94,16 +94,18 @@ export const Canvas = ({
   };
 
   // Click handler for stage handling layer selection
-  const handleLayerSelection = () => {
-    // Start by de-selecting all layers
-    setLayers((prev) => {
-      return prev.map((layer) => {
-        return {
-          ...layer,
-          isSelected: false,
-        };
+  const handleLayerSelection = (e: KonvaMouseEvent) => {
+    if (!e.evt.ctrlKey) {
+      // Start by de-selecting all layers
+      setLayers((prev) => {
+        return prev.map((layer) => {
+          return {
+            ...layer,
+            isSelected: false,
+          };
+        });
       });
-    });
+    }
 
     const pointer = stageRef.current?.getPointerPosition();
     if (!pointer) {
@@ -237,7 +239,7 @@ export const Canvas = ({
     isHoldingPrimary.current = false;
 
     if (e.evt.button != CANVAS_DRAG_MOUSE_BUTTON && !isDraggingLayers.current) {
-      handleLayerSelection();
+      handleLayerSelection(e);
       return;
     }
 
