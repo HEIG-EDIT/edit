@@ -9,8 +9,8 @@ export interface LayerProps {
   scale: Vector2d;
   image: HTMLImageElement;
   isVisible: boolean;
+  isSelected: boolean;
   lines: Line[];
 
   onDragEnd: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  onTransformEnd: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }

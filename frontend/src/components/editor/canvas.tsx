@@ -2,8 +2,8 @@
 
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
-import { Stage, Layer as KonvaLayer, Rect, Transformer } from "react-konva";
+import React, { useRef, useState } from "react";
+import { Stage, Layer as KonvaLayer, Rect } from "react-konva";
 import Konva from "konva";
 import KonvaEventObject from "konva";
 import {
@@ -41,8 +41,6 @@ export const Canvas = ({
   // TODO : to remove, usefull to pass deployment with eslint check ("'nameSelectedTool' is defined but never used.  @typescript-eslint/no-unused-vars")
   console.log(nameSelectedTool);
 
-  const transformerRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
-
   const stageRef = useRef<Konva.Stage>(null);
   const canvasRef = useRef<Konva.Layer>(null);
 
@@ -56,22 +54,6 @@ export const Canvas = ({
 
   // TODO : to remove, usefull to pass deployment with eslint check ("'setCanvasState' is assigned a value but never used.  @typescript-eslint/no-unused-vars")
   console.log(setCanvasState);
-
-  // Update transformer (blue bounding box around the image) when selection changes
-  useEffect(() => {
-    console.log(layers);
-    if (transformerRef.current) {
-      const nodes = [];
-      for (const layer of layers) {
-        if (layer.isSelected) {
-          console.log("Layer is selected: ", layer.name);
-          nodes.push(layer.groupRef.current);
-        }
-      }
-      transformerRef.current.nodes(nodes);
-      transformerRef.current.getLayer()?.batchDraw();
-    }
-  }, [layers]);
 
   const getCanvasPointerPosition = () => {
     const stagePosition = stageRef?.current?.getPointerPosition();
@@ -143,29 +125,6 @@ export const Canvas = ({
     });
   };
 
-  // Resize + Rotate handler for image
-  // TODO: Maybe move transformers to LayerComponent? If we want to select multiple layers it will be required
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleTransformEnd = (e: any) => {
-    const node = e.target;
-    const id = node.id();
-
-    updateLayer(id, (layer: Layer) => {
-      return {
-        ...layer,
-        scale: {
-          x: node.scaleX(),
-          y: node.scaleY(),
-        },
-        rotation: node.rotation(),
-        position: {
-          x: node.x(),
-          y: node.y(),
-        },
-      };
-    });
-  };
-
   return (
     <div>
       <Stage
@@ -203,11 +162,10 @@ export const Canvas = ({
                 scale={layer.scale}
                 image={layer.image}
                 isVisible={layer.isVisible}
+                isSelected={layer.isSelected}
                 lines={layer.lines}
                 ref={layer.groupRef}
                 onDragEnd={handleDragEnd}
-                onTransformEnd={handleTransformEnd}
-                // setSelected={() => updateLayer(layer.id)}
               />
             );
           })}
@@ -220,15 +178,6 @@ export const Canvas = ({
             stroke={"#7c3aed"}
             strokeWidth={2}
             strokeEnabled={true /* TODO: Link with editor setting */}
-          />
-          <Transformer
-            ref={transformerRef}
-            boundBoxFunc={(oldBox, newBox) => {
-              if (newBox.width < 5 || newBox.height < 5) {
-                return oldBox;
-              }
-              return newBox;
-            }}
           />
         </KonvaLayer>
       </Stage>
