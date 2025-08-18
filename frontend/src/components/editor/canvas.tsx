@@ -80,68 +80,48 @@ export const Canvas = ({
     };
   };
 
-  // Click handler for stage, allows selecting layers
-  const handleStageClick = (e: KonvaMouseEvent) => {
-    // TODO : to remove
-    console.log(e);
-    let hasClickedLayer = false;
-
-    for (const layer of layers.toReversed()) {
-      const targets = layer.groupRef.current.getAllIntersections(
-        getCanvasPointerPosition(),
-      );
-
-      if (targets.length && !hasClickedLayer) {
-        hasClickedLayer = true;
-        updateLayer(layer.id, (prev) => {
-          return {
-            ...prev,
-            isSelected: true,
-          };
-        });
-      }
-      // De-select all other layers
-      else {
-        updateLayer(layer.id, (prev) => {
-          return {
-            ...prev,
-            isSelected: false,
-          };
-        });
-      }
-    }
-  };
-
-  // Drag handler for image
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleDragEnd = (e: any) => {
-    const node = e.target;
-    const id = node.id();
-
-    setLayers((prevLayers) => {
-      const newlayers = [...prevLayers];
-      const index = newlayers.findIndex((img) => img.id === id);
-      if (index !== -1) {
-        newlayers[index] = {
-          ...newlayers[index],
-          position: {
-            x: node.x(),
-            y: node.y(),
-          },
+  // Click handler for stage handling layer selection
+  const handleLayerSelection = () => {
+    // Start by de-selecting all layers
+    setLayers((prev) => {
+      return prev.map((layer) => {
+        return {
+          ...layer,
+          isSelected: false,
         };
-      }
-      return newlayers;
+      });
     });
+
+    const pointer = stageRef.current?.getPointerPosition();
+    if (!pointer) {
+      return;
+    }
+
+    const target = stageRef.current?.getIntersection(pointer);
+
+    if (target) {
+      const layerId = target.parent?.id();
+      if (!layerId) {
+        return;
+      }
+      updateLayer(layerId, (prev) => {
+        return {
+          ...prev,
+          isSelected: true,
+        };
+      });
+    }
   };
 
   const handleMouseDown = (e: KonvaMouseEvent) => {
     e.evt.preventDefault();
-    if (
-      e.evt.button != CANVAS_DRAG_MOUSE_BUTTON ||
-      nameSelectedTool != MOVE_TOOL.name
-    ) {
+    if (nameSelectedTool != MOVE_TOOL.name) {
       // TODO: Other cases will need to be handled (e.g. tool application)
       return;
+    }
+
+    if (e.evt.button != CANVAS_DRAG_MOUSE_BUTTON) {
+      handleLayerSelection();
     }
 
     isDraggingCanvas.current = true;
@@ -215,18 +195,18 @@ export const Canvas = ({
         // FIXME: Find a way to use all available space
         height={1000}
         width={1000}
-        onClick={handleStageClick}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onWheel={handleScroll}
         ref={stageRef}
+        listening
       >
         {/* Unique Konva Layer of the stage representing the Canvas.
           EDIT Layers are "mapped" to Konva Groups */}
         <KonvaLayer
+          listening
           ref={canvasRef}
-          onClick={handleStageClick}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onWheel={handleScroll}
           imageSmoothingEnabled={false}
           width={width}
           height={height}
@@ -251,13 +231,15 @@ export const Canvas = ({
                 isSelected={layer.isSelected}
                 lines={layer.lines}
                 ref={layer.groupRef}
-                onDragEnd={handleDragEnd}
               />
             );
           })}
+        </KonvaLayer>
 
+        <KonvaLayer listening={false}>
           {/* Canvas outline, drawn as a Konva element */}
           <Rect
+            listenting={false}
             draggable={false}
             height={height}
             width={width}

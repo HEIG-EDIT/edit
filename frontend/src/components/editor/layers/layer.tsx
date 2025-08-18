@@ -5,6 +5,7 @@ import {
   Group as KonvaGroup,
   Line as KonvaLine,
   Transformer as KonvaTransformer,
+  Rect as KonvaRect,
 } from "react-konva";
 import Konva from "konva";
 
@@ -21,8 +22,6 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       isVisible,
       isSelected,
       lines,
-
-      onDragEnd,
     }: Partial<LayerProps> = props;
     const transformerRef = useRef<Konva.Transformer>(null);
 
@@ -30,7 +29,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       if (isSelected && groupRef) {
         transformerRef.current?.nodes([groupRef.current]);
       }
-    }, [isSelected]);
+    }, [isSelected, groupRef]);
 
     return (
       <>
@@ -43,13 +42,17 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
           width={image.width}
           height={image.height}
           id={id}
-          // FIXME: This will probably not work when moving multiple layers
-          draggable
           ref={groupRef}
           visible={isVisible}
-          onDragEnd={onDragEnd}
         >
-          <KonvaImage image={image} />
+          {/* Dummy rectangle, used to select layers with Canvas click */}
+          <KonvaRect
+            width={image.width}
+            height={image.height}
+            fill={"transparent"}
+            listening
+          />
+          <KonvaImage listening={false} image={image} />
           {lines?.map((line, i) => (
             <KonvaLine
               key={i}
@@ -65,6 +68,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
         </KonvaGroup>
         {isSelected && (
           <KonvaTransformer
+            listening={false}
             ref={transformerRef}
             boundBoxFunc={(oldBox, newBox) => {
               if (newBox.width < 5 || newBox.height < 5) {
