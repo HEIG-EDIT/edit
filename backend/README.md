@@ -93,19 +93,6 @@ When we just want to force the schema onto the DB, without keeping the migration
 npx prisma db push
 ```
 
-<<<<<<< HEAD
-Alternatively, to run ome single test:
-
-```bash
-$ npx jest ./path/to/test/test.name.spec.ts --detectOpenHandles
-```
-
-## Database migration
-
-```bash
-npx prisma db push
-```
-=======
 ⚠️ Warning: this **does not generate migration files** (we loose schema history). It’s useful for quick prototyping but not for production.
 
 ### 4. Generate Prisma Client (if needed)
@@ -118,7 +105,10 @@ npx prisma generate
 
 After that, our DB reflects our new `schema.prisma`.
 
+<<<<<<< HEAD
 >>>>>>> 10badc8 (Added new schema version, migration, and removed create-user-dto)
+=======
+>>>>>>> e69c6162fe611f40315da643ce834a3b646f4760
 
 ## Deployment
 
