@@ -2,13 +2,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { UserService } from '../user.service';
+import { UsersService } from '../users.service';
 import { execSync } from 'child_process';
 import { PrismaClient } from '@prisma/client';
 
 describe('UserService Integration', () => {
   let app: INestApplication;
-  let userService: UserService;
+  let userService: UsersService;
   let prisma: PrismaClient;
 
   // Start Docker Compose before all tests
@@ -26,13 +26,13 @@ describe('UserService Integration', () => {
     });
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      providers: [UserService, PrismaService],
+      providers: [UsersService, PrismaService],
     }).compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    userService = moduleFixture.get<UserService>(UserService);
+    userService = moduleFixture.get<UsersService>(UsersService);
     prisma = moduleFixture.get<PrismaService>(PrismaService);
   }, 30000);
 
