@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { UserService } from '../user.service';
+import { UsersService } from '../users.service';
 import { execSync } from 'child_process';
 import { PrismaClient } from '@prisma/client';
 
 describe('UserService Integration', () => {
   let app: INestApplication;
-  let userService: UserService;
+  let userService: UsersService;
   let prisma: PrismaClient;
 
   // Start Docker Compose before all tests
@@ -25,13 +25,13 @@ describe('UserService Integration', () => {
     });
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      providers: [UserService, PrismaService],
+      providers: [UsersService, PrismaService],
     }).compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    userService = moduleFixture.get<UserService>(UserService);
+    userService = moduleFixture.get<UsersService>(UsersService);
     prisma = moduleFixture.get<PrismaService>(PrismaService);
   }, 30000);
 
@@ -59,30 +59,21 @@ describe('UserService Integration', () => {
     // Test duplicate email behavior
     it('should throw ConflictException if email already exists', async () => {
       // Create user first
-      await userService.createUser({
-        email: 'duplicate@example.com',
-        password: 'password123',
-      });
+      await userService.createUser('duplicate@example.com','password123');
 
       // Try again with same email
       await expect(
-        userService.createUser({
-          email: 'duplicate@example.com',
-          password: 'password123',
-        })
+        userService.createUser('duplicate@example.com', 'password123')
       ).rejects.toThrow('Email already exists');  
     });
 
     // Test user creation with a unique email
     it('should create a user with unique email and random username', async () => {
-      const dto = {
-        email: 'unique@example.com',
-        password: 'password123',
-      };
+      const email = 'unique@example.com'
+      const password = 'password123'
+      const user = await userService.createUser(email, password);
 
-      const user = await userService.createUser(dto);
-
-      expect(user.email).toBe(dto.email);
+      expect(user.email).toBe(email);
       expect(user.userName).toMatch(/^user_/);
       expect(user.id).toBeDefined();
       expect(user.createdAt).toBeDefined();
