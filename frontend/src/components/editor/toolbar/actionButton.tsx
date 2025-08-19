@@ -4,14 +4,14 @@ export interface ActionButtonProps {
   icon: ReactNode;
   onClick: () => void;
   style: string;
-  disabled: bool;
+  disabled?: boolean;
 }
 
 export const ActionButton = ({
   icon,
   onClick,
   style,
-  disabled,
+  disabled = false,
 }: ActionButtonProps) => {
   return (
     <button
