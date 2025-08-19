@@ -12,8 +12,8 @@ interface UndoRedoSelectorProps {
 
 export const UndoRedoSelector = ({
   undo,
-  redo,
   canUndo,
+  redo,
   canRedo,
 }: UndoRedoSelectorProps) => {
   const getStyle = (canUse: boolean) =>
@@ -22,7 +22,7 @@ export const UndoRedoSelector = ({
     }`;
 
   const getIconColor = (canUse: boolean) =>
-    canUse ? colors.violet[50] : colors.gray[400];
+    canUse ? colors.white : colors.gray[400];
 
   return (
     <div className="flex gap-4">
