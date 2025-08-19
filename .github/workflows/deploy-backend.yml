@@ -64,7 +64,7 @@ jobs:
       - name: Run new backend container
         run: |
           docker run -d --restart=always \
-            -p 3000:3000 \
+            -p 4000:4000 \
             --name ${{ env.CONTAINER_NAME }} \
             -e DATABASE_URL=${{ secrets.DATABASE_URL_PROD }} \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{needs.build-and-push-image.outputs.image-tag}}
