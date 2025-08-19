@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
 import process from "node:process";
 
-@Injectable()
+/* @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     constructor() {
         super({
@@ -13,4 +13,4 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
             scope: ['email', 'profile'],
         });
     }
-}
+} */

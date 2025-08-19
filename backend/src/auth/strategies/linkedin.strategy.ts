@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-linkedin-oauth2';
 
-@Injectable()
+/* @Injectable()
 export class LinkedInStrategy extends PassportStrategy(Strategy, 'linkedin') {
     constructor() {
         super({
@@ -12,4 +12,4 @@ export class LinkedInStrategy extends PassportStrategy(Strategy, 'linkedin') {
             scope: ['r_emailaddress', 'r_liteprofile'],
         });
     }
-}
+} */

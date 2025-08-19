@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-oauth2';
 import process from 'node:process';
 
-@Injectable()
+/* @Injectable()
 export class MicrosoftStrategy  extends PassportStrategy(Strategy, 'microsoft') {
     constructor() {
         super({
@@ -15,4 +15,4 @@ export class MicrosoftStrategy  extends PassportStrategy(Strategy, 'microsoft') 
             tokenURL: 'https://login.microsoftonline.com/common/oauth2/v2.0/token'
         });
     }
-}
+} */
