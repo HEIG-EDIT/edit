@@ -1,17 +1,9 @@
 import react from "react";
-import Checkbox from "@mui/material/Checkbox";
-import IconButton from "@mui/material/IconButton";
 import ViewCompactRoundedIcon from "@mui/icons-material/ViewCompactRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
-
 import { LayerConfigurationProps } from "@/models/editor/layers/layerConfigurationProps";
 
-// TODO : ajouter logique (modifier icone quand bouton clique et ajouter fonctions logiques)
-// FIXME: Les boutons Material UI sont trop hauts ce qui influence la hauteur du component
-// Peut-être changer minHeight / minWidth dans le style ?
-// TODO: Trouver une meilleure manière de gérer la couleur dans les composants MUI
-// Actuellement "color" est utilisé sur tout le composant, y compris les contours
 export const LayerConfiguration = ({
   name,
   isSelected,
@@ -19,27 +11,26 @@ export const LayerConfiguration = ({
   updateLayer,
 }: LayerConfigurationProps) => {
   return (
-    <div className="border-2 border-violet-500 bg-violet-50 rounded-2xl p-2 flex justify-between">
-      <div className="flex justify-start gap-2">
-        <Checkbox
+    <div className="border-2 border-violet-500 bg-violet-50 rounded-2xl p-2 flex flex-row items-center justify-between gap-2">
+      <div className="flex flex-row justify-start gap-2">
+        <input
+          type="checkbox"
+          className="accent-violet-500"
           checked={isSelected}
-          style={{ color: "#8b5cf6" }}
-          onChange={(event: react.ChangeEvent<HTMLInputElement>) => {
+          onChange={(e: react.ChangeEvent<HTMLInputElement>) => {
             updateLayer((layer) => {
               return {
                 ...layer,
-                isSelected: event.target.checked,
+                isSelected: e.target.checked,
               };
             }, true);
           }}
         />
-        {name}
+        <p>{name}</p>
       </div>
-      <div className="flex justify-end gap-1">
+      <div className="flex flex-row justify-end gap-2">
         <ViewCompactRoundedIcon />
-        <IconButton
-          aria-label="Set layer visibility"
-          style={{ color: "#101828" }}
+        <button
           onClick={() => {
             updateLayer((layer) => {
               return {
@@ -51,7 +42,7 @@ export const LayerConfiguration = ({
           }}
         >
           {isVisible ? <VisibilityRoundedIcon /> : <VisibilityOffRoundedIcon />}
-        </IconButton>
+        </button>
       </div>
     </div>
   );
