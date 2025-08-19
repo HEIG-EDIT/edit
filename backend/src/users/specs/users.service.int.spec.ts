@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users.service';
-import { CreateUserDto } from '../dto/create-user.dto';
 import { execSync } from 'child_process';
 import { PrismaClient } from '@prisma/client';
 
@@ -59,28 +58,22 @@ describe('UserService Integration', () => {
     
     // Test duplicate email behavior
     it('should throw ConflictException if email already exists', async () => {
-      const dto: CreateUserDto = {
-        email: 'duplicate@example.com',
-        password: 'password123',
-      };
-
       // Create user first
-      await userService.createUser(dto);
+      await userService.createUser('duplicate@example.com','password123');
 
-      // Try to create user again with same email
-      await expect(userService.createUser(dto)).rejects.toThrow('Email already exists');
+      // Try again with same email
+      await expect(
+        userService.createUser('duplicate@example.com', 'password123')
+      ).rejects.toThrow('Email already exists');  
     });
 
     // Test user creation with a unique email
     it('should create a user with unique email and random username', async () => {
-      const dto: CreateUserDto = {
-        email: 'unique@example.com',
-        password: 'password123',
-      };
+      const email = 'unique@example.com'
+      const password = 'password123'
+      const user = await userService.createUser(email, password);
 
-      const user = await userService.createUser(dto);
-
-      expect(user.email).toBe(dto.email);
+      expect(user.email).toBe(email);
       expect(user.userName).toMatch(/^user_/);
       expect(user.id).toBeDefined();
       expect(user.createdAt).toBeDefined();

@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  output   = "../../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -25,8 +25,11 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime? @updatedAt
   
+  refreshToken    RefreshToken? @relation()
+  emailVerificationToken EmailVerificationToken? @relation()
+
+  projects        Project[]
   collaborations  Collaboration[]
-  refreshTokens   RefreshToken[]
   auditLogs       AuditLog[]
 }
 
@@ -34,11 +37,25 @@ model RefreshToken {
   id              Int       @id @default(autoincrement())
   tokenHash       String    
   deviceId        String    @unique
-  oauthProvider   String
+  oauthProvider   String?
+  createdAt       DateTime
   expiresAt       DateTime  
+  updatedAt       DateTime?  
   
-  user            User @relation(fields: [userId], references: [id])
-  userId          Int
+  user            User?     @relation(fields: [userId], references: [id])
+  userId          Int?      @unique
+}
+
+model EmailVerificationToken {
+  id              Int       @id @default(autoincrement())
+  tokenHash       String    
+  deviceId        String    @unique
+  createdAt       DateTime
+  expiresAt       DateTime 
+  usedAt          DateTime? 
+  
+  user            User?     @relation(fields: [userId], references: [id])
+  userId          Int?      @unique
 }
 
 model AuditLog {
@@ -48,43 +65,41 @@ model AuditLog {
   userAgent       String?
   createdAt       DateTime  @default(now())
   
-  user            User @relation(fields: [userId], references: [id])
+  user            User      @relation(fields: [userId], references: [id])
   userId          Int
 }
 
 model Project {
   id              Int       @id @default(autoincrement())
   createdAt       DateTime  @default(now())
-
-  images          Image[]
-  collaborations  Collaboration[]
-}
-
-model Image {
-  id              Int       @id @default(autoincrement())
-  createdAt       DateTime  @default(now())
+  openedAt        DateTime?  
+  lastSavedAt     DateTime?  
   s3Url           String
-  
-  project         Project @relation(fields: [projectId], references: [id])
-  projectId       Int
+  projectJson     String
+  userCurrentlyEditing Boolean @default(false)
+
+  collaborations  Collaboration[]
+  creator            User @relation(fields: [creatorId], references: [id])
+  creatorId          Int
 }
+
 
 model Role {
   id              Int       @id @default(autoincrement())
   name            String
 
-  collaborations  Collaboration[]
+  collaborations Collaboration[]
 }
 
 model Collaboration {
+  id              Int       @id @default(autoincrement())
+  createdAt       DateTime
+
   user            User @relation(fields: [userId], references: [id])
   userId          Int
 
   project         Project @relation(fields: [projectId], references: [id])
   projectId       Int
 
-  role            Role @relation(fields: [roleId], references: [id])
-  roleId          Int
-
-  @@id([userId, projectId])
+  roles Role[]
 }
