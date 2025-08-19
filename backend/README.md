@@ -65,10 +65,35 @@ $ npx jest ./path/to/test/test.name.spec.ts --detectOpenHandles
 
 ## Database migration
 
+Once we update our `schema.prisma` file, we want our **database** to match the new schema.
+We do this in two steps: **generate a migration** and then **apply it**.
+
+Before all, we have to make sure our changes in `schema.prisma` are saved.
+
+### 1. Create a migration
+
+We run:
+
+```bash
+npx prisma migrate dev --name some_descriptive_name
+```
+
+* `migrate dev` will:
+
+  * Compare our updated `schema.prisma` to the current DB.
+  * Generate a new migration file in `prisma/migrations/`.
+  * Apply it to our local dev database.
+  * Update the generated Prisma Client.
+
+### 3. Push schema without migration (only in dev/prototyping!)
+
+When we just want to force the schema onto the DB, without keeping the migration history, we simply run:
+
 ```bash
 npx prisma db push
 ```
 
+<<<<<<< HEAD
 Alternatively, to run ome single test:
 
 ```bash
@@ -80,6 +105,20 @@ $ npx jest ./path/to/test/test.name.spec.ts --detectOpenHandles
 ```bash
 npx prisma db push
 ```
+=======
+⚠️ Warning: this **does not generate migration files** (we loose schema history). It’s useful for quick prototyping but not for production.
+
+### 4. Generate Prisma Client (if needed)
+
+If not already done by the command above, we run this command to regenerate our client:
+
+```bash
+npx prisma generate
+```
+
+After that, our DB reflects our new `schema.prisma`.
+
+>>>>>>> 10badc8 (Added new schema version, migration, and removed create-user-dto)
 
 ## Deployment
 
