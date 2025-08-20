@@ -240,7 +240,6 @@ export const Canvas = ({
   const handleMouseUp = (e: KonvaMouseEvent) => {
     if (isTransforming.current) {
       isTransforming.current = false;
-      commitVirtualLayers();
       return;
     }
 
