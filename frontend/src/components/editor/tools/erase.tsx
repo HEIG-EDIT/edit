@@ -1,6 +1,7 @@
 import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
+import { PaintEraseBaseComponent } from "./paintEraseBase";
 
 export interface EraseToolConfiguration extends ToolConfiguration {
   radius: number;
@@ -12,6 +13,9 @@ export const EraseToolConfigurationComponent = ({
 }: ToolConfigurationProps<EraseToolConfiguration>) => {
   return (
     <div>
+      <PaintEraseBaseComponent
+        toolConfiguration={{ configuration, setConfiguration }}
+      />
       <p className="text-violet-50">
         Radius :<br></br>
       </p>
