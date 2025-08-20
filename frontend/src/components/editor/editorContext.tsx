@@ -11,7 +11,9 @@ export type CanvasState = {
   position: Vector2d;
 };
 
-export type EventHandlers = Partial<Record<EventType, (event?: KonvaMouseEvent) => void>>
+export type EventHandlers = Partial<
+  Record<EventType, (event?: KonvaMouseEvent) => void>
+>;
 
 // Define the complete context of the editor. This allows child components to edit
 // what is needed in the whole editor.
@@ -19,8 +21,16 @@ interface EditorContextType {
   isHoldingPrimary: React.RefObject<boolean>;
   isTransforming: React.RefObject<boolean>;
 
-  updateLayer: (id: LayerId, callback: LayerUpdateCallback, virtual?: boolean) => void;
-  editSelectedLayers: (callback: LayerUpdateCallback, virtual?: boolean) => void;
+  layers: Layer[];
+  updateLayer: (
+    id: LayerId,
+    callback: LayerUpdateCallback,
+    virtual?: boolean,
+  ) => void;
+  editSelectedLayers: (
+    callback: LayerUpdateCallback,
+    virtual?: boolean,
+  ) => void;
   commitVirtualLayers: () => void;
   setVirtualLayers: VirtualStateSetter<Layer[]>;
 
@@ -32,7 +42,7 @@ interface EditorContextType {
 
   toolEventHandlers: React.RefObject<EventHandlers>;
   setToolEventHandlers: (eventHandlers: EventHandlers) => void;
-};
+}
 
 export const EditorContext = createContext<EditorContextType | null>(null);
 
@@ -44,4 +54,4 @@ export const useEditorContext = () => {
   }
 
   return editorContext;
-}
+};

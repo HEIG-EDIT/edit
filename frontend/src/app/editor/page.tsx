@@ -2,7 +2,7 @@
 
 import Konva from "konva";
 import dynamic from "next/dynamic";
-import React, { useState, useEffect, useCallback, useRef, } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { LoadImageButton } from "@/components/editor/loadImageButton";
 
 import { MOVE_TOOL } from "@/components/editor/tools/move";
@@ -22,7 +22,11 @@ import {
 import { useUndoRedo } from "@/components/editor/undoRedo";
 import { TOOLS, TOOLS_INITIAL_STATE } from "@/models/editor/utils/tools";
 
-import { EditorContext, CanvasState, EventHandlers } from "@/components/editor/editorContext";
+import {
+  EditorContext,
+  CanvasState,
+  EventHandlers,
+} from "@/components/editor/editorContext";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
@@ -131,38 +135,44 @@ export default function EditorPage() {
     [findLayer, setLayers, setVirtualLayers],
   );
 
-  const editSelectedLayers = (callback: LayerUpdateCallback, virtual: boolean = false) => {
+  const editSelectedLayers = (
+    callback: LayerUpdateCallback,
+    virtual: boolean = false,
+  ) => {
     const fun = virtual ? setVirtualLayers : setLayers;
-    fun(prev => {
-      return prev.map(layer => {
+    fun((prev) => {
+      return prev.map((layer) => {
         if (!layer.isSelected) {
           return layer;
         }
         return callback(layer);
-      })
-    })
-  }
+      });
+    });
+  };
 
   return (
     <main className="bg-gray-900 min-h-screen">
-      <EditorContext value={{
-        isHoldingPrimary,
-        isTransforming,
+      <EditorContext
+        value={{
+          isHoldingPrimary,
+          isTransforming,
 
-        setVirtualLayers,
-        updateLayer,
-        editSelectedLayers,
-        commitVirtualLayers,
+          layers,
+          setVirtualLayers,
+          updateLayer,
+          editSelectedLayers,
+          commitVirtualLayers,
 
-        getCanvasPointerPosition,
+          getCanvasPointerPosition,
 
-        canvasState,
-        setCanvasState,
-        stageRef,
+          canvasState,
+          setCanvasState,
+          stageRef,
 
-        toolEventHandlers,
-        setToolEventHandlers,
-      }}>
+          toolEventHandlers,
+          setToolEventHandlers,
+        }}
+      >
         <div className="flex flex-row">
           <div className="flex-1">
             <div className="flex flex-col p-4">
