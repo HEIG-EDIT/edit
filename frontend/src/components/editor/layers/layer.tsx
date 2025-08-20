@@ -31,14 +31,14 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
     const transformerRef = useRef<Konva.Transformer>(null);
 
     const transformSelectedLayers = (diff: TransformDiff) => {
-      editSelectedLayers(layer => {
+      editSelectedLayers((layer) => {
         return {
           ...layer,
           scale: v2Add(layer.scale, diff.scale),
           position: v2Add(layer.position, diff.position),
           rotation: layer.rotation + diff.rotation,
         };
-      })
+      });
     };
 
     useEffect(() => {

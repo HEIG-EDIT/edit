@@ -9,7 +9,7 @@ export interface Tool<T extends ToolConfiguration> {
   initialConfiguration: T;
   configurationComponent: React.FC<ToolConfigurationProps<T>>;
 
-  handleMouseDown?: (event: KonvaMouseEvent) => void,
-  handleMouseMove?: (event: KonvaMouseEvent) => void,
-  handleMouseUp?: (event: KonvaMouseEvent) => void,
+  handleMouseDown?: (event: KonvaMouseEvent) => void;
+  handleMouseMove?: (event: KonvaMouseEvent) => void;
+  handleMouseUp?: (event: KonvaMouseEvent) => void;
 }
