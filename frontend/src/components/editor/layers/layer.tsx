@@ -9,8 +9,9 @@ import {
 } from "react-konva";
 import Konva from "konva";
 
-import { v2Sub } from "@/models/editor/layers/layerUtils";
-import { LayerProps } from "@/models/editor/layers/layerProps";
+import { v2Add, v2Sub } from "@/models/editor/layers/layerUtils";
+import { LayerProps, TransformDiff } from "@/models/editor/layers/layerProps";
+import { useEditorContext } from "../editorContext";
 
 export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
   (props, groupRef) => {
@@ -23,10 +24,22 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       isVisible,
       isSelected,
       lines,
-      setIsTransforming,
-      transformSelectedLayers,
     }: Partial<LayerProps> = props;
+
+    const { editSelectedLayers, isTransforming } = useEditorContext();
+
     const transformerRef = useRef<Konva.Transformer>(null);
+
+    const transformSelectedLayers = (diff: TransformDiff) => {
+      editSelectedLayers(layer => {
+        return {
+          ...layer,
+          scale: v2Add(layer.scale, diff.scale),
+          position: v2Add(layer.position, diff.position),
+          rotation: layer.rotation + diff.rotation,
+        };
+      })
+    };
 
     useEffect(() => {
       if (isSelected && groupRef) {
@@ -54,7 +67,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
         {isSelected && isVisible && (
           <KonvaTransformer
             onTransformStart={() => {
-              setIsTransforming(true);
+              isTransforming.current = true;
             }}
             onTransformEnd={handleTransformEnd}
             ref={transformerRef}
