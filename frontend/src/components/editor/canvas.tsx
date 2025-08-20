@@ -30,6 +30,7 @@ type CanvasState = {
 };
 
 type KonvaMouseEvent = KonvaEventObject.KonvaEventObject<MouseEvent>;
+type KonvaScrollEvent = KonvaEventObject.KonvaEventObject<WheelEvent>;
 
 // Middle click
 const CANVAS_DRAG_MOUSE_BUTTON = 1;
@@ -156,7 +157,7 @@ export const Canvas = ({
     isDraggingCanvas.current = false;
   };
 
-  const handleScroll = (e: KonvaMouseEvent) => {
+  const handleScroll = (e: KonvaScrollEvent) => {
     e.evt.preventDefault();
 
     // Avoid accidental scrolling when moving aroung
@@ -165,12 +166,18 @@ export const Canvas = ({
     }
 
     // In or out
-    const direction = e.evt.deltaY > 0 ? 1 : -1;
+    const direction = e.evt.deltaY < 0 ? 1 : -1;
     const scaleFactor = 1.1;
     const scaleBy = direction > 0 ? scaleFactor : 1 / scaleFactor;
 
-    setCanvasState(({ scale }) => {
+    setCanvasState((prev) => {
       const stagePointerPosition = stageRef.current?.getPointerPosition();
+      if (!stagePointerPosition) {
+        return prev;
+      }
+
+      const { scale } = prev;
+
       const canvasPointerPosition = getCanvasPointerPosition();
 
       const newScale = scale * scaleBy;
