@@ -174,7 +174,7 @@ export default function EditorPage() {
         }}
       >
         <div className="flex flex-row">
-          <div className="flex-1">
+          <div className="w-1/3">
             <div className="flex flex-col p-4">
               <div className="mb-6 flex items-center justify-center">
                 <LoadImageButton setLayers={setLayers} />
@@ -187,14 +187,19 @@ export default function EditorPage() {
                 />
               </div>
               <div>
-                <LayersManagement layers={layers} updateLayer={updateLayer} />
+                <LayersManagement
+                  layers={layers}
+                  updateLayer={updateLayer}
+                  setLayers={setLayers}
+                />
               </div>
             </div>
           </div>
-          <div className="flex-3">
+          <div className="w-2/3">
             <div className="mb-6 mr-4">
               <Canvas
                 layers={layers}
+                // FIXME : @Alessio -> a supprimer ?
                 setLayers={setLayers}
                 setVirtualLayers={setVirtualLayers}
                 commitVirtualLayers={commitVirtualLayers}

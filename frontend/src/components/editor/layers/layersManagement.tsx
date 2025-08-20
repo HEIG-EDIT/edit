@@ -10,8 +10,9 @@ import CollectionsRoundedIcon from "@mui/icons-material/CollectionsRounded";
 import { EntryButton } from "../menu/entryButton";
 import KeyboardReturnRoundedIcon from "@mui/icons-material/KeyboardReturnRounded";
 import useOnClickOutside from "@/hooks/useOnClickOutside";
-import { LayersManagementProps } from "@/models/editor/layers/layerManagementProps";
+import { LayersManagementProps } from "@/models/editor/layers/layersManagementProps";
 import { Layer, LayerUpdateCallback } from "@/models/editor/layers/layer";
+import { LayerReordering } from "./layerReordering";
 
 // FIXME: Maybe pass only required information
 // I don't know if this impacts performance, I think the component is re-rendered
@@ -19,6 +20,7 @@ import { Layer, LayerUpdateCallback } from "@/models/editor/layers/layer";
 export const LayersManagement = ({
   layers,
   updateLayer,
+  setLayers,
 }: LayersManagementProps) => {
   const [isNewLayerDisplayed, setIsNewLayerDisplayed] =
     useState<boolean>(false);
@@ -43,21 +45,28 @@ export const LayersManagement = ({
           onClick={() => {}}
         />
       </div>
-      <div className="flex flex-col gap-2 p-2">
-        {layers.toReversed().map((layer: Layer) => (
-          <LayerConfiguration
-            name={layer.name}
-            key={layer.id}
-            updateLayer={(
-              callback: LayerUpdateCallback,
-              virtual: boolean = true,
-            ) => {
-              updateLayer(layer.id, callback, virtual);
-            }}
-            isSelected={layer.isSelected}
-            isVisible={layer.isVisible}
-          />
-        ))}
+      <div className="flex flex-row p-2 gap-4 items-center">
+        <div className="flex flex-col gap-2 w-5/6">
+          {layers.toReversed().map((layer: Layer) => (
+            <LayerConfiguration
+              name={layer.name}
+              key={layer.id}
+              updateLayer={(
+                callback: LayerUpdateCallback,
+                virtual: boolean = true,
+              ) => {
+                updateLayer(layer.id, callback, virtual);
+              }}
+              isSelected={layer.isSelected}
+              isVisible={layer.isVisible}
+            />
+          ))}
+        </div>
+        <div className="flex flex-col w-1/6 justify-center">
+          {layers.length > 1 && (
+            <LayerReordering layers={layers} setLayers={setLayers} />
+          )}
+        </div>
       </div>
     </Fragment>
   );

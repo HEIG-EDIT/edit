@@ -7,4 +7,5 @@ export interface LayersManagementProps {
     callback: LayerUpdateCallback,
     virtual?: boolean,
   ) => void;
+  setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
 }

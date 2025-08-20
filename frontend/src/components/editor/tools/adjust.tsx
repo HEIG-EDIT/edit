@@ -27,7 +27,6 @@ export interface PixelateConfiguration extends SubToolConfiguration {
   amount: number;
 }
 
-// TODO : definir plusieurs attributs avec boolean
 export interface FlipConfiguration extends SubToolConfiguration {
   horizontal_flip: boolean;
   vertical_flip: boolean;
