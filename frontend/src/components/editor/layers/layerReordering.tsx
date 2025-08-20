@@ -3,27 +3,33 @@ import KeyboardArrowUpRoundedIcon from "@mui/icons-material/KeyboardArrowUpRound
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import KeyboardDoubleArrowDownRoundedIcon from "@mui/icons-material/KeyboardDoubleArrowDownRounded";
 import { LayerReorderingProps } from "@/models/editor/layers/layerReorderingProps";
+import { LayerReorderingButton } from "./reorderingButton";
 
 export const LayerReordering = ({
   layers,
   setLayers,
 }: LayerReorderingProps) => {
+  const nbLayers = layers.length;
+  const nbSelectedLayers = layers.filter((l) => l.isSelected == true).length;
+  const indexSelectedLayer = layers.findIndex((l) => l.isSelected == true);
+  const indexBackLayer = 0;
+  const indexFrontLayer = nbLayers - 1;
+
+  const canBringLayerToFront =
+    nbSelectedLayers == 1 && indexSelectedLayer != indexFrontLayer;
+  const canSendLayerToBack =
+    nbSelectedLayers == 1 && indexSelectedLayer != indexBackLayer;
+  const canMoveLayerForward = nbSelectedLayers > 1 || canBringLayerToFront;
+  const canMoveLayerBackward = nbSelectedLayers > 1 || canSendLayerToBack;
+
   function bringLayerToFront(): void {
-    const nbSelectedLayers = layers.filter((l) => l.isSelected == true).length;
-
-    if (nbSelectedLayers != 1) {
+    if (!canBringLayerToFront) {
       return;
     }
 
-    const nbLayers = layers.length;
     const reorderedLayers = [...layers];
-    const indexSelectedLayer = layers.findIndex((l) => l.isSelected == true);
 
-    if (indexSelectedLayer == reorderedLayers.length - 1) {
-      return;
-    }
-
-    for (let i = indexSelectedLayer; i < nbLayers - 1; ++i) {
+    for (let i = indexSelectedLayer; i < indexFrontLayer; ++i) {
       [reorderedLayers[i], reorderedLayers[i + 1]] = [
         reorderedLayers[i + 1],
         reorderedLayers[i],
@@ -34,14 +40,9 @@ export const LayerReordering = ({
   }
 
   function moveLayerForward(): void {
-    const nbLayers = layers.length;
     const reorderedLayers = [...layers];
 
-    if (
-      reorderedLayers.filter((l) => l.isSelected == true).length == 1 &&
-      reorderedLayers.findIndex((l) => l.isSelected == true) ==
-        reorderedLayers.length - 1
-    ) {
+    if (!canMoveLayerForward) {
       // no need to iterate over layers if only the first layer is selected
       return;
     }
@@ -59,13 +60,9 @@ export const LayerReordering = ({
   }
 
   function moveLayerBackward(): void {
-    const nbLayers = layers.length;
     const reorderedLayers = [...layers];
 
-    if (
-      reorderedLayers.filter((l) => l.isSelected == true).length == 1 &&
-      reorderedLayers.findIndex((l) => l.isSelected == true) == 0
-    ) {
+    if (!canMoveLayerBackward) {
       // no need to iterate over layers if only the last layer is selected
       return;
     }
@@ -83,18 +80,11 @@ export const LayerReordering = ({
   }
 
   function sendLayerToBack(): void {
-    const nbSelectedLayers = layers.filter((l) => l.isSelected == true).length;
-
-    if (nbSelectedLayers != 1) {
+    if (!canSendLayerToBack) {
       return;
     }
 
     const reorderedLayers = [...layers];
-    const indexSelectedLayer = layers.findIndex((l) => l.isSelected == true);
-
-    if (indexSelectedLayer == 0) {
-      return;
-    }
 
     for (let i = indexSelectedLayer; i > 0; --i) {
       [reorderedLayers[i], reorderedLayers[i - 1]] = [
@@ -108,38 +98,26 @@ export const LayerReordering = ({
 
   return (
     <div>
-      <button className="cursor-pointer" onClick={bringLayerToFront}>
-        {
-          <KeyboardDoubleArrowUpRoundedIcon
-            fontSize="large"
-            style={{ color: "black" }}
-          />
-        }
-      </button>
-      <button className="cursor-pointer" onClick={moveLayerForward}>
-        {
-          <KeyboardArrowUpRoundedIcon
-            fontSize="large"
-            style={{ color: "black" }}
-          />
-        }
-      </button>
-      <button className="cursor-pointer" onClick={moveLayerBackward}>
-        {
-          <KeyboardArrowDownRoundedIcon
-            fontSize="large"
-            style={{ color: "black" }}
-          />
-        }
-      </button>
-      <button className="cursor-pointer" onClick={sendLayerToBack}>
-        {
-          <KeyboardDoubleArrowDownRoundedIcon
-            fontSize="large"
-            style={{ color: "black" }}
-          />
-        }
-      </button>
+      <LayerReorderingButton
+        onClick={bringLayerToFront}
+        icon={KeyboardDoubleArrowUpRoundedIcon}
+        canUse={canBringLayerToFront}
+      />
+      <LayerReorderingButton
+        onClick={moveLayerForward}
+        icon={KeyboardArrowUpRoundedIcon}
+        canUse={canMoveLayerForward}
+      />
+      <LayerReorderingButton
+        onClick={moveLayerBackward}
+        icon={KeyboardArrowDownRoundedIcon}
+        canUse={canMoveLayerBackward}
+      />
+      <LayerReorderingButton
+        onClick={sendLayerToBack}
+        icon={KeyboardDoubleArrowDownRoundedIcon}
+        canUse={canSendLayerToBack}
+      />
     </div>
   );
 };
