@@ -2,10 +2,9 @@
 
 "use client";
 
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useContext, createContext } from "react";
 import { Stage, Layer as KonvaLayer, Rect } from "react-konva";
-import Konva from "konva";
-import KonvaEventObject from "konva";
+import { KonvaMouseEvent, KonvaScrollEvent } from "@/models/editor/utils/events";
 import {
   Layer,
   LayerId,
@@ -16,6 +15,7 @@ import { Vector2d } from "konva/lib/types";
 import { MOVE_TOOL } from "@/components/editor/tools/move";
 import { TransformDiff } from "@/models/editor/layers/layerProps";
 import { v2Add, v2Sub } from "@/models/editor/layers/layerUtils";
+import { useEditorContext } from "@/components/editor/editorContext";
 
 type CanvasProps = {
   layers: Layer[];
@@ -32,20 +32,6 @@ type CanvasProps = {
   width: number;
 };
 
-type CanvasState = {
-  scale: number;
-  position: Vector2d;
-};
-
-type KonvaMouseEvent = KonvaEventObject.KonvaEventObject<MouseEvent>;
-type KonvaScrollEvent = KonvaEventObject.KonvaEventObject<WheelEvent>;
-
-// Left click
-const PRIMARY_MOUSE_BUTTON = 0;
-
-// Middle click
-const CANVAS_DRAG_MOUSE_BUTTON = 1;
-
 export const Canvas = ({
   layers: layers,
   setLayers: setLayers,
@@ -56,9 +42,6 @@ export const Canvas = ({
   width,
   height,
 }: CanvasProps) => {
-  const stageRef = useRef<Konva.Stage>(null);
-  const canvasRef = useRef<Konva.Layer>(null);
-
   const isDraggingCanvas = useRef(false);
   const [canvasDragStartPosition, setCanvasDragStartPosition] =
     useState<Vector2d>({
@@ -76,66 +59,26 @@ export const Canvas = ({
 
   const isTransforming = useRef(false);
 
-  const [canvasState, setCanvasState] = useState<CanvasState>({
-    scale: 1,
-    position: {
-      x: 0,
-      y: 0,
-    },
-  });
+  const { editSelectedLayers, getCanvasPointerPosition, handleLayerSelection, canvasState, setCanvasState, stageRef } = useEditorContext();
 
-  const getCanvasPointerPosition = () => {
-    const stagePosition = stageRef?.current?.getPointerPosition();
-    if (!stagePosition) {
-      // Should not happen
-      throw new Error("Could not get the stage pointer position");
-    }
+  const isDrawing = useRef(false);
+  const handleDrawStart = (e: KonvaMouseEvent) => {
+    isDrawing.current = true;
 
-    const canvas = canvasState;
-
-    return {
-      x: (stagePosition.x - canvas.position.x) / canvas.scale,
-      y: (stagePosition.y - canvas.position.y) / canvas.scale,
-    };
-  };
-
-  // Click handler for stage handling layer selection
-  const handleLayerSelection = (e: KonvaMouseEvent) => {
-    if (!e.evt.ctrlKey) {
-      // Start by de-selecting all layers
-      setVirtualLayers((prev) => {
-        return prev.map((layer) => {
-          return {
-            ...layer,
-            isSelected: false,
-          };
-        });
-      });
-    }
-
-    const pointer = stageRef.current?.getPointerPosition();
-    if (!pointer) {
-      return;
-    }
-
-    const target = stageRef.current?.getIntersection(pointer);
-
-    if (target) {
-      const layerId = target.parent?.id();
-      if (!layerId) {
-        return;
-      }
-      updateLayer(
-        layerId,
-        (prev) => {
-          return {
-            ...prev,
-            isSelected: true,
-          };
-        },
-        true,
-      );
-    }
+    editSelectedLayers(layer => {
+      const pointPosition = v2Sub(getCanvasPointerPosition(), layer.position);
+      return {
+        ...layer,
+        lines: layer.lines.concat([
+          {
+            points: [pointPosition.x, pointPosition.y],
+            color: ,
+            width: 3,
+            tool: null,
+          }
+        ])
+      };
+    }, true);
   };
 
   const handleMouseDown = (e: KonvaMouseEvent) => {
@@ -156,20 +99,18 @@ export const Canvas = ({
       setLayerDragStartPosition(getCanvasPointerPosition());
       isHoldingPrimary.current = true;
 
-      setVirtualLayers((prev) => {
-        return prev.map((layer) => {
-          if (!layer.isSelected) {
-            return layer;
-          }
-          return {
-            ...layer,
-            positionBeforeDrag: {
-              x: layer.position.x,
-              y: layer.position.y,
-            },
-          };
-        });
-      });
+      editSelectedLayers(layer => {
+        if (!layer.isSelected) {
+          return layer;
+        }
+        return {
+          ...layer,
+          positionBeforeDrag: {
+            x: layer.position.x,
+            y: layer.position.y,
+          },
+        };
+      }, true)
     }
   };
 
@@ -196,17 +137,12 @@ export const Canvas = ({
 
       isDraggingLayers.current = true;
 
-      setVirtualLayers((prev: Layer[]) => {
-        return prev.map((layer) => {
-          if (!layer.isSelected) {
-            return layer;
-          }
-          return {
-            ...layer,
-            position: v2Add(layer.positionBeforeDrag, positionDiff),
-          };
-        });
-      });
+      editSelectedLayers(layer => {
+        return {
+          ...layer,
+          position: v2Add(layer.positionBeforeDrag, positionDiff),
+        };
+      }, true)
 
       return;
     }
@@ -291,21 +227,22 @@ export const Canvas = ({
   };
 
   const transformSelectedLayers = (diff: TransformDiff) => {
-    setLayers((prev) => {
-      return prev.map((layer) => {
-        if (!layer.isSelected) {
-          return layer;
-        }
-
-        return {
-          ...layer,
-          scale: v2Add(layer.scale, diff.scale),
-          position: v2Add(layer.position, diff.position),
-          rotation: layer.rotation + diff.rotation,
-        };
-      });
-    });
+    editSelectedLayers(layer => {
+      return {
+        ...layer,
+        scale: v2Add(layer.scale, diff.scale),
+        position: v2Add(layer.position, diff.position),
+        rotation: layer.rotation + diff.rotation,
+      };
+    })
   };
+
+  // Context used to give child components manipulation capabilities on the whole
+  // canvas
+  const canvasContext = useContext(createContext({
+    getCanvasPointerPosition: getCanvasPointerPosition,
+    editSelectedLayers: editSelectedLayers,
+  }));
 
   return (
     <div>
@@ -326,7 +263,6 @@ export const Canvas = ({
           EDIT Layers are "mapped" to Konva Groups */}
         <KonvaLayer
           listening
-          ref={canvasRef}
           imageSmoothingEnabled={false}
           width={width}
           height={height}
