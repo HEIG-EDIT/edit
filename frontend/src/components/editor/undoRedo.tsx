@@ -14,12 +14,14 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
     virtualState: T;
     // Index of the current state in the stateHistory
     index: number;
+    isLatestChange: boolean;
   }
 
   const [state, setState] = useState<UndoRedoState>({
     stateHistory: new CircularBuffer<T>(capacity, [initialState]),
     virtualState: initialState,
     index: 0,
+    isLatestChange: true,
   });
 
   /// Public function to update the state while keeping the history
@@ -34,11 +36,14 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
         const newHistory = stateHistory.getCopy();
         const newState = func(virtualState);
 
-        newHistory.push(newState);
+        const newIndex = index + 1;
+        newHistory.set(newIndex, newState);
+
         return {
           stateHistory: newHistory,
           virtualState: newState,
-          index: index + 1,
+          index: newIndex,
+          isLatestChange: true,
         };
       });
     },
@@ -76,6 +81,7 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
         ...prev,
         index: prev.index - 1,
         virtualState: prev.stateHistory.get(prev.index - 1),
+        isLatestChange: false,
       };
     });
   }, [setState]);
@@ -88,6 +94,7 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
         ...prev,
         index: index,
         virtualState: prev.stateHistory.get(index),
+        isLatestChange: index == prev.stateHistory.length - 1,
       };
     });
   }, [setState]);
@@ -95,7 +102,8 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
   const canUndo =
     state.stateHistory.getStartIndex() >= 0 &&
     state.index > state.stateHistory.getStartIndex();
-  const canRedo = state.index < state.stateHistory.length - 1;
+  const canRedo =
+    !state.isLatestChange && state.index < state.stateHistory.length - 1;
 
   return {
     get state() {
