@@ -246,6 +246,12 @@ export const Canvas = ({
             stroke={"#7c3aed"}
             strokeWidth={2}
             strokeEnabled={true /* TODO: Link with editor setting */}
+            scale={{
+              x: canvasState.scale,
+              y: canvasState.scale,
+            }}
+            x={canvasState.position.x}
+            y={canvasState.position.y}
           />
         </KonvaLayer>
       </Stage>
