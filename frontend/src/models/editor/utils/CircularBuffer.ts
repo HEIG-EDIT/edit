@@ -19,6 +19,17 @@ export class CircularBuffer<T> {
     this._length++;
   };
 
+  public set = (index: number, value: T) => {
+    if (index > this._length) {
+      throw new RangeError("Cannot set value for out of bounds index");
+    }
+    if (index == this._length) {
+      return this.push(value);
+    }
+
+    this.elements[index % this.elements.length] = value;
+  };
+
   public get = (index: number) => {
     if (
       this._length === 0 ||
