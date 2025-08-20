@@ -72,10 +72,19 @@ jobs:
       - name: Remove old images
         run: docker image prune -af
 
-      # Run Prisma migrations on RDS
+      # Run Prisma migrations (reset or deploy depending on secret)
       - name: Run Prisma migrations
         run: |
-          docker run --rm \
-            -e DATABASE_URL=${{ secrets.DATABASE_URL_PROD }} \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{needs.build-and-push-image.outputs.image-tag}} \
-            npx prisma migrate deploy
+          if [ "${{ secrets.RESET_DB }}" = "true" ]; then
+            echo "⚠️ RESETTING DATABASE..."
+            docker run --rm \
+              -e DATABASE_URL=${{ secrets.DATABASE_URL_PROD }} \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{needs.build-and-push-image.outputs.image-tag}} \
+              npx prisma migrate reset --force --skip-seed
+          else
+            echo "✅ Applying safe migrations..."
+            docker run --rm \
+              -e DATABASE_URL=${{ secrets.DATABASE_URL_PROD }} \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{needs.build-and-push-image.outputs.image-tag}} \
+              npx prisma migrate deploy
+          fi
