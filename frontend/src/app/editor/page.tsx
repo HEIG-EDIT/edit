@@ -1,7 +1,8 @@
 "use client";
 
+import Konva from "konva";
 import dynamic from "next/dynamic";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef, } from "react";
 import { LoadImageButton } from "@/components/editor/loadImageButton";
 
 import { MOVE_TOOL } from "@/components/editor/tools/move";
@@ -20,6 +21,9 @@ import {
 } from "@/models/editor/layers/layer";
 import { useUndoRedo } from "@/components/editor/undoRedo";
 import { TOOLS, TOOLS_INITIAL_STATE } from "@/models/editor/utils/tools";
+
+import { EditorContext, CanvasState } from "@/components/editor/editorContext";
+import { KonvaMouseEvent } from "@/models/editor/utils/events";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
@@ -58,8 +62,78 @@ export default function EditorPage() {
     useState<Record<string, ToolConfiguration>>(TOOLS_INITIAL_STATE);
   const [menuDisplay, setMenuDisplay] = useState<boolean>(false);
 
+  const toolEventHandlers = useRef({});
+
   // TODO : a supprimer des que gestion du state global ok
   useEffect(() => console.log(toolsConfiguration), [toolsConfiguration]);
+
+  const stageRef = useRef<Konva.Stage>(null);
+  const [canvasState, setCanvasState] = useState<CanvasState>({
+    position: {
+      x: 0,
+      y: 0,
+    },
+    scale: 1,
+  });
+
+  const setToolEventHandlers = () => {
+    toolEventHandlers.current = {
+    };
+  };
+
+  const getCanvasPointerPosition = () => {
+    const stagePosition = stageRef?.current?.getPointerPosition();
+    if (!stagePosition) {
+      // Should not happen
+      throw new Error("Could not get the stage pointer position");
+    }
+
+    const canvas = canvasState;
+
+    return {
+      x: (stagePosition.x - canvas.position.x) / canvas.scale,
+      y: (stagePosition.y - canvas.position.y) / canvas.scale,
+    };
+  };
+
+  // Click handler for stage handling layer selection
+  const handleLayerSelection = (e: KonvaMouseEvent) => {
+    if (!e.evt.ctrlKey) {
+      // Start by de-selecting all layers
+      setVirtualLayers((prev) => {
+        return prev.map((layer) => {
+          return {
+            ...layer,
+            isSelected: false,
+          };
+        });
+      });
+    }
+
+    const pointer = stageRef.current?.getPointerPosition();
+    if (!pointer) {
+      return;
+    }
+
+    const target = stageRef.current?.getIntersection(pointer);
+
+    if (target) {
+      const layerId = target.parent?.id();
+      if (!layerId) {
+        return;
+      }
+      updateLayer(
+        layerId,
+        (prev) => {
+          return {
+            ...prev,
+            isSelected: true,
+          };
+        },
+        true,
+      );
+    }
+  };
 
   /// Find the layer's state and it's index in the list from it's id
   const findLayer = useCallback(
@@ -95,53 +169,74 @@ export default function EditorPage() {
     [findLayer, setLayers, setVirtualLayers],
   );
 
+  const editSelectedLayers = (callback: LayerUpdateCallback, virtual: boolean = false) => {
+    const fun = virtual ? setVirtualLayers : setLayers;
+    fun(prev => {
+      return prev.map(layer => {
+        if (!layer.isSelected) {
+          return layer;
+        }
+        return callback(layer);
+      })
+    })
+  }
+
   return (
     <main className="bg-gray-900 min-h-screen">
-      <div className="flex flex-row">
-        <div className="flex-1">
-          <div className="flex flex-col p-4">
-            <div className="mb-6 flex items-center justify-center">
-              <LoadImageButton setLayers={setLayers} />
+      <EditorContext value={{
+        editSelectedLayers,
+        getCanvasPointerPosition,
+        handleLayerSelection,
+        canvasState,
+        setCanvasState,
+        stageRef,
+      }}>
+        <div className="flex flex-row">
+          <div className="flex-1">
+            <div className="flex flex-col p-4">
+              <div className="mb-6 flex items-center justify-center">
+                <LoadImageButton setLayers={setLayers} />
+              </div>
+              <div className="mb-6">
+                <ToolsManagement
+                  nameSelectedTool={nameSelectedTool}
+                  toolsConfiguration={toolsConfiguration}
+                  setToolsConfiguration={setToolsConfiguration}
+                />
+              </div>
+              <div>
+                <LayersManagement layers={layers} updateLayer={updateLayer} />
+              </div>
             </div>
-            <div className="mb-6">
-              <ToolsManagement
+          </div>
+          <div className="flex-3">
+            <div className="mb-6 mr-4">
+              <Canvas
+                layers={layers}
+                setLayers={setLayers}
+                setVirtualLayers={setVirtualLayers}
+                commitVirtualLayers={commitVirtualLayers}
+                updateLayer={updateLayer}
                 nameSelectedTool={nameSelectedTool}
-                toolsConfiguration={toolsConfiguration}
-                setToolsConfiguration={setToolsConfiguration}
+                height={1000}
+                width={1000}
               />
             </div>
-            <div>
-              <LayersManagement layers={layers} updateLayer={updateLayer} />
+            <div className="flex items-center justify-center">
+              <Toolbar
+                undo={undo}
+                canUndo={canUndo}
+                redo={redo}
+                canRedo={canRedo}
+                nameSelectedTool={nameSelectedTool}
+                setNameSelectedTool={setNameSelectedTool}
+                setMenuDisplay={setMenuDisplay}
+              />
             </div>
           </div>
         </div>
-        <div className="flex-3">
-          <div className="mb-6 mr-4">
-            <Canvas
-              layers={layers}
-              setLayers={setLayers}
-              setVirtualLayers={setVirtualLayers}
-              commitVirtualLayers={commitVirtualLayers}
-              updateLayer={updateLayer}
-              nameSelectedTool={nameSelectedTool}
-              height={1000}
-              width={1000}
-            />
-          </div>
-          <div className="flex items-center justify-center">
-            <Toolbar
-              undo={undo}
-              canUndo={canUndo}
-              redo={redo}
-              canRedo={canRedo}
-              nameSelectedTool={nameSelectedTool}
-              setNameSelectedTool={setNameSelectedTool}
-              setMenuDisplay={setMenuDisplay}
-            />
-          </div>
-        </div>
-      </div>
-      {menuDisplay && <Menu setMenuDisplay={setMenuDisplay} />}
+        {menuDisplay && <Menu setMenuDisplay={setMenuDisplay} />}
+      </EditorContext>
     </main>
   );
 }
