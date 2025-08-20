@@ -1,19 +1,36 @@
-import { Body, Controller, Get, Post, Req, Res, Query } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { UserService } from '../user/user.service';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  Query,
+  UseGuards,
+  UsePipes,
+  HttpCode,
+  ValidationPipe,
+  HttpStatus,
+} from '@nestjs/common';
 import { Response } from 'express';
+import { AuthGuard } from '@nestjs/passport';
 
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { VerifyTwoFaDto } from './dto/verify-twofa.dto';
 
-import { UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
+import { TwoFaService } from './twoFA/twofa.service';
+
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(
-    private readonly authService: AuthService,
-    private readonly userService: UserService,
+    private authService: AuthService,
+    private userService: UsersService,
+    private twofaService: TwoFaService,
   ) {}
 
   //Add HTTP responses and guards for the endpoints (+swagger)
@@ -86,4 +103,51 @@ export class AuthController {
   async microsoftAuthCallback() {}
 
   // TODO : X and Facebook login and callback
+
+  // ----------------- 2FA: VERIFY -----------------
+  /**
+   * POST /auth/2fa/verify
+   *
+   * Verifies a 2FA challenge with a code.
+   * - Commits enable/disable effects when applicable.
+   *
+   * Body: { twofaToken, code }
+   * Returns: { success: true, action, method }
+   */
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  )
+  @Post('2fa/verify')
+  @HttpCode(HttpStatus.OK)
+  async verifyTwoFa(
+    @Req()
+    req: Request & {
+      user?: { userId?: number; id?: number; auth_id?: number };
+    },
+    @Body() body: VerifyTwoFaDto,
+  ): Promise<{
+    success: true;
+    action:
+      | 'enable2fa'
+      | 'disable2fa'
+      | 'login'
+      | 'changePassword'
+      | 'passwordRecovery';
+    method: 'totp' | 'email' | 'sms';
+  }> {
+    const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
+    if (!userId)
+      throw Object.assign(new Error('Unauthorized'), { status: 401 });
+
+    return await this.twofaService.verifyChallenge(
+      Number(userId),
+      body.twofaToken,
+      body.code,
+    );
+  }
 }

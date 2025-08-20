@@ -3,11 +3,14 @@ import {
   UnauthorizedException,
   BadRequestException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 //add ConflictException
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+
+import { Prisma } from '@prisma/client';
 
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -15,11 +18,8 @@ import { LoginDto } from './dto/login.dto';
 import { UsersService } from 'src/users/users.service';
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
-
-// Utility to hash verification tokens (like passwords)
-function sha256Hex(input: string): string {
-  return crypto.createHash('sha256').update(input, 'utf8').digest('hex');
-}
+import { TwoFaService } from './twoFA/twofa.service';
+import { TokensService } from './tokens/tokens.service';
 
 const FRONTEND_BASE_URL = process.env.FRONTEND_URL_LOCAL;
 //const API_BASE_URL = process.env.API_URL_LOCAL;
@@ -41,14 +41,17 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
     private readonly prisma: PrismaService,
+    private readonly twoFaService: TwoFaService,
+    private readonly tokenService: TokensService,
   ) {}
 
   /**
-   * Registers a new user.
-   * If the user already exists, it sends an email indicating that the account already exists.
-   * If the user does not exist, it creates a new user and sends a verification email.
-   * @param dto - The registration data transfer object containing email and password.
-   * @returns A message indicating the result of the registration attempt.
+   * Registers a new user and sends a verification email.
+   *
+   * Notes:
+   * - Handles unique email with a generic response (no account enumeration).
+   * - Deletes any previous unused verification token for this user before creating a new one
+   *   (your schema uses `userId @unique` on EmailVerificationToken).
    */
   async registerUser(dto: RegisterDto) {
     try {
@@ -57,38 +60,44 @@ export class AuthService {
 
       // Print the user object for debugging purposes
       console.log('Registered user:', user);
-      // TODO: put this logic into separate function to use it in other places
-      // Generate a verification token
-      // IMPORTANT: use a secure random token generator, not just a random string
-      const plainToken = crypto.randomBytes(32).toString('hex');
-      const tokenHash = sha256Hex(plainToken);
-      const expiresAt = new Date(Date.now() + 1000 * 60 * 30); // 30 min
+
+      //TODO: This is duplicated in UsersService change email method
+      // Remove any stale, unused token to satisfy `userId @unique`
+      await this.prisma.emailVerificationToken.deleteMany({
+        where: { userId: user.id, usedAt: null },
+      });
+
+      const { plain, hash, expiresAt } = this.tokenService.pair(30 * 60 * 1000);
 
       await this.prisma.emailVerificationToken.create({
-        data: { tokenHash, userId: user.id, expiresAt },
+        data: { tokenHash: hash, userId: user.id, expiresAt },
       });
       // print the token for debugging purposes
-      console.log('Generated verification token:', plainToken);
+      console.log('Generated verification token:', plain);
 
       // IMPORTANT: link goes to FRONTEND
-      const frontendVerifyUrl = `${FRONTEND_BASE_URL}/verify?token=${plainToken}`;
+      const frontendVerifyUrl = `${FRONTEND_BASE_URL}/verify?token=${plain}`;
       await this.emailService.sendVerificationEmail(
         user.email,
         frontendVerifyUrl,
       );
 
-      // Print the verification URL for debugging purposes
-      console.log('Verification URL sent to user:', frontendVerifyUrl);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Verification URL sent to user:', frontendVerifyUrl);
+      }
 
       return {
         message: 'If this email is valid, a confirmation has been sent.1',
       };
     } catch (err: any) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (err.code === 'P2002') {
+      if (
+        err instanceof ConflictException ||
+        (err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === 'P2002')
+      ) {
         await this.emailService.sendExistingAccountEmail(dto.email);
         return {
-          message: 'If this email is valid, a confirmation has been sent.2',
+          message: 'If this email is valid, a confirmation has been sent.',
         };
       }
       throw err;
@@ -97,24 +106,25 @@ export class AuthService {
 
   /**
    * Confirms the user's email address using a verification token.
-   * This method checks if the token is valid, not used, and not expired.
-   * If valid, it enables the user's account and marks the token as used.
+   * - Validates token existence, not-used, not-expired.
+   * - Marks the user as verified.
+   * - Marks the token as used and deletes other unused tokens for the user.
    * @param plainToken - The verification token sent to the user's email.
-   * @returns A confirmation message with the user's email.
    */
   async confirmEmail(plainToken: string) {
     if (!plainToken || typeof plainToken !== 'string') {
       throw new BadRequestException('Invalid token');
     }
 
-    const tokenHash = sha256Hex(plainToken);
+    const tokenHash = this.tokenService.sha256Hex(plainToken);
 
     const token = await this.prisma.emailVerificationToken.findUnique({
       where: { tokenHash },
       include: { user: true },
     });
 
-    if (!token) throw new ForbiddenException('Invalid or expired token');
+    if (!token || !token.user)
+      throw new ForbiddenException('Invalid or expired token');
     if (token.usedAt) throw new ForbiddenException('Token already used');
     if (token.expiresAt.getTime() < Date.now())
       throw new ForbiddenException('Token expired');
@@ -127,7 +137,7 @@ export class AuthService {
     });
 
     await this.prisma.emailVerificationToken.deleteMany({
-      where: { userId: token.userId, usedAt: null },
+      where: { userId: token.userId },
     });
 
     return { email: token.user.email };
@@ -195,14 +205,14 @@ export class AuthService {
       });
     }
 
-    // 6) Shape response timing to blur residual differences
+    // 6) Timing floor + jitter
     const elapsed = Date.now() - start;
     const wait = TIMING_FLOOR_MS + JITTER_MS - elapsed;
     if (wait > 0) await this.sleep(wait);
 
     // 7) Return generic failure to avoid leaking existence/verification state
     if (!canLogin) {
-      // You can standardize on 200 + { success:false } if you prefer.
+      // can standardize on 200 + { success:false } if prefered.
       throw new UnauthorizedException('Invalid credentials');
     }
 

@@ -106,6 +106,28 @@ export class UsersService {
   }
 
   /**
+   * Finds a user by their ID.
+   *
+   * - Returns selected fields (id, email, userName, createdAt, isEmailVerified).
+   *
+   * @param userId - The ID of the user to find.
+   * @returns The user object if found, otherwise null.
+   */
+  async findUserById(userId: number) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        passwordHash: true, // Include passwordHash for auth purposes
+        userName: true,
+        createdAt: true,
+        isEmailVerified: true,
+        refreshToken: true,
+      },
+    });
+  }
+  /**
    * Enables a user account after successful email verification.
    *
    * - Finds the user by email.
