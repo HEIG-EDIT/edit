@@ -14,10 +14,12 @@ import {
 import { LayerComponent } from "./layers/layer";
 import { Vector2d } from "konva/lib/types";
 import { MOVE_TOOL } from "@/components/editor/tools/move";
+import { TransformDiff } from "@/models/editor/layers/layerProps";
+import { v2Add, v2Sub } from "@/models/editor/layers/layerUtils";
 
 type CanvasProps = {
   layers: Layer[];
-  // setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
+  setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
   updateLayer: (
     id: LayerId,
     callback: LayerUpdateCallback,
@@ -46,7 +48,7 @@ const CANVAS_DRAG_MOUSE_BUTTON = 1;
 
 export const Canvas = ({
   layers: layers,
-  // setLayers: setLayers,
+  setLayers: setLayers,
   setVirtualLayers,
   commitVirtualLayers,
   updateLayer,
@@ -176,10 +178,7 @@ export const Canvas = ({
   // considered a drag and not a click.
   const getLayerDragPositionDiff = useCallback(() => {
     const canvasPosition = getCanvasPointerPosition();
-    return {
-      x: canvasPosition.x - layerDragStartPosition.x,
-      y: canvasPosition.y - layerDragStartPosition.y,
-    };
+    return v2Sub(canvasPosition, layerDragStartPosition);
   }, [canvasDragStartPosition, getCanvasPointerPosition]);
 
   const handleMouseMove = (e: KonvaMouseEvent) => {
@@ -204,10 +203,7 @@ export const Canvas = ({
           }
           return {
             ...layer,
-            position: {
-              x: layer.positionBeforeDrag.x + positionDiff.x,
-              y: layer.positionBeforeDrag.y + positionDiff.y,
-            },
+            position: v2Add(layer.positionBeforeDrag, positionDiff),
           };
         });
       });
@@ -294,6 +290,23 @@ export const Canvas = ({
     });
   };
 
+  const transformSelectedLayers = (diff: TransformDiff) => {
+    setLayers((prev) => {
+      return prev.map((layer) => {
+        if (!layer.isSelected) {
+          return layer;
+        }
+
+        return {
+          ...layer,
+          scale: v2Add(layer.scale, diff.scale),
+          position: v2Add(layer.position, diff.position),
+          rotation: layer.rotation + diff.rotation,
+        };
+      });
+    });
+  };
+
   return (
     <div>
       <Stage
@@ -337,12 +350,14 @@ export const Canvas = ({
                 isSelected={layer.isSelected}
                 lines={layer.lines}
                 ref={layer.groupRef}
-                updateLayer={(callback: LayerUpdateCallback) =>
-                  updateLayer(layer.id, callback)
-                }
+                updateLayer={(
+                  callback: LayerUpdateCallback,
+                  virtual: boolean,
+                ) => updateLayer(layer.id, callback, virtual)}
                 setIsTransforming={(val: boolean) => {
                   isTransforming.current = val;
                 }}
+                transformSelectedLayers={transformSelectedLayers}
               />
             );
           })}

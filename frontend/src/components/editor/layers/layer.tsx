@@ -9,7 +9,7 @@ import {
 } from "react-konva";
 import Konva from "konva";
 
-import { Layer } from "@/models/editor/layers/layer";
+import { v2Sub } from "@/models/editor/layers/layerUtils";
 import { LayerProps } from "@/models/editor/layers/layerProps";
 
 export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
@@ -23,8 +23,8 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       isVisible,
       isSelected,
       lines,
-      updateLayer,
       setIsTransforming,
+      transformSelectedLayers,
     }: Partial<LayerProps> = props;
     const transformerRef = useRef<Konva.Transformer>(null);
 
@@ -37,20 +37,16 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
     const handleTransformEnd = () => {
       const node = groupRef?.current;
 
-      updateLayer((layer: Layer) => {
-        return {
-          ...layer,
-          scale: {
-            x: node.scaleX(),
-            y: node.scaleY(),
-          },
-          rotation: node.rotation(),
-          position: {
-            x: node.x(),
-            y: node.y(),
-          },
-        };
-      });
+      const transformDiff = {
+        scale: {
+          x: node.scaleX() - scale.x,
+          y: node.scaleY() - scale.y,
+        },
+        position: v2Sub(node.position(), position),
+        rotation: node.rotation() - rotation,
+      };
+
+      transformSelectedLayers(transformDiff);
     };
 
     return (

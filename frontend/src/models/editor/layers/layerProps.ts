@@ -2,6 +2,12 @@ import { Vector2d } from "konva/lib/types";
 import { LayerId, LayerUpdateCallback } from "./layer";
 import { Line } from "./line";
 
+export interface TransformDiff {
+  scale: Vector2d;
+  position: Vector2d;
+  rotation: number;
+}
+
 export interface LayerProps {
   id: LayerId;
   position: Vector2d;
@@ -11,6 +17,7 @@ export interface LayerProps {
   isVisible: boolean;
   isSelected: boolean;
   lines: Line[];
-  updateLayer: (callback: LayerUpdateCallback) => void;
+  updateLayer: (callback: LayerUpdateCallback, virtual: boolean) => void;
   setIsTransforming: (val: boolean) => void;
+  transformSelectedLayers: (diff: TransformDiff) => void;
 }
