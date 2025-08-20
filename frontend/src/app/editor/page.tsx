@@ -22,8 +22,7 @@ import {
 import { useUndoRedo } from "@/components/editor/undoRedo";
 import { TOOLS, TOOLS_INITIAL_STATE } from "@/models/editor/utils/tools";
 
-import { EditorContext, CanvasState } from "@/components/editor/editorContext";
-import { KonvaMouseEvent } from "@/models/editor/utils/events";
+import { EditorContext, CanvasState, EventHandlers } from "@/components/editor/editorContext";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
@@ -62,7 +61,10 @@ export default function EditorPage() {
     useState<Record<string, ToolConfiguration>>(TOOLS_INITIAL_STATE);
   const [menuDisplay, setMenuDisplay] = useState<boolean>(false);
 
-  const toolEventHandlers = useRef({});
+  const isHoldingPrimary = useRef(false);
+  const isTransforming = useRef(false);
+
+  const toolEventHandlers = useRef<EventHandlers>({});
 
   // TODO : a supprimer des que gestion du state global ok
   useEffect(() => console.log(toolsConfiguration), [toolsConfiguration]);
@@ -76,9 +78,8 @@ export default function EditorPage() {
     scale: 1,
   });
 
-  const setToolEventHandlers = () => {
-    toolEventHandlers.current = {
-    };
+  const setToolEventHandlers = (eventHandlers: EventHandlers) => {
+    toolEventHandlers.current = eventHandlers;
   };
 
   const getCanvasPointerPosition = () => {
@@ -94,45 +95,6 @@ export default function EditorPage() {
       x: (stagePosition.x - canvas.position.x) / canvas.scale,
       y: (stagePosition.y - canvas.position.y) / canvas.scale,
     };
-  };
-
-  // Click handler for stage handling layer selection
-  const handleLayerSelection = (e: KonvaMouseEvent) => {
-    if (!e.evt.ctrlKey) {
-      // Start by de-selecting all layers
-      setVirtualLayers((prev) => {
-        return prev.map((layer) => {
-          return {
-            ...layer,
-            isSelected: false,
-          };
-        });
-      });
-    }
-
-    const pointer = stageRef.current?.getPointerPosition();
-    if (!pointer) {
-      return;
-    }
-
-    const target = stageRef.current?.getIntersection(pointer);
-
-    if (target) {
-      const layerId = target.parent?.id();
-      if (!layerId) {
-        return;
-      }
-      updateLayer(
-        layerId,
-        (prev) => {
-          return {
-            ...prev,
-            isSelected: true,
-          };
-        },
-        true,
-      );
-    }
   };
 
   /// Find the layer's state and it's index in the list from it's id
@@ -184,12 +146,22 @@ export default function EditorPage() {
   return (
     <main className="bg-gray-900 min-h-screen">
       <EditorContext value={{
+        isHoldingPrimary,
+        isTransforming,
+
+        setVirtualLayers,
+        updateLayer,
         editSelectedLayers,
+        commitVirtualLayers,
+
         getCanvasPointerPosition,
-        handleLayerSelection,
+
         canvasState,
         setCanvasState,
         stageRef,
+
+        toolEventHandlers,
+        setToolEventHandlers,
       }}>
         <div className="flex flex-row">
           <div className="flex-1">

@@ -18,6 +18,4 @@ export interface LayerProps {
   isSelected: boolean;
   lines: Line[];
   updateLayer: (callback: LayerUpdateCallback, virtual: boolean) => void;
-  setIsTransforming: (val: boolean) => void;
-  transformSelectedLayers: (diff: TransformDiff) => void;
 }

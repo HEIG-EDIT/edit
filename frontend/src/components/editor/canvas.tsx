@@ -2,9 +2,9 @@
 
 "use client";
 
-import React, { useRef, useState, useCallback, useContext, createContext } from "react";
+import React, { useRef, useState, useCallback, createContext } from "react";
 import { Stage, Layer as KonvaLayer, Rect } from "react-konva";
-import { KonvaMouseEvent, KonvaScrollEvent } from "@/models/editor/utils/events";
+import { CANVAS_DRAG_MOUSE_BUTTON, KonvaMouseEvent, KonvaScrollEvent, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, PRIMARY_MOUSE_BUTTON } from "@/models/editor/utils/events";
 import {
   Layer,
   LayerId,
@@ -12,9 +12,8 @@ import {
 } from "@/models/editor/layers/layer";
 import { LayerComponent } from "./layers/layer";
 import { Vector2d } from "konva/lib/types";
-import { MOVE_TOOL } from "@/components/editor/tools/move";
 import { TransformDiff } from "@/models/editor/layers/layerProps";
-import { v2Add, v2Sub } from "@/models/editor/layers/layerUtils";
+import { v2Add, } from "@/models/editor/layers/layerUtils";
 import { useEditorContext } from "@/components/editor/editorContext";
 
 type CanvasProps = {
@@ -34,11 +33,7 @@ type CanvasProps = {
 
 export const Canvas = ({
   layers: layers,
-  setLayers: setLayers,
-  setVirtualLayers,
-  commitVirtualLayers,
   updateLayer,
-  nameSelectedTool,
   width,
   height,
 }: CanvasProps) => {
@@ -49,44 +44,12 @@ export const Canvas = ({
       y: 0,
     });
 
-  const isDraggingLayers = useRef(false);
-  const isHoldingPrimary = useRef(false);
-  const [layerDragStartPosition, setLayerDragStartPosition] =
-    useState<Vector2d>({
-      x: 0,
-      y: 0,
-    });
-
   const isTransforming = useRef(false);
 
-  const { editSelectedLayers, getCanvasPointerPosition, handleLayerSelection, canvasState, setCanvasState, stageRef } = useEditorContext();
-
-  const isDrawing = useRef(false);
-  const handleDrawStart = (e: KonvaMouseEvent) => {
-    isDrawing.current = true;
-
-    editSelectedLayers(layer => {
-      const pointPosition = v2Sub(getCanvasPointerPosition(), layer.position);
-      return {
-        ...layer,
-        lines: layer.lines.concat([
-          {
-            points: [pointPosition.x, pointPosition.y],
-            color: ,
-            width: 3,
-            tool: null,
-          }
-        ])
-      };
-    }, true);
-  };
+  const { editSelectedLayers, getCanvasPointerPosition, canvasState, setCanvasState, stageRef, toolEventHandlers, isHoldingPrimary } = useEditorContext();
 
   const handleMouseDown = (e: KonvaMouseEvent) => {
     e.evt.preventDefault();
-    if (nameSelectedTool != MOVE_TOOL.name || isTransforming.current) {
-      // TODO: Other cases will need to be handled (e.g. tool application)
-      return;
-    }
 
     if (e.evt.button == CANVAS_DRAG_MOUSE_BUTTON) {
       setCanvasDragStartPosition({
@@ -96,60 +59,19 @@ export const Canvas = ({
 
       isDraggingCanvas.current = true;
     } else if (e.evt.button == PRIMARY_MOUSE_BUTTON) {
-      setLayerDragStartPosition(getCanvasPointerPosition());
-      isHoldingPrimary.current = true;
-
-      editSelectedLayers(layer => {
-        if (!layer.isSelected) {
-          return layer;
-        }
-        return {
-          ...layer,
-          positionBeforeDrag: {
-            x: layer.position.x,
-            y: layer.position.y,
-          },
-        };
-      }, true)
+      const handler = toolEventHandlers.current[MOUSE_DOWN];
+      if (handler) {
+        handler(e);
+      }
     }
   };
 
-  // Determine whether or not the mouse is dragging across the canvas. The
-  // mouse needs to move past a certain threshold before the action is
-  // considered a drag and not a click.
-  const getLayerDragPositionDiff = useCallback(() => {
-    const canvasPosition = getCanvasPointerPosition();
-    return v2Sub(canvasPosition, layerDragStartPosition);
-  }, [canvasDragStartPosition, getCanvasPointerPosition]);
-
   const handleMouseMove = (e: KonvaMouseEvent) => {
-    if (isTransforming.current) {
-      return;
-    }
-    if (isHoldingPrimary.current) {
-      const positionDiff = getLayerDragPositionDiff();
-
-      // Not dragging
-      // FIXME: Maybe update threshold?
-      if (Math.hypot(positionDiff.x, positionDiff.y) < 2) {
-        return;
+    if (!isDraggingCanvas.current) {
+      const handler = toolEventHandlers.current[MOUSE_MOVE];
+      if (handler) {
+        return handler(e);
       }
-
-      isDraggingLayers.current = true;
-
-      editSelectedLayers(layer => {
-        return {
-          ...layer,
-          position: v2Add(layer.positionBeforeDrag, positionDiff),
-        };
-      }, true)
-
-      return;
-    }
-
-    if (!isDraggingCanvas.current && !isDraggingLayers.current) {
-      // TODO: Handle other cases
-      return;
     }
 
     if (e.evt.buttons != 4) {
@@ -170,22 +92,15 @@ export const Canvas = ({
   };
 
   const handleMouseUp = (e: KonvaMouseEvent) => {
-    if (isTransforming.current) {
-      isTransforming.current = false;
-      return;
-    }
-
     isDraggingCanvas.current = false;
     isHoldingPrimary.current = false;
 
-    if (e.evt.button != CANVAS_DRAG_MOUSE_BUTTON && !isDraggingLayers.current) {
-      handleLayerSelection(e);
-      return;
-    }
-
-    if (isDraggingLayers.current) {
-      commitVirtualLayers();
-      isDraggingLayers.current = false;
+    if (e.evt.button == PRIMARY_MOUSE_BUTTON) {
+      const handler = toolEventHandlers.current[MOUSE_UP];
+      if (handler) {
+        handler(e);
+        return
+      }
     }
   };
 
@@ -225,24 +140,6 @@ export const Canvas = ({
       };
     });
   };
-
-  const transformSelectedLayers = (diff: TransformDiff) => {
-    editSelectedLayers(layer => {
-      return {
-        ...layer,
-        scale: v2Add(layer.scale, diff.scale),
-        position: v2Add(layer.position, diff.position),
-        rotation: layer.rotation + diff.rotation,
-      };
-    })
-  };
-
-  // Context used to give child components manipulation capabilities on the whole
-  // canvas
-  const canvasContext = useContext(createContext({
-    getCanvasPointerPosition: getCanvasPointerPosition,
-    editSelectedLayers: editSelectedLayers,
-  }));
 
   return (
     <div>
@@ -290,10 +187,6 @@ export const Canvas = ({
                   callback: LayerUpdateCallback,
                   virtual: boolean,
                 ) => updateLayer(layer.id, callback, virtual)}
-                setIsTransforming={(val: boolean) => {
-                  isTransforming.current = val;
-                }}
-                transformSelectedLayers={transformSelectedLayers}
               />
             );
           })}
