@@ -25,6 +25,7 @@ export const PaintToolConfigurationComponent = ({
     getCanvasPointerPosition,
     setToolEventHandlers,
     commitVirtualLayers,
+    layers,
   } = useEditorContext();
 
   const getLayerCursorPosition = (layer: Layer) => {
@@ -32,6 +33,19 @@ export const PaintToolConfigurationComponent = ({
   };
 
   const handleMouseDown = () => {
+    // If no layer is selected, don't set isDrawing in order to not update the history
+    let hasSelectedLayer = false;
+    for (const layer of layers) {
+      if (layer.isSelected) {
+        hasSelectedLayer = true;
+        break;
+      }
+    }
+
+    if (!hasSelectedLayer) {
+      return;
+    }
+
     isDrawing.current = true;
 
     editSelectedLayers((layer) => {
@@ -57,7 +71,6 @@ export const PaintToolConfigurationComponent = ({
 
     // TODO: Restrict drawing to inside the layer
     editSelectedLayers((layer) => {
-      console.log("layer", layer);
       const pointPosition = getLayerCursorPosition(layer);
       const lines = layer.lines.slice();
       const currentLine = lines[lines.length - 1];
