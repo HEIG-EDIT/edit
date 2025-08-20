@@ -66,7 +66,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
             />
           ))}
         </KonvaGroup>
-        {isSelected && (
+        {isSelected && isVisible && (
           <KonvaTransformer
             listening={false}
             ref={transformerRef}

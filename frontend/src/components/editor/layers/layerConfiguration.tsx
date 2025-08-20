@@ -45,6 +45,7 @@ export const LayerConfiguration = ({
               return {
                 ...layer,
                 isVisible: !layer.isVisible,
+                isSelected: layer.isVisible ? false : layer.isSelected,
               };
             });
           }}
