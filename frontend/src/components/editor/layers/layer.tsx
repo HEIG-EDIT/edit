@@ -108,7 +108,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
               tension={0.5}
               lineCap="round"
               lineJoin="round"
-              globalCompositeOperation={"source-over"}
+              globalCompositeOperation={line.tool}
             />
           ))}
         </KonvaGroup>

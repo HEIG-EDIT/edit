@@ -5,10 +5,7 @@ import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
 import BrushRoundedIcon from "@mui/icons-material/BrushRounded";
-import { useRef } from "react";
-import { useEditorContext } from "../editorContext";
-import { v2Sub } from "@/models/editor/layers/layerUtils";
-import { Layer } from "@/models/editor/layers/layer";
+import { PaintEraseBaseComponent } from "./paintEraseBase";
 
 export interface PaintToolConfiguration extends ToolConfiguration {
   radius: number;
@@ -19,86 +16,11 @@ export const PaintToolConfigurationComponent = ({
   configuration,
   setConfiguration,
 }: ToolConfigurationProps<PaintToolConfiguration>) => {
-  const isDrawing = useRef(false);
-  const {
-    editSelectedLayers,
-    getCanvasPointerPosition,
-    setToolEventHandlers,
-    commitVirtualLayers,
-    layers,
-  } = useEditorContext();
-
-  const getLayerCursorPosition = (layer: Layer) => {
-    return v2Sub(getCanvasPointerPosition(), layer.position);
-  };
-
-  const handleMouseDown = () => {
-    // If no layer is selected, don't set isDrawing in order to not update the history
-    let hasSelectedLayer = false;
-    for (const layer of layers) {
-      if (layer.isSelected) {
-        hasSelectedLayer = true;
-        break;
-      }
-    }
-
-    if (!hasSelectedLayer) {
-      return;
-    }
-
-    isDrawing.current = true;
-
-    editSelectedLayers((layer) => {
-      const pointPosition = getLayerCursorPosition(layer);
-      return {
-        ...layer,
-        lines: layer.lines.concat([
-          {
-            points: [pointPosition.x, pointPosition.y],
-            color: configuration.color,
-            width: configuration.radius,
-            tool: null,
-          },
-        ]),
-      };
-    }, true);
-  };
-
-  const handleMouseMove = () => {
-    if (!isDrawing.current) {
-      return;
-    }
-
-    // TODO: Restrict drawing to inside the layer
-    editSelectedLayers((layer) => {
-      const pointPosition = getLayerCursorPosition(layer);
-      const lines = layer.lines.slice();
-      const currentLine = lines[lines.length - 1];
-      currentLine.points = currentLine.points.concat([
-        pointPosition.x,
-        pointPosition.y,
-      ]);
-
-      layer.lines = lines;
-      return layer;
-    }, true);
-  };
-
-  const handleMouseUp = () => {
-    if (isDrawing.current) {
-      isDrawing.current = false;
-      commitVirtualLayers();
-    }
-  };
-
-  setToolEventHandlers({
-    mouseDown: handleMouseDown,
-    mouseMove: handleMouseMove,
-    mouseUp: handleMouseUp,
-  });
-
   return (
     <div>
+      <PaintEraseBaseComponent
+        toolConfiguration={{ configuration, setConfiguration }}
+      />
       <p className="text-violet-50">
         Radius :<br></br>
       </p>
