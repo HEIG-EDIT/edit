@@ -2,9 +2,17 @@
 
 "use client";
 
-import React, { useRef, useState, useCallback, createContext } from "react";
+import React, { useRef, useState } from "react";
 import { Stage, Layer as KonvaLayer, Rect } from "react-konva";
-import { CANVAS_DRAG_MOUSE_BUTTON, KonvaMouseEvent, KonvaScrollEvent, MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, PRIMARY_MOUSE_BUTTON } from "@/models/editor/utils/events";
+import {
+  CANVAS_DRAG_MOUSE_BUTTON,
+  KonvaMouseEvent,
+  KonvaScrollEvent,
+  MOUSE_DOWN,
+  MOUSE_MOVE,
+  MOUSE_UP,
+  PRIMARY_MOUSE_BUTTON,
+} from "@/models/editor/utils/events";
 import {
   Layer,
   LayerId,
@@ -12,8 +20,6 @@ import {
 } from "@/models/editor/layers/layer";
 import { LayerComponent } from "./layers/layer";
 import { Vector2d } from "konva/lib/types";
-import { TransformDiff } from "@/models/editor/layers/layerProps";
-import { v2Add, } from "@/models/editor/layers/layerUtils";
 import { useEditorContext } from "@/components/editor/editorContext";
 
 type CanvasProps = {
@@ -44,9 +50,14 @@ export const Canvas = ({
       y: 0,
     });
 
-  const isTransforming = useRef(false);
-
-  const { editSelectedLayers, getCanvasPointerPosition, canvasState, setCanvasState, stageRef, toolEventHandlers, isHoldingPrimary } = useEditorContext();
+  const {
+    getCanvasPointerPosition,
+    canvasState,
+    setCanvasState,
+    stageRef,
+    toolEventHandlers,
+    isHoldingPrimary,
+  } = useEditorContext();
 
   const handleMouseDown = (e: KonvaMouseEvent) => {
     e.evt.preventDefault();
@@ -99,7 +110,7 @@ export const Canvas = ({
       const handler = toolEventHandlers.current[MOUSE_UP];
       if (handler) {
         handler(e);
-        return
+        return;
       }
     }
   };

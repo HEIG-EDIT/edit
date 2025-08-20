@@ -1,7 +1,7 @@
 import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
-import { CANVAS_DRAG_MOUSE_BUTTON, KonvaMouseEvent, MOUSE_DOWN, PRIMARY_MOUSE_BUTTON } from "@/models/editor/utils/events";
+import { KonvaMouseEvent } from "@/models/editor/utils/events";
 import OpenWithRoundedIcon from "@mui/icons-material/OpenWithRounded";
 import { useEditorContext } from "../editorContext";
 import { useState, useCallback, useRef } from "react";
@@ -18,7 +18,17 @@ export const MoveToolConfigurationComponent = ({
   console.log(configuration);
   console.log(setConfiguration);
 
-  const { isHoldingPrimary, isTransforming, editSelectedLayers, setToolEventHandlers, getCanvasPointerPosition, commitVirtualLayers, setVirtualLayers, stageRef, updateLayer } = useEditorContext();
+  const {
+    isHoldingPrimary,
+    isTransforming,
+    editSelectedLayers,
+    setToolEventHandlers,
+    getCanvasPointerPosition,
+    commitVirtualLayers,
+    setVirtualLayers,
+    stageRef,
+    updateLayer,
+  } = useEditorContext();
 
   const [layerDragStartPosition, setLayerDragStartPosition] =
     useState<Vector2d>({
@@ -34,12 +44,11 @@ export const MoveToolConfigurationComponent = ({
   const getLayerDragPositionDiff = useCallback(() => {
     const canvasPosition = getCanvasPointerPosition();
     return v2Sub(canvasPosition, layerDragStartPosition);
-
   }, [getCanvasPointerPosition, layerDragStartPosition]);
 
   // Click handler for stage handling layer selection
-  const handleLayerSelection = (e: KonvaMouseEvent) => {
-    if (!e.evt.ctrlKey) {
+  const handleLayerSelection = (e: KonvaMouseEvent | undefined) => {
+    if (!e?.evt.ctrlKey) {
       // Start by de-selecting all layers
       setVirtualLayers((prev) => {
         return prev.map((layer) => {
@@ -76,23 +85,22 @@ export const MoveToolConfigurationComponent = ({
     }
   };
 
-
   const handleMouseDown = () => {
-      setLayerDragStartPosition(getCanvasPointerPosition());
-      isHoldingPrimary.current = true;
+    setLayerDragStartPosition(getCanvasPointerPosition());
+    isHoldingPrimary.current = true;
 
-      editSelectedLayers(layer => {
-        if (!layer.isSelected) {
-          return layer;
-        }
-        return {
-          ...layer,
-          positionBeforeDrag: {
-            x: layer.position.x,
-            y: layer.position.y,
-          },
-        };
-      }, true)
+    editSelectedLayers((layer) => {
+      if (!layer.isSelected) {
+        return layer;
+      }
+      return {
+        ...layer,
+        positionBeforeDrag: {
+          x: layer.position.x,
+          y: layer.position.y,
+        },
+      };
+    }, true);
   };
 
   const handleMouseMove = () => {
@@ -107,19 +115,18 @@ export const MoveToolConfigurationComponent = ({
 
       isDraggingLayers.current = true;
 
-      editSelectedLayers(layer => {
+      editSelectedLayers((layer) => {
         return {
           ...layer,
           position: v2Add(layer.positionBeforeDrag, positionDiff),
         };
-      }, true)
+      }, true);
 
       return;
     }
-
   };
 
-  const handleMouseUp = (e: KonvaMouseEvent) => {
+  const handleMouseUp = (e: KonvaMouseEvent | undefined) => {
     if (isTransforming.current) {
       isTransforming.current = false;
       return;
@@ -128,16 +135,15 @@ export const MoveToolConfigurationComponent = ({
     if (isDraggingLayers.current) {
       commitVirtualLayers();
       isDraggingLayers.current = false;
-    }
-    else {
+    } else {
       return handleLayerSelection(e);
     }
   };
 
   setToolEventHandlers({
-     mouseDown: handleMouseDown,
-     mouseMove: handleMouseMove,
-     mouseUp: handleMouseUp,
+    mouseDown: handleMouseDown,
+    mouseMove: handleMouseMove,
+    mouseUp: handleMouseUp,
   });
 
   return (

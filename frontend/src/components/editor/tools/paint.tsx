@@ -15,25 +15,24 @@ export const PaintToolConfigurationComponent = ({
   configuration,
   setConfiguration,
 }: ToolConfigurationProps<PaintToolConfiguration>) => {
+  // const handleDrawStart = (e: KonvaMouseEvent) => {
+  //   isDrawing.current = true;
 
-  const handleDrawStart = (e: KonvaMouseEvent) => {
-    isDrawing.current = true;
-
-    editSelectedLayers(layer => {
-      const pointPosition = v2Sub(getCanvasPointerPosition(), layer.position);
-      return {
-        ...layer,
-        lines: layer.lines.concat([
-          {
-            points: [pointPosition.x, pointPosition.y],
-            color: "",
-            width: 3,
-            tool: null,
-          }
-        ])
-      };
-    }, true);
-  };
+  //   editSelectedLayers(layer => {
+  //     const pointPosition = v2Sub(getCanvasPointerPosition(), layer.position);
+  //     return {
+  //       ...layer,
+  //       lines: layer.lines.concat([
+  //         {
+  //           points: [pointPosition.x, pointPosition.y],
+  //           color: "",
+  //           width: 3,
+  //           tool: null,
+  //         }
+  //       ])
+  //     };
+  //   }, true);
+  // };
 
   return (
     <div>
