@@ -46,20 +46,30 @@ export const LayersManagement = ({
         />
       </div>
       <div className="flex flex-row p-2 gap-4 items-center">
-        <div className="flex flex-col gap-2 w-5/6">
+        <div
+          className="flex flex-col gap-2 w-5/6 max-h-64 overflow-y-auto
+        [&::-webkit-scrollbar]:w-3
+        [&::-webkit-scrollbar-track]:bg-gray-400
+        [&::-webkit-scrollbar-track]:rounded-full
+        [&::-webkit-scrollbar-thumb]:border-2
+        [&::-webkit-scrollbar-thumb]:border-gray-900
+        [&::-webkit-scrollbar-thumb]:bg-gray-600 
+        [&::-webkit-scrollbar-thumb]:rounded-full"
+        >
           {layers.toReversed().map((layer: Layer) => (
-            <LayerConfiguration
-              name={layer.name}
-              key={layer.id}
-              updateLayer={(
-                callback: LayerUpdateCallback,
-                virtual: boolean = true,
-              ) => {
-                updateLayer(layer.id, callback, virtual);
-              }}
-              isSelected={layer.isSelected}
-              isVisible={layer.isVisible}
-            />
+            <div className="pr-4" key={layer.id}>
+              <LayerConfiguration
+                name={layer.name}
+                updateLayer={(
+                  callback: LayerUpdateCallback,
+                  virtual: boolean = true,
+                ) => {
+                  updateLayer(layer.id, callback, virtual);
+                }}
+                isSelected={layer.isSelected}
+                isVisible={layer.isVisible}
+              />
+            </div>
           ))}
         </div>
         <div className="flex flex-col w-1/6 justify-center">
