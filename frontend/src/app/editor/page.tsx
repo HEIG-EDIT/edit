@@ -3,7 +3,6 @@
 import Konva from "konva";
 import dynamic from "next/dynamic";
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { LoadImageButton } from "@/components/editor/loadImageButton";
 
 import { MOVE_TOOL } from "@/components/editor/tools/move";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
@@ -176,9 +175,6 @@ export default function EditorPage() {
         <div className="flex flex-row">
           <div className="w-1/3">
             <div className="flex flex-col p-4">
-              <div className="mb-6 flex items-center justify-center">
-                <LoadImageButton setLayers={setLayers} />
-              </div>
               <div className="mb-6">
                 <ToolsManagement
                   nameSelectedTool={nameSelectedTool}

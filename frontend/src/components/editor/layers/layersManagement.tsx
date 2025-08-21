@@ -8,7 +8,6 @@ import { Fragment, useCallback, useRef, useState } from "react";
 import AddToPhotosRoundedIcon from "@mui/icons-material/AddToPhotosRounded";
 import CollectionsRoundedIcon from "@mui/icons-material/CollectionsRounded";
 import { EntryButton } from "../menu/entryButton";
-import KeyboardReturnRoundedIcon from "@mui/icons-material/KeyboardReturnRounded";
 import useOnClickOutside from "@/hooks/useOnClickOutside";
 import { LayersManagementProps } from "@/models/editor/layers/layersManagementProps";
 import { Layer, LayerUpdateCallback } from "@/models/editor/layers/layer";
@@ -31,6 +30,27 @@ export const LayersManagement = ({
   }, [setIsNewLayerDisplayed]);
 
   useOnClickOutside(containerRef, handleClickOutside);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new window.Image();
+      img.src = reader.result as string;
+      img.onload = () => {
+        setLayers((prev) => [...prev, new Layer(file.name, img)]);
+      };
+    };
+    reader.readAsDataURL(file);
+  };
 
   const displayLayers = (
     <Fragment>
@@ -86,19 +106,20 @@ export const LayersManagement = ({
       <EntryButton
         icon={<AddToPhotosRoundedIcon />}
         text={"Import image"}
-        onClick={() => {}}
+        onClick={handleUploadClick}
         style="bg-violet-50 border-2 border-violet-500"
+      />
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileChange}
       />
       <EntryButton
         icon={<CollectionsRoundedIcon />}
         text={"Empty layer"}
         onClick={() => {}}
-        style="bg-violet-50 border-2 border-violet-500"
-      />
-      <EntryButton
-        icon={<KeyboardReturnRoundedIcon />}
-        text={"Cancel"}
-        onClick={() => setIsNewLayerDisplayed(false)}
         style="bg-violet-50 border-2 border-violet-500"
       />
     </div>
