@@ -11,14 +11,20 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 import { EmailModule } from '../email/email.module';
-import { UserModule } from '../user/user.module';
+import { UsersModule } from '../users/users.module';
+import { UsersService } from '../users/users.service';
+import { TwoFaService } from './twoFA/twofa.service';
+import { TokensService } from './tokens/tokens.service';
+
+import { JwtService } from '@nestjs/jwt';
+
 import config from '../config/auth.config';
 
 @Module({
   imports: [
     PrismaModule,
     PassportModule,
-    forwardRef(() => UserModule), // UPDATED: handles circular deps if any
+    forwardRef(() => UsersModule), // UPDATED: handles circular deps if any
     EmailModule, // UPDATED: so EmailService can be injected
     JwtModule.registerAsync({
       useFactory: () => ({
@@ -32,7 +38,14 @@ import config from '../config/auth.config';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    UsersService,
+    TwoFaService,
+    TokensService,
+    JwtService,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

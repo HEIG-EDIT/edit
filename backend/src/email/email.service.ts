@@ -7,4 +7,5 @@ export class EmailService {
   async sendExistingAccountEmail(email: string) {}
   async sendForgotPasswordEmail() {}
   async sendPasswordChangeEmail(email: string) {}
+  async sendEmailChangeEmail(email: string) {}
 }

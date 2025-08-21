@@ -4,6 +4,7 @@ import {
   BadRequestException,
   ForbiddenException,
   ConflictException,
+  NotFoundException,
 } from '@nestjs/common';
 //add ConflictException
 import { JwtService } from '@nestjs/jwt';
@@ -232,5 +233,56 @@ export class AuthService {
    */
   private sleep(ms: number) {
     return new Promise((r) => setTimeout(r, ms));
+  }
+
+  /**
+   * logs out a user by deleting their refresh token.
+   * @param userId - The ID of the user to log out.
+   * @param deviceId - The ID of the device to log out from.
+   * @throws {NotFoundException} If the refresh token does not exist.
+   */
+  async logoutUser(
+    userId: number | string,
+    deviceId: string,
+  ): Promise<{ message: string }> {
+    // basic input checks (KISS)
+    const uid =
+      typeof userId === 'string' ? Number.parseInt(userId, 10) : userId;
+    if (!Number.isFinite(uid)) {
+      throw new BadRequestException('Invalid user id');
+    }
+    if (!deviceId || typeof deviceId !== 'string') {
+      throw new BadRequestException('Invalid device id');
+    }
+
+    const result = await this.prisma.refreshToken.deleteMany({
+      where: { userId: uid, deviceId },
+    });
+
+    if (result.count === 0) {
+      throw new NotFoundException('Refresh token not found for this device');
+    }
+
+    return { message: 'Logged out successfully' };
+  }
+
+  /**
+   * Logs out a user from all devices by deleting all their refresh tokens.
+   * @param userId - The ID of the user to log out from all devices.
+   * @returns An object indicating how many tokens were revoked.
+   * @throws {BadRequestException} If the user ID is invalid.
+   */
+  async logoutAllDevices(
+    userId: number | string,
+  ): Promise<{ revoked: number }> {
+    const uid =
+      typeof userId === 'string' ? Number.parseInt(userId, 10) : userId;
+    if (!Number.isFinite(uid)) {
+      throw new BadRequestException('Invalid user id');
+    }
+    const result = await this.prisma.refreshToken.deleteMany({
+      where: { userId: uid },
+    });
+    return { revoked: result.count };
   }
 }

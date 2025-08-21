@@ -6,26 +6,38 @@ import {
   Post,
   Body,
   Req,
+  Res,
   ValidationPipe,
   HttpStatus,
   HttpCode,
   UseGuards,
   UsePipes,
   ForbiddenException,
+  Param,
+  NotFoundException,
 } from '@nestjs/common';
-import type { Request } from 'express';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { Request, Response } from 'express';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
 
 import { UsersService } from './users.service';
 import { TwoFaService } from '../auth/twoFA/twofa.service';
 import { TokensService } from '../auth/tokens/tokens.service';
 import { EmailService } from '../email/email.service';
+import { AuthService } from '../auth/auth.service';
 
 import { ChangeUsernameDto } from './dto/change-username.dto';
 import { ChangeEmailDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangeTwoFaDto } from './dto/change-2fa.dto';
+
+import {
+  conflict,
+  noContent,
+  ok,
+  setNoStore,
+  unauthorized,
+} from '../common/helpers/responses/responses.helper';
 
 const FRONTEND_BASE_URL = process.env.FRONTEND_URL_LOCAL;
 
@@ -37,9 +49,10 @@ export class UsersController {
     private prisma: PrismaService,
     private tokens: TokensService,
     private emailService: EmailService,
+    private authService: AuthService,
   ) {}
 
-  //--------------------Manage User Profile------------------//
+  //--------------------Get User Profile------------------//
 
   /**
    * GET /user/me
@@ -49,7 +62,11 @@ export class UsersController {
    * - Provides username, email, and 2FA method.
    *
    * @param req - Express request containing authenticated user payload.
-   * @returns Object with profile info.
+   * @param res - Express response to handle errors.
+   * @returns User profile information or 401 if not authenticated.
+   * @throws 401 if user is not authenticated or token is invalid.
+   * @throws 404 if user profile is not found.
+   * @throws 200 with user profile information if successful.
    */
   @UseGuards(JwtAuthGuard)
   @Get('me')
@@ -58,17 +75,54 @@ export class UsersController {
     req: Request & {
       user?: { userId?: number; id?: number; auth_id?: number };
     },
+    @Res({ passthrough: true }) res: Response,
   ): Promise<{ userName: string; email: string; twoFaMethod: string | null }> {
-    const userId =
-      req.user?.userId ?? req.user?.id ?? req.user?.auth_id ?? undefined;
+    setNoStore(res); /// Ensure no caching for this endpoint
+
+    const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
 
     if (!userId) {
-      throw Object.assign(new Error('Unauthorized'), { status: 401 });
+      // Standard 401 with auth header
+      return unauthorized(res);
     }
 
-    return await this.usersService.getUserProfile(Number(userId));
+    const profile = await this.usersService.getUserProfile(Number(userId));
+    if (!profile) {
+      // Stale/invalid session → 401 opaque
+      return unauthorized(res, 'Authentication required', {
+        error: 'invalid_token',
+      });
+    }
+
+    // 200 OK with user profile --> note: this profile does not include sensitive data like password hash
+    return ok(res, profile);
   }
 
+  /**
+   * GET /user/username/:username
+   *
+   * - 200 OK with public profile info
+   * - 400 Bad Request if param is empty/invalid
+   * - 404 Not Found if no user matches
+   */
+  @Get('username/:username')
+  async getProfileByUsername(
+    @Param('username') username: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    setNoStore(res); // Don’t cache user profile responses
+
+    const profile = await this.usersService.findUserByUsername(username);
+
+    if (!profile) {
+      throw new NotFoundException('User not found'); // 404
+    }
+
+    // 200 OK
+    return ok(res, profile);
+  }
+
+  //--------------------Update User Profile------------------//
   /**
    * PATCH /user/me/username
    *
@@ -78,8 +132,13 @@ export class UsersController {
    * - Short-circuits if the username is unchanged.
    *
    * @param req - Express request containing the authenticated user.
+   * @param res - Express response to handle errors and set cache headers.
    * @param body - DTO containing the new username.
-   * @returns Success message on update.
+   * @returns Updated username or no content if unchanged.
+   * @throws 401 if user is not authenticated or token is invalid.
+   * @throws 422 if validation fails.
+   * @throws 204 if the username is unchanged (idempotent no-op).
+   * @throws 200 with updated username if successful.
    */
   @UseGuards(JwtAuthGuard)
   @UsePipes(
@@ -87,28 +146,49 @@ export class UsersController {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
     }),
   )
   @Patch('me/username')
-  @HttpCode(HttpStatus.OK)
   async updateUsername(
     @Req()
     req: Request & {
       user?: { userId?: number; id?: number; auth_id?: number; email?: string };
     },
+    @Res({ passthrough: true }) res: Response,
     @Body() body: ChangeUsernameDto,
-  ): Promise<{ message: string }> {
+  ): Promise<{ userName: string } | void> {
+    // Ensure sensitive responses aren't cached
+    setNoStore(res);
+
     // UPDATED: trust DTO, rely on guard for auth, resolve user id from strategy payload
     const userId =
       req.user?.userId ?? req.user?.id ?? req.user?.auth_id ?? undefined;
 
     if (!userId) {
-      // JwtAuthGuard should prevent this, but just in case
-      throw Object.assign(new Error('Unauthorized'), { status: 401 });
+      // Shouldn't happen with JwtAuthGuard, but just in case
+      return unauthorized(res);
     }
 
-    await this.usersService.changeUsername(userId, body.userName);
-    return { message: 'Username updated successfully' };
+    const result = await this.usersService.changeUsername(
+      userId,
+      body.userName,
+    );
+
+    if (result === null) {
+      // Stale token or deleted account → opaque 401
+      return unauthorized(res, 'Authentication required', {
+        error: 'invalid_token',
+      });
+    }
+
+    if (result.updated === false) {
+      // Idempotent no-op → 204
+      return noContent(res);
+    }
+
+    // 200 OK with updated field
+    return ok(res, { userName: result.userName });
   }
 
   /**
@@ -120,8 +200,15 @@ export class UsersController {
    * - Short-circuits if the email is unchanged.
    *
    * @param req - Express request containing the authenticated user.
+   * @param res - Express response to handle errors and set cache headers.
    * @param body - DTO containing the new email.
    * @returns Success message on update.
+   *
+   * @throws 401 if user is not authenticated or token is invalid.
+   * @throws 409 if the email is already in use by another user.
+   * @throws 403 if the user is trying to change email on an OAuth-only account.
+   * @throws 202 if the email change process has started and a verification email is sent
+   * @thros 204 if the email is unchanged (idempotent no-op).
    */
   @UseGuards(JwtAuthGuard)
   @UsePipes(
@@ -129,22 +216,31 @@ export class UsersController {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
     }),
   )
   @Patch('me/email')
-  @HttpCode(HttpStatus.OK)
   async updateEmail(
     @Req()
     req: Request & {
       user?: { userId?: number; id?: number; auth_id?: number; email?: string };
     },
+    @Res({ passthrough: true }) res: Response,
     @Body() body: ChangeEmailDto,
-  ) {
+  ): Promise<void | { message: string }> {
+    setNoStore(res); // No caching sensitive response
+
     const userId =
       req.user?.userId ?? req.user?.id ?? req.user?.auth_id ?? undefined;
 
-    if (!userId) {
-      throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    if (!userId) return unauthorized(res);
+
+    const me = await this.usersService.getAuthSnapshot(userId);
+    if (me?.passwordHash == null) {
+      // 403 Provider OAuth account cannot change email
+      throw new ForbiddenException(
+        'Email change not available for this account',
+      );
     }
 
     // check if regirster with Oauth Provider if yes, throw error
@@ -159,22 +255,38 @@ export class UsersController {
       );
     }
 
+    // Staged email change
+    const started = await this.usersService.changeUserEmail(userId, body.email);
+    if (started === 'CONFLICT') {
+      // 409 --> Generic message to avoid enumerating other users’ emails
+      return conflict('Cannot use this email.');
+    }
+
+    if (started === 'UNCHANGED') {
+      return noContent(res); // 204
+    }
+
+    // if started = 'SATARTED' creat verification token and send email
     // Clear any previous unused token to avoid unique (userId) conflict
     await this.prisma.emailVerificationToken.deleteMany({
       where: { userId, usedAt: null },
     });
 
     const { plain, hash, expiresAt } = this.tokens.pair(30 * 60 * 1000);
+
     await this.prisma.emailVerificationToken.create({
-      data: {
-        tokenHash: hash,
-        userId,
-        expiresAt,
-      },
+      data: { tokenHash: hash, userId, expiresAt },
     });
 
-    const link = `${FRONTEND_BASE_URL}/verify-email-change?token=${plain}`;
+    const link = `${FRONTEND_BASE_URL}/verify-email?token=${plain}`;
     await this.emailService.sendVerificationEmail(body.email, link);
+
+    // send email in previous email to inform user about email change in case they did not request it
+    await this.emailService.sendEmailChangeEmail(body.email);
+
+    // 202 Accepted: process started, email sent to new address
+    res.status(202);
+    return { message: 'If the address is valid, we sent a confirmation link.' };
   }
 
   /**

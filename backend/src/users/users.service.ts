@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 import { EmailService } from '../email/email.service';
+import { conflict } from '../common/helpers/responses/responses.helper';
 
 @Injectable()
 export class UsersService {
@@ -106,6 +107,34 @@ export class UsersService {
   }
 
   /**
+   * Finds a user by username.
+   *
+   * - Returns selected fields (id, userName, createdAt, isEmailVerified).
+   * - Throws BadRequestException if username is empty.
+   *
+   * @param usernameToCheck - The username to search for.
+   * @returns The user object if found, otherwise null.
+   */
+  async findUserByUsername(usernameToCheck: string) {
+    const username =
+      typeof usernameToCheck === 'string' ? usernameToCheck.trim() : '';
+
+    if (!username) {
+      throw new BadRequestException('Username is required'); // 400
+    }
+
+    return this.prisma.user.findUnique({
+      where: { userName: username }, // userName is unique
+      select: {
+        id: true,
+        userName: true,
+        createdAt: true,
+        isEmailVerified: true,
+      },
+    });
+  }
+
+  /**
    * Finds a user by their ID.
    *
    * - Returns selected fields (id, email, userName, createdAt, isEmailVerified).
@@ -156,6 +185,177 @@ export class UsersService {
     await this.prisma.user.update({
       where: { id: user.id },
       data: { isEmailVerified: true },
+    });
+  }
+
+  //-------------------------Manage User Methods----------------------------//
+
+  /**
+   * Gets the profile info of the given user.
+   *
+   * - Returns username, email, and 2FA method.
+   * - Throws BadRequestException if user not found.
+   *
+   * @param userId - ID of the authenticated user.
+   * @returns Object with userName, email, and twoFaMethod.
+   */
+  async getUserProfile(userId: number): Promise<{
+    userName: string;
+    email: string;
+    twoFaMethod: string | null;
+  } | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        userName: true,
+        email: true,
+        twoFaMethod: true,
+      },
+    });
+
+    if (!user) return null;
+
+    return {
+      userName: user.userName,
+      email: user.email,
+      twoFaMethod: user.twoFaMethod,
+    };
+  }
+
+  /**
+   * Changes the username of a given user.
+   *
+   * - Trusts DTO validation for format/length (done at controller).
+   * - Short-circuits if the username is unchanged.
+   * - Relies on Prisma unique constraint to enforce uniqueness.
+   *
+   * @param userId - The ID of the user whose username is being changed.
+   * @param newUsername - The new username.
+   * @throws BadRequestException if the user is not found or if the username is already taken.
+   */
+  async changeUsername(
+    userId: number,
+    newUsername: string,
+  ): Promise<{ updated: true; userName: string } | { updated: false } | null> {
+    const current = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { userName: true },
+    });
+
+    if (!current) {
+      throw new BadRequestException('User not found.');
+    }
+
+    if (!current) {
+      // UPDATED: let controller map this to 401 (stale session)
+      return null;
+    }
+
+    // Short-circuit if unchanged (idempotent)
+    if (current.userName === newUsername) {
+      return { updated: false };
+    }
+
+    try {
+      const updated = await this.prisma.user.update({
+        where: { id: userId },
+        data: { userName: newUsername },
+        select: { userName: true },
+      });
+
+      return { updated: true, userName: updated.userName };
+    } catch (e: any) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002' &&
+        Array.isArray(e.meta?.target) &&
+        e.meta.target.includes('userName')
+      ) {
+        // Uses centralized helper to keep errors consistent
+        conflict('Username is already taken.');
+      }
+      throw e;
+    }
+  }
+
+  /**
+   * Changes the email address of a given user.
+   *
+   * - Trusts DTO validation for format (done at controller).
+   * - Short-circuits if the email is unchanged.
+   * - Relies on Prisma unique constraint to enforce uniqueness.
+   *
+   * @param userId - The ID of the user whose email is being changed.
+   * @param newEmail - The new email address.
+   * @returns 'UNCHANGED' if the email is the same, 'CONFLICT' if another user has this email,
+   *         'STARTED' if the change was initiated successfully.
+   */
+  async changeUserEmail(
+    userId: number,
+    newEmail: string,
+  ): Promise<'UNCHANGED' | 'CONFLICT' | 'READY'> {
+    const me = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    if (!me) return 'CONFLICT';
+
+    // short-circuit if unchanged
+    if (me.email === newEmail) return 'UNCHANGED';
+
+    // Check if another user already uses this email
+    const taken = await this.prisma.user.findUnique({
+      where: { email: newEmail },
+      select: { id: true },
+    });
+    if (taken && taken.id !== userId) {
+      return 'CONFLICT'; // generic message at controller
+    }
+
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { email: newEmail, isEmailVerified: false }, // reset verification status
+      });
+      return 'READY';
+    } catch (e: unknown) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002' &&
+        Array.isArray(e.meta?.target) &&
+        e.meta.target.includes('email')
+      ) {
+        throw new BadRequestException('Email is already taken.');
+      }
+      throw e;
+    }
+  }
+
+  /**
+   * Retrieves a snapshot of the user's authentication details.
+   *
+   * - Returns id, email, passwordHash, twoFaMethod, and twoFaSecret.
+   * - Used for password change and 2FA validation.
+   *
+   * @param userId - ID of the user.
+   * @returns An object with user auth details or null if not found.
+   */
+  async getAuthSnapshot(userId: number): Promise<{
+    id: number;
+    email: string;
+    passwordHash: string | null;
+    twoFaMethod: string | null;
+    twoFaSecret: string | null;
+  } | null> {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        passwordHash: true,
+        twoFaMethod: true,
+        twoFaSecret: true,
+      },
     });
   }
 
@@ -231,128 +431,5 @@ export class UsersService {
     const requires2FA = !!user.twoFaMethod && !!user.twoFaSecret;
 
     return { success: true, requires2FA };
-  }
-
-  //-------------------------Manage User Methods----------------------------//
-
-  /**
-   * Gets the profile info of the given user.
-   *
-   * - Returns username, email, and 2FA method.
-   * - Throws BadRequestException if user not found.
-   *
-   * @param userId - ID of the authenticated user.
-   * @returns Object with userName, email, and twoFaMethod.
-   */
-  async getUserProfile(
-    userId: number,
-  ): Promise<{ userName: string; email: string; twoFaMethod: string | null }> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        userName: true,
-        email: true,
-        twoFaMethod: true,
-      },
-    });
-
-    if (!user) {
-      throw new BadRequestException('User not found.');
-    }
-
-    return {
-      userName: user.userName,
-      email: user.email,
-      twoFaMethod: user.twoFaMethod,
-    };
-  }
-
-  /**
-   * Changes the username of a given user.
-   *
-   * - Trusts DTO validation for format/length (done at controller).
-   * - Short-circuits if the username is unchanged.
-   * - Relies on Prisma unique constraint to enforce uniqueness.
-   *
-   * @param userId - The ID of the user whose username is being changed.
-   * @param newUsername - The new username.
-   * @throws BadRequestException if the user is not found or if the username is already taken.
-   */
-  async changeUsername(userId: number, newUsername: string): Promise<void> {
-    const current = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { userName: true },
-    });
-
-    if (!current) {
-      throw new BadRequestException('User not found.');
-    }
-
-    // short-circuit if unchanged
-    if (current.userName === newUsername) {
-      return;
-    }
-
-    try {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { userName: newUsername },
-      });
-    } catch (e: any) {
-      if (
-        e instanceof Prisma.PrismaClientKnownRequestError &&
-        e?.code === 'P2002' &&
-        Array.isArray(e?.meta?.target)
-      ) {
-        if (e.meta.target.includes('userName')) {
-          throw new BadRequestException('Username is already taken.');
-        }
-      }
-      throw e;
-    }
-  }
-
-  /**
-   * Changes the email address of a given user.
-   *
-   * - Trusts DTO validation for format (done at controller).
-   * - Short-circuits if the email is unchanged.
-   * - Relies on Prisma unique constraint to enforce uniqueness.
-   *
-   * @param userId - The ID of the user whose email is being changed.
-   * @param newEmail - The new email address.
-   * @throws BadRequestException if the user is not found or if the email is already taken.
-   */
-  async changeUserEmail(userId: number, newEmail: string): Promise<void> {
-    const current = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { email: true },
-    });
-
-    if (!current) {
-      throw new BadRequestException('User not found.');
-    }
-
-    // short-circuit if unchanged
-    if (current.email === newEmail) {
-      return;
-    }
-
-    try {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { email: newEmail, isEmailVerified: false }, // reset verification if you want
-      });
-    } catch (e: unknown) {
-      if (
-        e instanceof Prisma.PrismaClientKnownRequestError &&
-        e.code === 'P2002' &&
-        Array.isArray(e.meta?.target) &&
-        e.meta.target.includes('email')
-      ) {
-        throw new BadRequestException('Email is already taken.');
-      }
-      throw e;
-    }
   }
 }

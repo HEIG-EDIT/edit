@@ -9,21 +9,24 @@ import {
   UseGuards,
   UsePipes,
   HttpCode,
+  Headers,
   ValidationPipe,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyTwoFaDto } from './dto/verify-twofa.dto';
+import { LogoutDto } from './dto/logout.dto';
 
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { TwoFaService } from './twoFA/twofa.service';
 
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -52,10 +55,79 @@ export class AuthController {
     return this.authService.loginUser(body);
   }
 
-  //TODO
-  //Placeholder for logout functionality
-  //@Post('logout')
-  //logout(@Req() req: Request, @Res() res: Response) {}
+  //---------------------------API for Logout--------------------------------------
+  /**
+   * POST /auth/logout
+   *
+   * Logs out the current device (revokes refresh token for this device).
+   * - Requires JWT (access token) in the Authorization header.
+   * - Reads deviceId from `X-Device-Id` header or from body as a fallback.
+   * - If you store refresh token in a cookie, clear it here (see comment).
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(
+    @Req()
+    req: Request & {
+      user?: { userId?: number; id?: number; auth_id?: number };
+    },
+    @Headers('x-device-id') deviceIdHeader: string | undefined,
+    @Body() body: LogoutDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ message: string }> {
+    const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
+    if (!userId) {
+      throw new BadRequestException('Unauthorized');
+    }
+
+    const deviceId = deviceIdHeader ?? body.deviceId;
+    if (!deviceId) {
+      throw new BadRequestException('Missing deviceId');
+    }
+
+    // When using cookie-based refresh tokens, also clear cookie here:
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    return this.authService.logoutUser(Number(userId), deviceId);
+  }
+
+  /**
+   * POST /auth/logout-all
+   *
+   * Logs out from all devices (revokes all refresh tokens for the user).
+   * - Requires JWT (access token).
+   * - If you use cookie-based refresh tokens, clear the cookie too.
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('logout-all')
+  @HttpCode(HttpStatus.OK)
+  async logoutAll(
+    @Req()
+    req: Request & {
+      user?: { userId?: number; id?: number; auth_id?: number };
+    },
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ revoked: number }> {
+    const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
+    if (!userId) {
+      throw new BadRequestException('Unauthorized');
+    }
+
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    return this.authService.logoutAllDevices(Number(userId));
+  }
 
   //---------------------------API for Token Handling--------------------------------------
 
