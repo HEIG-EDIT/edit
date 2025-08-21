@@ -20,7 +20,10 @@ import {
 } from "@/models/editor/layers/layer";
 import { LayerComponent } from "./layers/layer";
 import { Vector2d } from "konva/lib/types";
-import { useEditorContext } from "@/components/editor/editorContext";
+import {
+  CanvasState,
+  useEditorContext,
+} from "@/components/editor/editorContext";
 
 type CanvasProps = {
   layers: Layer[];

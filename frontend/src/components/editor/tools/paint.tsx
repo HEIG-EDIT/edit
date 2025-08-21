@@ -18,7 +18,7 @@ export const PaintToolConfigurationComponent = ({
 }: ToolConfigurationProps<PaintToolConfiguration>) => {
   return (
     <div>
-      <PaintEraseBaseComponent
+      <PaintEraseBaseComponent<PaintToolConfiguration>
         toolConfiguration={{ configuration, setConfiguration }}
       />
       <p className="text-violet-50">
