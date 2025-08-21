@@ -1,5 +1,5 @@
 "use client";
-import { forwardRef, useEffect, useRef } from "react";
+import { forwardRef, useEffect, useRef, RefObject } from "react";
 import {
   Image as KonvaImage,
   Group as KonvaGroup,
@@ -14,7 +14,7 @@ import { LayerProps, TransformDiff } from "@/models/editor/layers/layerProps";
 import { useEditorContext } from "../editorContext";
 
 export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
-  (props, groupRef) => {
+  (props, ref) => {
     const {
       id,
       position,
@@ -28,6 +28,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
 
     const { editSelectedLayers, isTransforming } = useEditorContext();
 
+    const groupRef = ref as RefObject<Konva.Group>;
     const transformerRef = useRef<Konva.Transformer>(null);
 
     const transformSelectedLayers = (diff: TransformDiff) => {
@@ -43,7 +44,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
 
     useEffect(() => {
       if (isSelected && groupRef) {
-        transformerRef.current?.nodes([groupRef.current]);
+        transformerRef.current?.nodes([groupRef?.current]);
       }
     }, [isSelected, groupRef]);
 
@@ -88,7 +89,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
           width={image.width}
           height={image.height}
           id={id}
-          ref={groupRef}
+          ref={ref}
           visible={isVisible}
         >
           {/* Dummy rectangle, used to select layers with Canvas click */}

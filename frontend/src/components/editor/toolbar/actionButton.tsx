@@ -23,3 +23,7 @@ export const ActionButton = ({
     </button>
   );
 };
+
+ActionButton.defaultProps = {
+  disabled: false,
+};

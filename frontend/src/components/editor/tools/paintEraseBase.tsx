@@ -12,9 +12,11 @@ type PaintEraseBaseProps<T extends ToolConfiguration> = {
   toolConfiguration: ToolConfigurationProps<T>;
 };
 
-export const PaintEraseBaseComponent = ({
+export const PaintEraseBaseComponent = <
+  T extends PaintToolConfiguration | EraseToolConfiguration,
+>({
   toolConfiguration,
-}: PaintEraseBaseProps<EraseToolConfiguration | PaintToolConfiguration>) => {
+}: PaintEraseBaseProps<T>) => {
   const {
     editSelectedLayers,
     getCanvasPointerPosition,

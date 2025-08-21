@@ -45,14 +45,38 @@ export const LayersManagement = ({
   };
 
   const displayLayers = (
-    <div className="flex flex-row gap-4 justify-center items-center p-2">
-      <ConfigurationButton
-        icon={AddRoundedIcon}
-        onClick={() => setIsNewLayerDisplayed(true)}
-      />
-      <ConfigurationButton icon={ContentCopyRoundedIcon} onClick={() => {}} />
-      <ConfigurationButton icon={DeleteForeverRoundedIcon} onClick={() => {}} />
-    </div>
+    <Fragment>
+      <div className="flex flex-row gap-4 justify-center items-center p-2">
+        <ConfigurationButton
+          icon={AddRoundedIcon}
+          onClick={() => setIsNewLayerDisplayed(true)}
+        />
+        <ConfigurationButton icon={ContentCopyRoundedIcon} onClick={() => {}} />
+        <ConfigurationButton
+          icon={DeleteForeverRoundedIcon}
+          onClick={() => {}}
+        />
+      </div>
+      <div className="flex flex-col gap-2 p-2">
+        {layers
+          .slice()
+          .reverse()
+          .map((layer: Layer) => (
+            <LayerConfiguration
+              name={layer.name}
+              key={layer.id}
+              updateLayer={(
+                callback: LayerUpdateCallback,
+                virtual: boolean = true
+              ) => {
+                updateLayer(layer.id, callback, virtual);
+              }}
+              isSelected={layer.isSelected}
+              isVisible={layer.isVisible}
+            />
+          ))}
+      </div>
+    </Fragment>
   );
 
   const addLayer = (
@@ -108,7 +132,7 @@ export const LayersManagement = ({
                     name={layer.name}
                     updateLayer={(
                       callback: LayerUpdateCallback,
-                      virtual: boolean = true,
+                      virtual: boolean = true
                     ) => {
                       updateLayer(layer.id, callback, virtual);
                     }}
