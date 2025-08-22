@@ -121,6 +121,9 @@ export const Canvas = ({
   const handleScroll = (e: KonvaScrollEvent) => {
     e.evt.preventDefault();
 
+    // Arbitrary
+    const MINIMUM_SCALE = 0.02;
+
     // Avoid accidental scrolling when moving aroung
     if (e.evt.buttons == 4) {
       return;
@@ -138,10 +141,13 @@ export const Canvas = ({
       }
 
       const { scale } = prev;
-
       const canvasPointerPosition = getCanvasPointerPosition();
 
       const newScale = scale * scaleBy;
+
+      if (newScale < MINIMUM_SCALE) {
+        return prev;
+      }
 
       const newPos = {
         x: stagePointerPosition.x - canvasPointerPosition.x * newScale,
