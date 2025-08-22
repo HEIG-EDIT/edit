@@ -69,6 +69,25 @@ export default function EditorPage() {
 
   const toolEventHandlers = useRef<EventHandlers>({});
 
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const container = canvasContainerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setCanvasSize({ width, height });
+      }
+    });
+
+    resizeObserver.observe(container);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
   // TODO : a supprimer des que gestion du state global ok
   useEffect(() => console.log(toolsConfiguration), [toolsConfiguration]);
 
@@ -172,52 +191,48 @@ export default function EditorPage() {
           setToolEventHandlers,
         }}
       >
-        <div className="flex flex-row">
+        <div className="flex flex-row gap-4 px-4">
           <div className="w-1/3">
-            <div className="flex flex-col p-4">
-              <div className="mb-6">
-                <ToolsManagement
-                  nameSelectedTool={nameSelectedTool}
-                  toolsConfiguration={toolsConfiguration}
-                  setToolsConfiguration={setToolsConfiguration}
-                />
-              </div>
-              <div>
-                <LayersManagement
-                  layers={layers}
-                  updateLayer={updateLayer}
-                  setLayers={setLayers}
-                />
-              </div>
+            <div className="flex flex-col gap-6">
+              <ToolsManagement
+                nameSelectedTool={nameSelectedTool}
+                toolsConfiguration={toolsConfiguration}
+                setToolsConfiguration={setToolsConfiguration}
+              />
+              <LayersManagement
+                layers={layers}
+                updateLayer={updateLayer}
+                setLayers={setLayers}
+              />
             </div>
           </div>
           <div className="w-2/3">
-            <div className="mb-6 mr-4">
-              {/* TODO : supprimer couleur du fond (violet) +
+            <div className="flex flex-col gap-4 h-screen">
+              <div className="h-5/6" ref={canvasContainerRef}>
+                {/* TODO : supprimer couleur du fond (violet) +
                   adapter taille selon ecran (but -> pas besoin de scroller pour acceder
                    a la toolbar et taille des composants a gauche ne doit pas influencer sur la taille du canvas */}
-              <Canvas
-                layers={layers}
-                // FIXME : @Alessio -> a supprimer ?
-                setLayers={setLayers}
-                setVirtualLayers={setVirtualLayers}
-                commitVirtualLayers={commitVirtualLayers}
-                updateLayer={updateLayer}
-                nameSelectedTool={nameSelectedTool}
-                height={1000}
-                width={1000}
-              />
-            </div>
-            <div className="flex items-center justify-center mb-6">
-              <Toolbar
-                undo={undo}
-                canUndo={canUndo}
-                redo={redo}
-                canRedo={canRedo}
-                nameSelectedTool={nameSelectedTool}
-                setNameSelectedTool={setNameSelectedTool}
-                setMenuDisplay={setMenuDisplay}
-              />
+                <Canvas
+                  layers={layers}
+                  setVirtualLayers={setVirtualLayers}
+                  commitVirtualLayers={commitVirtualLayers}
+                  updateLayer={updateLayer}
+                  nameSelectedTool={nameSelectedTool}
+                  height={canvasSize.height}
+                  width={canvasSize.width}
+                />
+              </div>
+              <div className="flex justify-center">
+                <Toolbar
+                  undo={undo}
+                  canUndo={canUndo}
+                  redo={redo}
+                  canRedo={canRedo}
+                  nameSelectedTool={nameSelectedTool}
+                  setNameSelectedTool={setNameSelectedTool}
+                  setMenuDisplay={setMenuDisplay}
+                />
+              </div>
             </div>
           </div>
         </div>
