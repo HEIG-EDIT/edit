@@ -68,7 +68,7 @@ $ npx jest ./path/to/test/test.name.spec.ts --detectOpenHandles
 Once we update our `schema.prisma` file, we want our **database** to match the new schema.
 We do this in two steps: **generate a migration** and then **apply it**.
 
-Before all, we have to make sure our changes in `schema.prisma` are saved.
+Before all, we have to make sure our changes in `schema.prisma` are saved. Also, we need to have a running db instance, and to do so we can simply use the given docker-compose file, by running `docker compose up`.
 
 ### 1. Create a migration
 
@@ -105,10 +105,6 @@ npx prisma generate
 
 After that, our DB reflects our new `schema.prisma`.
 
-<<<<<<< HEAD
->>>>>>> 10badc8 (Added new schema version, migration, and removed create-user-dto)
-=======
->>>>>>> e69c6162fe611f40315da643ce834a3b646f4760
 
 ## Deployment
 

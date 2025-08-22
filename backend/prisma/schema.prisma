@@ -94,11 +94,10 @@ model AuditLog {
 
 model Project {
   id                   Int       @id @default(autoincrement())
+  name                 String
   createdAt            DateTime  @default(now())
   openedAt             DateTime?
   lastSavedAt          DateTime?
-  s3Url                String
-  projectJson          String
   userCurrentlyEditing Boolean   @default(false)
 
   collaborations Collaboration[]
