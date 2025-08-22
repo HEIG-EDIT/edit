@@ -1,4 +1,3 @@
-import { v2Sub } from "@/models/editor/layers/layerUtils";
 import { useEditorContext } from "../editorContext";
 import { Layer } from "@/models/editor/layers/layer";
 import { useRef } from "react";
@@ -19,7 +18,6 @@ export const PaintEraseBaseComponent = <
 }: PaintEraseBaseProps<T>) => {
   const {
     editSelectedLayers,
-    getCanvasPointerPosition,
     setToolEventHandlers,
     commitVirtualLayers,
     layers,
@@ -31,7 +29,7 @@ export const PaintEraseBaseComponent = <
   const isPaintTool = "color" in configuration;
 
   const getLayerCursorPosition = (layer: Layer) => {
-    return v2Sub(getCanvasPointerPosition(), layer.position);
+    return layer.groupRef.current?.getRelativePointerPosition();
   };
 
   const handleMouseDown = () => {
