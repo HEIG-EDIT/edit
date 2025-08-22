@@ -2,6 +2,8 @@ import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
 
+// TODO : finaliser ui (si plusieurs type de select alors choisir icones, sinon mettre message "pas de config dispo")
+
 export const selectCursorType = ["Rectangle", "Circle", "Lasso"];
 
 export interface SelectCursorToolConfiguration extends ToolConfiguration {

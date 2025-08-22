@@ -7,6 +7,8 @@ import { SubToolConfigurationProps } from "@/models/editor/tools/subToolConfigur
 import { SubTool } from "@/models/editor/tools/subTool";
 import ContrastRoundedIcon from "@mui/icons-material/ContrastRounded";
 
+// TODO (last) : s'occuper de ce composant une fois qu'on sait ce qu'on aura le temps d'implementer
+
 export type BlackWhiteConfiguration = SubToolConfiguration;
 
 export interface GaussianBlurConfiguration extends SubToolConfiguration {

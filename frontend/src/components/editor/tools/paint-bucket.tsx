@@ -13,10 +13,7 @@ export const PaintBucketToolConfigurationComponent = ({
   setConfiguration,
 }: ToolConfigurationProps<PaintBucketToolConfiguration>) => {
   return (
-    <div>
-      <p className="text-violet-50">
-        Color :<br></br>
-      </p>
+    <div className="p-2">
       <SliderPicker
         color={configuration.color}
         onChangeComplete={(color) => {

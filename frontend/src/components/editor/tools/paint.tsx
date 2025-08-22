@@ -24,6 +24,7 @@ export const PaintToolConfigurationComponent = ({
       <p className="text-violet-50">
         Radius :<br></br>
       </p>
+      {/* TODO : faire un composant pour styliser barre en violet (et utiliser pour erase) */}
       <input
         type="range"
         min="1"
