@@ -3,7 +3,7 @@ import { LayerConfiguration } from "@/components/editor/layers/layerConfiguratio
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
 import DeleteForeverRoundedIcon from "@mui/icons-material/DeleteForeverRounded";
-import { ConfigurationButton } from "@/components/editor/layers/configurationButton";
+import { ConfigurationButton } from "@/components/configurationButton";
 import { useRef, useState } from "react";
 import AddToPhotosRoundedIcon from "@mui/icons-material/AddToPhotosRounded";
 import CollectionsRoundedIcon from "@mui/icons-material/CollectionsRounded";
