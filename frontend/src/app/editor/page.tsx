@@ -10,7 +10,7 @@ import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolsManagement } from "@/components/editor/tools/toolsManagement";
 import { LayersManagement } from "@/components/editor/layers/layersManagement";
 
-import { Menu } from "@/components/editor/menu/menu";
+import { Menu } from "@/components/menu/menu";
 import { Toolbar } from "@/components/editor/toolbar/toolbar";
 
 import {

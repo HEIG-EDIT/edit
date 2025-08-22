@@ -1,10 +1,15 @@
 "use client";
+
 import { ConfigurationButton } from "@/components/configurationButton";
 import { ActionButton } from "@/components/actionButton";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import { Menu } from "@/components/menu/menu";
+import { useState } from "react";
 
 export default function ProjectSelection() {
+  const [menuDisplay, setMenuDisplay] = useState<boolean>(false);
+
   return (
     <main className="bg-gray-900 min-h-screen p-6">
       <div className="bg-gray-700 rounded-xl">
@@ -27,7 +32,7 @@ export default function ProjectSelection() {
             </div>
             <ActionButton
               icon={<MenuRoundedIcon style={{ color: "white" }} />}
-              onClick={() => {}}
+              onClick={() => setMenuDisplay(true)}
               style="bg-violet-500 border-gray-800 border-violet-50"
             />
           </div>
@@ -35,6 +40,7 @@ export default function ProjectSelection() {
         {/* TODO : call endpoint pour recuperer projets selon current user + creer composant projectDescription */}
         <div>TODO</div>
       </div>
+      {menuDisplay && <Menu setMenuDisplay={setMenuDisplay} />}
     </main>
   );
 }
