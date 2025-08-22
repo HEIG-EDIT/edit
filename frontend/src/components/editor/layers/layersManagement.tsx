@@ -50,7 +50,9 @@ export const LayersManagement = ({
         icon={AddRoundedIcon}
         onClick={() => setIsNewLayerDisplayed(true)}
       />
+      {/* TODO : gerer logique pour dupliquer */}
       <ConfigurationButton icon={ContentCopyRoundedIcon} onClick={() => {}} />
+      {/* TODO : gerer logique pour supprimer */}
       <ConfigurationButton icon={DeleteForeverRoundedIcon} onClick={() => {}} />
     </div>
   );
@@ -72,6 +74,7 @@ export const LayersManagement = ({
       <ConfigurationButton
         icon={AddToPhotosRoundedIcon}
         text={"Empty layer"}
+        // TODO : gerer logique pour charger layer vide
         onClick={() => {}}
       />
       <ConfigurationButton

@@ -19,6 +19,7 @@ export const EraseToolConfigurationComponent = ({
       <p className="text-violet-50">
         Radius :<br></br>
       </p>
+      {/* TODO : faire un composant pour styliser barre en violet (et utiliser pour paint) */}
       <input
         type="range"
         min="1"

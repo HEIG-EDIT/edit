@@ -193,6 +193,9 @@ export default function EditorPage() {
           </div>
           <div className="w-2/3">
             <div className="mb-6 mr-4">
+              {/* TODO : supprimer couleur du fond (violet) +
+                  adapter taille selon ecran (but -> pas besoin de scroller pour acceder
+                   a la toolbar et taille des composants a gauche ne doit pas influencer sur la taille du canvas */}
               <Canvas
                 layers={layers}
                 // FIXME : @Alessio -> a supprimer ?
@@ -205,7 +208,7 @@ export default function EditorPage() {
                 width={1000}
               />
             </div>
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center mb-6">
               <Toolbar
                 undo={undo}
                 canUndo={canUndo}
