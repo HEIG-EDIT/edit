@@ -29,7 +29,19 @@ export const PaintEraseBaseComponent = <
   const isPaintTool = "color" in configuration;
 
   const getLayerCursorPosition = (layer: Layer) => {
-    return layer.groupRef.current?.getRelativePointerPosition();
+    let position = layer.groupRef.current?.getRelativePointerPosition();
+    const layerSize = layer.groupRef.current?.size();
+
+    if (!position || !layerSize) {
+      throw new Error("Could not get cursor position or layer size");
+    }
+
+    position = {
+      x: Math.max(0, Math.min(position.x, layerSize.width)),
+      y: Math.max(0, Math.min(position.y, layerSize.height)),
+    };
+
+    return position;
   };
 
   const handleMouseDown = () => {

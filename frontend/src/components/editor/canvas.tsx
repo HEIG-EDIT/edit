@@ -199,6 +199,7 @@ export const Canvas = ({
                 rotation={layer.rotation}
                 scale={layer.scale}
                 image={layer.image}
+                size={layer.size}
                 isVisible={layer.isVisible}
                 isSelected={layer.isSelected}
                 lines={layer.lines}

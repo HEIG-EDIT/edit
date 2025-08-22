@@ -24,6 +24,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       isVisible,
       isSelected,
       lines,
+      size,
     }: Partial<LayerProps> = props;
 
     const { editSelectedLayers, isTransforming } = useEditorContext();
@@ -46,7 +47,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       if (isSelected && groupRef) {
         transformerRef.current?.nodes([groupRef?.current]);
       }
-    }, [isSelected, groupRef]);
+    }, [isSelected, groupRef, transformerRef]);
 
     const handleTransformEnd = () => {
       const node = groupRef?.current;
@@ -84,6 +85,12 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
           listening
           x={position.x}
           y={position.y}
+          clip={{
+            x: 0,
+            y: 0,
+            width: size.x,
+            height: size.y,
+          }}
           scale={scale}
           rotation={rotation}
           width={image.width}
@@ -91,6 +98,10 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
           id={id}
           ref={ref}
           visible={isVisible}
+          size={{
+            width: size.x,
+            height: size.y,
+          }}
         >
           {/* Dummy rectangle, used to select layers with Canvas click */}
           <KonvaRect
