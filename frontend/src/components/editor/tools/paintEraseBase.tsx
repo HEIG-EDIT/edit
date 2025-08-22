@@ -53,7 +53,7 @@ export const PaintEraseBaseComponent = <
       const line: Partial<Line> = {
         points: [pointPosition.x, pointPosition.y],
         width: configuration.radius,
-        color: "",
+        color: "0x000", // This is needed otherwise the eraser fails
       };
 
       // tool property reference: https://konvajs.org/docs/react/Free_Drawing.html
