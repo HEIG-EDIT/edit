@@ -1,11 +1,13 @@
 interface ConfigurationButtonProps {
   icon: React.ElementType;
   onClick: () => void;
+  text?: string;
 }
 
 export const ConfigurationButton = ({
   icon: Icon,
   onClick,
+  text,
 }: ConfigurationButtonProps) => {
   return (
     <button
@@ -13,6 +15,11 @@ export const ConfigurationButton = ({
       onClick={onClick}
     >
       <Icon style={{ color: "white" }} />
+      {text && (
+        <div>
+          <p className="text-violet-50">{text}</p>
+        </div>
+      )}
     </button>
   );
 };
