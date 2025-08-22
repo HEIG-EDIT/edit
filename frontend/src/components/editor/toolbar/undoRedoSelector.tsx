@@ -1,4 +1,4 @@
-import { ActionButton } from "./actionButton";
+import { ActionButton } from "@/components/actionButton";
 import UndoRoundedIcon from "@mui/icons-material/UndoRounded";
 import RedoRoundedIcon from "@mui/icons-material/RedoRounded";
 import colors from "tailwindcss/colors";
