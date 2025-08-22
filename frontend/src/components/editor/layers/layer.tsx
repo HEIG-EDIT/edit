@@ -1,5 +1,5 @@
 "use client";
-import { forwardRef, useEffect, useRef, RefObject } from "react";
+import { forwardRef, useEffect, useRef, RefObject, useState } from "react";
 import {
   Image as KonvaImage,
   Group as KonvaGroup,
@@ -12,6 +12,7 @@ import Konva from "konva";
 import { v2Add, v2Sub } from "@/models/editor/layers/layerUtils";
 import { LayerProps, TransformDiff } from "@/models/editor/layers/layerProps";
 import { useEditorContext } from "../editorContext";
+import { CROP_TOOL, CropToolTransformer } from "../tools/crop";
 
 export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
   (props, ref) => {
@@ -24,13 +25,28 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       isVisible,
       isSelected,
       lines,
-      size,
+      crop,
     }: Partial<LayerProps> = props;
 
-    const { editSelectedLayers, isTransforming } = useEditorContext();
+    const { editSelectedLayers, isTransforming, toolName, updateLayer } = useEditorContext();
+
+    const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+
+    // Get image dimensions when image loads
+    useEffect(() => {
+      if (image) {
+        setImageSize({
+          width: image.width || image.naturalWidth,
+          height: image.height || image.naturalHeight
+        });
+      }
+    }, [image]);
 
     const groupRef = ref as RefObject<Konva.Group>;
     const transformerRef = useRef<Konva.Transformer>(null);
+    const cropTransformerRef = useRef(null);
+
+    const cropRectRef = useRef<Konva.Rect>(null);
 
     const transformSelectedLayers = (diff: TransformDiff) => {
       editSelectedLayers((layer) => {
@@ -44,8 +60,12 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
     };
 
     useEffect(() => {
-      if (isSelected && groupRef) {
-        transformerRef.current?.nodes([groupRef?.current]);
+      if (isSelected) {
+        if (cropRectRef.current && cropTransformerRef.current && toolName == CROP_TOOL.name) {
+          cropTransformerRef.current.nodes([cropRectRef.current])
+        } else if (groupRef.current && transformerRef.current) {
+          transformerRef.current?.nodes([groupRef?.current]);
+        }
       }
     }, [isSelected, groupRef, transformerRef]);
 
@@ -64,32 +84,71 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       transformSelectedLayers(transformDiff);
     };
 
+    const handleCropTransformEnd = () => {
+      const rect = cropRectRef?.current;
+      if (rect) {
+        const newCrop = {
+          x: rect.x(),
+          y: rect.y(),
+          width: rect.width() * rect.scaleX(),
+          height: rect.height() * rect.scaleY(),
+        };
+
+        // Reset the rectangle's scale to 1 after applying the crop
+        rect.scaleX(1);
+        rect.scaleY(1);
+
+        updateLayer(id, (layer) => {
+          return {
+            ...layer,
+            crop: newCrop,
+          }
+        });
+      }
+    };
+
+    const effectiveCrop = crop || {
+      x: 0,
+      y: 0,
+      width: imageSize.width,
+      height: imageSize.height
+    };
+
     return (
       <>
-        {isSelected && isVisible && (
+        {isSelected && isVisible && (toolName == CROP_TOOL.name &&
           <KonvaTransformer
-            onTransformStart={() => {
-              isTransforming.current = true;
-            }}
-            onTransformEnd={handleTransformEnd}
-            ref={transformerRef}
-            boundBoxFunc={(oldBox, newBox) => {
-              if (newBox.width < 5 || newBox.height < 5) {
-                return oldBox;
-              }
-              return newBox;
-            }}
-          />
-        )}
+            ref={cropTransformerRef}
+            onTransformEnd={handleCropTransformEnd}
+            rotateEnabled={false}
+          />)
+          ||
+          (
+            <KonvaTransformer
+              ref={transformerRef}
+              onTransformStart={() => {
+                isTransforming.current = true;
+              }}
+              onTransformEnd={handleTransformEnd}
+              boundBoxFunc={(oldBox, newBox) => {
+                if (newBox.width < 5 || newBox.height < 5) {
+                  return oldBox;
+                }
+                return newBox;
+              }}
+            />
+          )}
         <KonvaGroup
           listening
           x={position.x}
           y={position.y}
-          clip={{
-            x: 0,
-            y: 0,
-            width: size.x,
-            height: size.y,
+          clipFunc={(ctx) => {
+            ctx.rect(
+              effectiveCrop.x,
+              effectiveCrop.y,
+              effectiveCrop.width,
+              effectiveCrop.height
+            );
           }}
           scale={scale}
           rotation={rotation}
@@ -98,16 +157,14 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
           id={id}
           ref={ref}
           visible={isVisible}
-          size={{
-            width: size.x,
-            height: size.y,
-          }}
         >
           {/* Dummy rectangle, used to select layers with Canvas click */}
           <KonvaRect
-            width={image.width}
-            height={image.height}
-            fill={"transparent"}
+            ref={cropRectRef}
+            x={effectiveCrop.x}
+            y={effectiveCrop.y}
+            width={effectiveCrop.width}
+            height={effectiveCrop.height}
             listening
           />
           <KonvaImage listening={false} image={image} />

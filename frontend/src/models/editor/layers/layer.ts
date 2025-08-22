@@ -5,6 +5,13 @@ import Konva from "konva";
 
 export type LayerId = string;
 
+export type Crop = {
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+};
+
 export class Layer {
   name: string;
   id: LayerId; // UUID
@@ -31,7 +38,7 @@ export class Layer {
   rotation: number = 0;
   lines: Array<Line> = []; // Lines drawn free-hand on a Layer
 
-  size: Vector2d;
+  crop: Crop | undefined;
 
   constructor(
     name: string | null = null,

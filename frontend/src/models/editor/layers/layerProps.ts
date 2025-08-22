@@ -1,5 +1,5 @@
 import { Vector2d } from "konva/lib/types";
-import { LayerId, LayerUpdateCallback } from "./layer";
+import { Crop, LayerId, LayerUpdateCallback } from "./layer";
 import { Line } from "./line";
 
 export interface TransformDiff {
@@ -14,7 +14,9 @@ export interface LayerProps {
   rotation: number;
   scale: Vector2d;
   image: HTMLImageElement;
+  crop: Crop,
   size: Vector2d;
+  sizeOffset: Vector2d;
   isVisible: boolean;
   isSelected: boolean;
   lines: Line[];

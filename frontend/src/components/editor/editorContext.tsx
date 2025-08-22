@@ -21,6 +21,8 @@ interface EditorContextType {
   isHoldingPrimary: React.RefObject<boolean>;
   isTransforming: React.RefObject<boolean>;
 
+  toolName: string;
+
   layers: Layer[];
   updateLayer: (
     id: LayerId,

@@ -156,6 +156,8 @@ export default function EditorPage() {
           isHoldingPrimary,
           isTransforming,
 
+          toolName: nameSelectedTool,
+
           layers,
           setVirtualLayers,
           updateLayer,
