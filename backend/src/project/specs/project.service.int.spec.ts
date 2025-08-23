@@ -4,7 +4,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateProjectDto } from '../dto/create-project.dto';
 import { execSync } from 'child_process';
 import { S3Service } from '../../s3/s3.service';
-import { NotFoundException } from '@nestjs/common';
 
 describe('ProjectService (integration)', () => {
   let service: ProjectService;
@@ -28,18 +27,17 @@ describe('ProjectService (integration)', () => {
     // Start Docker container
     execSync('docker compose up -d', { stdio: 'inherit' });
 
-    // Wait a bit for DB
-    await new Promise((resolve) => setTimeout(resolve, 15000));
-
     // Run migrations
-    execSync('npx prisma db push', {
-      stdio: 'inherit'
-    });
+    for (let i = 0; i < 10; i++) {
+        try {
+            execSync('npx prisma db push', { stdio: 'inherit' });
+            break; // success, exit loop
+        } catch (err) {
+            console.log(`DB not ready yet, retrying... (${i+1}/10)`);
+            await new Promise(r => setTimeout(r, 5000));
+        }
+    }
 
-    /*const module: TestingModule = await Test.createTestingModule({
-      providers: [ProjectService, PrismaService],
-    }).compile();*/
-    
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProjectService,
@@ -50,7 +48,9 @@ describe('ProjectService (integration)', () => {
 
     service = module.get<ProjectService>(ProjectService);
     prisma = module.get<PrismaService>(PrismaService);
-  }, 30000);
+    
+    await prisma.$connect();
+  }, 50000);
 
   afterAll(async () => {
     await prisma.$disconnect();

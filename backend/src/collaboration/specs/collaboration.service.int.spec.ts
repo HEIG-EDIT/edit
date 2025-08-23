@@ -5,6 +5,7 @@ import { CreateCollaborationDto } from '../dto/create-collaboration.dto';
 import { EditCollaborationDto } from '../dto/edit-collaboration.dto';
 import { ListCollaborationsDto } from '../dto/list-collaborations.dto';
 import { RemoveCollaborationDto } from '../dto/remove-collaboration.dto';
+import { execSync } from 'child_process';
 
 describe('CollaborationService (integration)', () => {
   let service: CollaborationService;
@@ -14,6 +15,20 @@ describe('CollaborationService (integration)', () => {
   let collaboration: any;
 
   beforeAll(async () => {
+    // Start Docker container
+    execSync('docker compose up -d', { stdio: 'inherit' });
+
+    // Run migrations
+    for (let i = 0; i < 10; i++) {
+        try {
+            execSync('npx prisma db push', { stdio: 'inherit' });
+            break; // success, exit loop
+        } catch (err) {
+            console.log(`DB not ready yet, retrying... (${i+1}/10)`);
+            await new Promise(r => setTimeout(r, 5000));
+        }
+    }
+    
     const module: TestingModule = await Test.createTestingModule({
       providers: [PrismaService, CollaborationService],
     }).compile();
@@ -22,7 +37,7 @@ describe('CollaborationService (integration)', () => {
     service = module.get(CollaborationService);
 
     await prisma.$connect();
-  });
+  }, 50000);
 
   beforeEach(async () => {
     await prisma.collaboration.deleteMany();
@@ -45,6 +60,9 @@ describe('CollaborationService (integration)', () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
+
+    // Stop docker container
+    execSync('docker compose down', { stdio: 'inherit' });
   });
 
   it('should addPrjCollaboration', async () => {
