@@ -119,7 +119,7 @@ mau deploy
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
-## How to run backend 
+## How to run backend locally
 
 Copy the .env file inside the ./backend folder.
 Run:
@@ -144,6 +144,11 @@ npx prisma db seed
 Optionally, verify the database:
 ```bash
 npx prisma studio
+```
+
+Run the backend to be able to reach the APIs at `http://localhost:4000/projects`:
+```bash
+npm run start:dev
 ```
 
 ## Resources
