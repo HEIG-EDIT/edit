@@ -107,14 +107,14 @@ model Project {
 
 model Role {
   id   Int    @id @default(autoincrement())
-  name String
+  name String @unique
 
   collaborations Collaboration[]
 }
 
 model Collaboration {
   id        Int      @id @default(autoincrement())
-  createdAt DateTime
+  createdAt DateTime @default(now())
 
   user   User @relation(fields: [userId], references: [id])
   userId Int
