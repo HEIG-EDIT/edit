@@ -119,6 +119,33 @@ mau deploy
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
+## How to run backend 
+
+Copy the .env file inside the ./backend folder.
+Run:
+```bash
+docker compose up
+```
+
+Apply last migration:
+```bash
+npx prisma migrate deploy
+```
+or, to reset the database and reapply all migrations:
+```bash
+npx prisma migrate reset
+```
+
+Seed the database (if not already done/if reset):
+```bash
+npx prisma db seed
+```
+
+Optionally, verify the database:
+```bash
+npx prisma studio
+```
+
 ## Resources
 
 Check out a few resources that may come in handy when working with NestJS:
