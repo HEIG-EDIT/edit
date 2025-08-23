@@ -56,6 +56,22 @@ export class S3Service {
     return Buffer.concat(chunks).toString('utf-8');
   }
 
+  async getThumbnail(projectId: number): Promise<string> {
+    const key = `${projectId}/thumbnail.png`;
+    const obj = await this.s3.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+
+    const stream = obj.Body as Readable;
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+        chunks.push(Buffer.from(chunk));
+    }
+
+    const buffer = Buffer.concat(chunks);
+    const base64 = buffer.toString('base64');
+    return base64;
+  }
+
+
   async deleteProjectFiles(projectId: number) {
     const jsonKey = `${projectId}/project.json`;
     const thumbKey = `${projectId}/thumbnail.png`;

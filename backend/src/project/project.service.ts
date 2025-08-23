@@ -4,6 +4,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { SaveProjectDto } from './dto/save-project.dto';
 import { DeleteProjectDto } from './dto/delete-project.dto';
 import { S3Service } from '../s3/s3.service';
+import { AccessibleProjectDto } from './dto/list-accessible-prj.dto';
 
 @Injectable()
 export class ProjectService {
@@ -82,4 +83,58 @@ export class ProjectService {
     await this.s3Service.deleteProjectFiles(dto.projectId);
     await this.prisma.project.delete({ where: { id: dto.projectId } });
   }
+
+  async listAccessibleProjects(userId: number): Promise<AccessibleProjectDto[]> {
+  // Get projects where user is owner
+  const ownedProjects = await this.prisma.project.findMany({
+    where: { creatorId: userId },
+    select: {
+      id: true,
+      name: true,
+      createdAt: true,
+      lastSavedAt: true,
+    },
+  });
+
+  // Get projects where user is collaborator
+  const collaborations = await this.prisma.collaboration.findMany({
+    where: { userId },
+    include: {
+      project: true,
+      roles: true,
+    },
+  });
+
+  // Prepare results
+  const results: AccessibleProjectDto[] = [];
+
+  // Owned projects (role = owner)
+  for (const prj of ownedProjects) {
+    const thumbnail = await this.s3Service.getThumbnail(prj.id);
+    results.push({
+      projectId: prj.id,
+      projectName: prj.name,
+      createdAt: prj.createdAt,
+      lastSavedAt: prj.lastSavedAt,
+      thumbnail,
+      roles: ['owner'],
+    });
+  }
+
+  // Collaborator projects
+  for (const collab of collaborations) {
+    const thumbnail = await this.s3Service.getThumbnail(collab.project.id);
+    results.push({
+      projectId: collab.project.id,
+      projectName: collab.project.name,
+      createdAt: collab.project.createdAt,
+      lastSavedAt: collab.project.lastSavedAt,
+      thumbnail,
+      roles: collab.roles.map(r => r.name),
+    });
+  }
+
+  return results;
+}
+
 }

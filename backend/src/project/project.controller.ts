@@ -36,4 +36,10 @@ export class ProjectController {
     await this.projectService.deleteProject(dto);
     return;
   }
+
+  @Get('accessible/:userId')
+    async listAccessibleProjects(@Param('userId') userId: string) {
+    return this.projectService.listAccessibleProjects(Number(userId));
+  }
+
 }
