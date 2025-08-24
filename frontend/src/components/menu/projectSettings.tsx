@@ -3,9 +3,12 @@ import { useState } from "react";
 import { AuthorizedUsers } from "./authorizedUsers";
 import { EntryButton } from "./entryButton";
 import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
+import { handleExport } from "../editor/saveProject";
+import { useEditorContext } from "../editor/editorContext";
 
 export const ProjectSettings = () => {
   const currentPage = usePathname().split("/")[1];
+  const { stageRef } = useEditorContext();
 
   // TODO : recuperer id + nom + thumbnail des projets via appel au backend et creer un record pour stocker tout ca
   const projectsName = ["tata", "toto", "tutu"];
@@ -47,8 +50,8 @@ export const ProjectSettings = () => {
         <div className="flex w-fit mx-auto">
           <EntryButton
             icon={<FileDownloadRoundedIcon />}
-            text="Download project"
-            onClick={() => {}}
+            text="Export project"
+            onClick={() => handleExport({ stageRef })}
             style={"bg-violet-50 border-2 border-violet-500"}
           />
         </div>
