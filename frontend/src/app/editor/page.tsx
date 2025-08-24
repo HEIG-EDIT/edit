@@ -209,9 +209,6 @@ export default function EditorPage() {
           <div className="w-2/3">
             <div className="flex flex-col gap-4 h-screen">
               <div className="h-5/6" ref={canvasContainerRef}>
-                {/* TODO : supprimer couleur du fond (violet) +
-                  adapter taille selon ecran (but -> pas besoin de scroller pour acceder
-                   a la toolbar et taille des composants a gauche ne doit pas influencer sur la taille du canvas */}
                 <Canvas
                   layers={layers}
                   setVirtualLayers={setVirtualLayers}

@@ -6,6 +6,7 @@ import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
 import BrushRoundedIcon from "@mui/icons-material/BrushRounded";
 import { PaintEraseBaseComponent } from "./paintEraseBase";
+import { RangeInput } from "./rangeInput";
 
 export interface PaintToolConfiguration extends ToolConfiguration {
   radius: number;
@@ -21,21 +22,12 @@ export const PaintToolConfigurationComponent = ({
       <PaintEraseBaseComponent<PaintToolConfiguration>
         toolConfiguration={{ configuration, setConfiguration }}
       />
-      <p className="text-violet-50">
-        Radius :<br></br>
-      </p>
-      {/* TODO : faire un composant pour styliser barre en violet (et utiliser pour erase) */}
-      <input
-        type="range"
-        min="1"
-        max="100"
+      <RangeInput
+        property="Radius"
         value={configuration.radius}
-        onChange={(e) => {
-          setConfiguration({
-            ...configuration,
-            radius: Number(e.target.value),
-          });
-        }}
+        onChange={(newRadius) =>
+          setConfiguration({ ...configuration, radius: newRadius })
+        }
       />
       <span className="text-violet-50"> {configuration.radius}</span>
       <p className="text-violet-50">
