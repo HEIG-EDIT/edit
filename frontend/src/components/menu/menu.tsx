@@ -70,8 +70,8 @@ export const Menu = ({
           className="relative bg-gray-600 rounded-2xl border border-violet-300 p-2 w-2/3 h-2/3"
           ref={containerRef}
         >
-          <div className="flex flex-row gap-6 p-4 h-full">
-            <div className="rounded-2xl bg-gray-900 w-1/3 p-6 flex flex-col justify-between">
+          <div className="flex flex-row gap-6 p-2 h-full">
+            <div className="rounded-2xl bg-gray-900 w-1/4 p-2 flex flex-col justify-between">
               <div className="flex flex-col gap-4">
                 {Object.keys(MENU_ENTRIES).map((key) => {
                   const isSelected =
@@ -109,7 +109,7 @@ export const Menu = ({
                 />
               </div>
             </div>
-            <div className="w-2/3">
+            <div className="w-3/4">
               <MenuEntryConfigurationComponent />
             </div>
           </div>
