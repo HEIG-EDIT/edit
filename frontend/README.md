@@ -18,6 +18,14 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+To run tests, execute :
+
+```
+npm run build
+npm run start
+npx playwright test
+```
+
 ## Project structure
 
 All of the app's pages are located in [./src/app](./src/app). These pages may use
