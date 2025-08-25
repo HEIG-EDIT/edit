@@ -47,14 +47,11 @@ npm run start:prod
 ## Run tests
 
 ```bash
-# unit tests
-npm run test
-
-# e2e tests
-npm run test:e2e
-
-# test coverage
-npm run test:cov
+# backend unit tests
+cd ../backend
+npm install
+npm run build --if-present
+npm test
 ```
 
 Alternatively, to run ome single test:
@@ -68,7 +65,7 @@ $ npx jest ./path/to/test/test.name.spec.ts --detectOpenHandles
 Once we update our `schema.prisma` file, we want our **database** to match the new schema.
 We do this in two steps: **generate a migration** and then **apply it**.
 
-Before all, we have to make sure our changes in `schema.prisma` are saved.
+Before all, we have to make sure our changes in `schema.prisma` are saved. Also, we need to have a running db instance, and to do so we can simply use the given docker-compose file, by running `docker compose up`.
 
 ### 1. Create a migration
 
@@ -85,7 +82,7 @@ npx prisma migrate dev --name some_descriptive_name
   * Apply it to our local dev database.
   * Update the generated Prisma Client.
 
-### 3. Push schema without migration (only in dev/prototyping!)
+### 2. Push schema without migration (only in dev/prototyping!)
 
 When we just want to force the schema onto the DB, without keeping the migration history, we simply run:
 
@@ -95,7 +92,7 @@ npx prisma db push
 
 ⚠️ Warning: this **does not generate migration files** (we loose schema history). It’s useful for quick prototyping but not for production.
 
-### 4. Generate Prisma Client (if needed)
+### 3. Generate Prisma Client (if needed)
 
 If not already done by the command above, we run this command to regenerate our client:
 
@@ -105,10 +102,6 @@ npx prisma generate
 
 After that, our DB reflects our new `schema.prisma`.
 
-<<<<<<< HEAD
->>>>>>> 10badc8 (Added new schema version, migration, and removed create-user-dto)
-=======
->>>>>>> e69c6162fe611f40315da643ce834a3b646f4760
 
 ## Deployment
 
@@ -122,6 +115,63 @@ mau deploy
 ```
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+
+## How to run backend locally
+
+Copy the .env file inside the ./backend folder.
+Run:
+```bash
+docker compose up
+```
+This will create, with docker, a local instance of the postgres database and of the S3 service using Localstack. The S3-compatible endpoint will be available at: `http://localhost:4566`. Running this command will also seed Localstack.
+
+### 1. Check creation of a test bucket
+
+Install AWS CLI if not done already. You can follow this guide:
+`https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions`
+
+Configure AWS CLI to point to Localstack:
+```bash
+aws configure
+# Use dummy values:
+# AWS Access Key ID: test
+# AWS Secret Access Key: test
+# Default region: us-east-1
+```
+
+Check that a test bucket and object exist:
+```bash
+aws --endpoint-url=http://localhost:4566 s3 ls s3://test-bucket
+```
+
+### 2. Manage database
+
+Apply last migration:
+```bash
+npx prisma migrate deploy
+```
+or, to reset the database and reapply all migrations:
+```bash
+npx prisma migrate reset
+```
+
+Seed the database (if not already done):
+```bash
+npx prisma db seed
+```
+
+Optionally, verify the database:
+```bash
+npx prisma studio
+```
+
+### 3. Run the app
+
+Run the backend to be able to reach the APIs at `http://localhost:4000/projects`:
+```bash
+cp .env.local .env
+npm run start:dev
+```
 
 ## Resources
 
