@@ -11,7 +11,7 @@ THUMBNAIL_PATH="./thumbnail.png"
 WIDTH=200
 HEIGHT=200
 
-for projectId in 1 2 3; do
+for projectId in 1 2 3 4 5 6 7 8 9; do
   # create a dummy project.json
   echo "{\"id\":$projectId,\"name\":\"Local Test Project $projectId\",\"status\":\"draft\"}" > /tmp/project.json
   
