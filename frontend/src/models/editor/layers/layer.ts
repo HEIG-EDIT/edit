@@ -33,6 +33,8 @@ export class Layer {
 
   size: Vector2d;
 
+  static emptyLayerCounter: number = 0;
+
   static duplicate(other: Layer): Layer {
     const result = new Layer(
       other.name,
@@ -61,7 +63,13 @@ export class Layer {
     if (name) {
       this.name = name;
     } else {
-      this.name = this.id;
+      // Layer is empty
+      const layerSuffix = Layer.emptyLayerCounter
+        ? ` (${Layer.emptyLayerCounter})`
+        : "";
+      Layer.emptyLayerCounter++;
+
+      this.name = `New layer${layerSuffix}`;
     }
 
     if (image) {
