@@ -16,7 +16,9 @@ export const ProjectSettings = () => {
   return (
     <div className="flex flex-col justify-between gap-4">
       <div className="flex">
-        <p className="text-violet-50 font-bold text-xl">Project settings</p>
+        <p className="text-violet-50 font-bold text-xl mb-2">
+          Project settings
+        </p>
       </div>
       {currentPage == "projects" && (
         <div className="flex flex-row justify-between">
@@ -37,7 +39,7 @@ export const ProjectSettings = () => {
           <div>THUMBNAIL</div>
         </div>
       )}
-      <div className="bg-gray-700 rounded-xl p-4">
+      <div className="bg-gray-700 rounded-xl p-2 mb-4">
         <AuthorizedUsers />
       </div>
       {/* TODO : gerer logique pour download projet */}

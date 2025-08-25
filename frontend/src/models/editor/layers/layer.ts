@@ -31,6 +31,8 @@ export class Layer {
   rotation: number = 0;
   lines: Array<Line> = []; // Lines drawn free-hand on a Layer
 
+  size: Vector2d;
+
   constructor(
     name: string | null = null,
     image: HTMLImageElement | null = null,
@@ -51,6 +53,11 @@ export class Layer {
     } else {
       this.image = new Image(width, height);
     }
+
+    this.size = {
+      x: this.image.width,
+      y: this.image.height,
+    };
   }
 }
 

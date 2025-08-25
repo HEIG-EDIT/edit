@@ -1,4 +1,3 @@
-import { v2Sub } from "@/models/editor/layers/layerUtils";
 import { useEditorContext } from "../editorContext";
 import { Layer } from "@/models/editor/layers/layer";
 import { useRef } from "react";
@@ -19,7 +18,6 @@ export const PaintEraseBaseComponent = <
 }: PaintEraseBaseProps<T>) => {
   const {
     editSelectedLayers,
-    getCanvasPointerPosition,
     setToolEventHandlers,
     commitVirtualLayers,
     layers,
@@ -31,7 +29,19 @@ export const PaintEraseBaseComponent = <
   const isPaintTool = "color" in configuration;
 
   const getLayerCursorPosition = (layer: Layer) => {
-    return v2Sub(getCanvasPointerPosition(), layer.position);
+    let position = layer.groupRef.current?.getRelativePointerPosition();
+    const layerSize = layer.groupRef.current?.size();
+
+    if (!position || !layerSize) {
+      throw new Error("Could not get cursor position or layer size");
+    }
+
+    position = {
+      x: Math.max(0, Math.min(position.x, layerSize.width)),
+      y: Math.max(0, Math.min(position.y, layerSize.height)),
+    };
+
+    return position;
   };
 
   const handleMouseDown = () => {
@@ -55,7 +65,7 @@ export const PaintEraseBaseComponent = <
       const line: Partial<Line> = {
         points: [pointPosition.x, pointPosition.y],
         width: configuration.radius,
-        color: "",
+        color: "0x000", // This is needed otherwise the eraser fails
       };
 
       // tool property reference: https://konvajs.org/docs/react/Free_Drawing.html

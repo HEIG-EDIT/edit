@@ -27,7 +27,6 @@ import {
 
 type CanvasProps = {
   layers: Layer[];
-  setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
   updateLayer: (
     id: LayerId,
     callback: LayerUpdateCallback,
@@ -121,6 +120,9 @@ export const Canvas = ({
   const handleScroll = (e: KonvaScrollEvent) => {
     e.evt.preventDefault();
 
+    // Arbitrary
+    const MINIMUM_SCALE = 0.02;
+
     // Avoid accidental scrolling when moving aroung
     if (e.evt.buttons == 4) {
       return;
@@ -138,10 +140,13 @@ export const Canvas = ({
       }
 
       const { scale } = prev;
-
       const canvasPointerPosition = getCanvasPointerPosition();
 
       const newScale = scale * scaleBy;
+
+      if (newScale < MINIMUM_SCALE) {
+        return prev;
+      }
 
       const newPos = {
         x: stagePointerPosition.x - canvasPointerPosition.x * newScale,
@@ -159,10 +164,8 @@ export const Canvas = ({
     <div>
       <Stage
         className="bg-violet-200"
-        // TODO : voir avec code d'Alessio si taille respectée et plus modifier la taille du canvas
-        // FIXME: Find a way to use all available space
-        height={1000}
-        width={1000}
+        height={height}
+        width={width}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -193,6 +196,7 @@ export const Canvas = ({
                 rotation={layer.rotation}
                 scale={layer.scale}
                 image={layer.image}
+                size={layer.size}
                 isVisible={layer.isVisible}
                 isSelected={layer.isSelected}
                 lines={layer.lines}

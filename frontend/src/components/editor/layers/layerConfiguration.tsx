@@ -11,19 +11,24 @@ export const LayerConfiguration = ({
 }: LayerConfigurationProps) => {
   return (
     <div className="border-2 border-violet-500 bg-violet-50 rounded-2xl p-2 flex flex-row items-center justify-between gap-2">
-      <div className="flex flex-row justify-start gap-2 flex-1 overflow-hidden">
+      <div
+        className="flex flex-row justify-start gap-2 flex-1 overflow-hidden"
+        onClick={() =>
+          updateLayer((layer) => {
+            return {
+              ...layer,
+              isSelected: !isSelected,
+            };
+          })
+        }
+      >
         <input
           type="checkbox"
-          className="accent-violet-500"
+          className="accent-violet-500 border-black cursor-pointer"
           checked={isSelected}
-          onChange={(e: react.ChangeEvent<HTMLInputElement>) => {
-            updateLayer((layer) => {
-              return {
-                ...layer,
-                isSelected: e.target.checked,
-              };
-            }, true);
-          }}
+          onChange={(e: react.ChangeEvent<HTMLInputElement>) =>
+            e.stopPropagation()
+          }
         />
         <p className="truncate whitespace-nowrap overflow-hidden" title={name}>
           {name}
@@ -31,6 +36,7 @@ export const LayerConfiguration = ({
       </div>
       <div className="flex flex-row justify-end gap-2 shrink-0">
         <button
+          className="cursor-pointer"
           onClick={() => {
             updateLayer((layer) => {
               return {

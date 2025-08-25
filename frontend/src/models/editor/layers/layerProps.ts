@@ -14,6 +14,7 @@ export interface LayerProps {
   rotation: number;
   scale: Vector2d;
   image: HTMLImageElement;
+  size: Vector2d;
   isVisible: boolean;
   isSelected: boolean;
   lines: Line[];

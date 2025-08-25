@@ -248,7 +248,7 @@ export interface AdjustToolConfiguration extends ToolConfiguration {
   subConfigurations: Record<string, SubToolConfiguration>;
 }
 
-// TODO : ajouter un bouton pour save sous-configuration et pop up si chgmt de filtre alors que sous-configuration pas save
+// TODO : changement de tool amene a une sauvegarde de l'etat du projet (plus dans virtual)
 export const AdjustToolConfigurationComponent = ({
   configuration,
   setConfiguration,

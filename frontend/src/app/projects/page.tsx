@@ -27,7 +27,7 @@ export default function ProjectSelection() {
               </div>
               <div className="bg-white rounded-xl p-2">
                 {/* TODO : gerer logique pour trier projets + affichage de la box */}
-                <p className="text-black text-sm">TODO</p>
+                <p className="text-black text-sm">...</p>
               </div>
             </div>
             <ActionButton
@@ -38,7 +38,7 @@ export default function ProjectSelection() {
           </div>
         </div>
         {/* TODO : call endpoint pour recuperer projets selon current user + creer composant projectDescription */}
-        <div>TODO</div>
+        <div>...</div>
       </div>
       {menuDisplay && <Menu setMenuDisplay={setMenuDisplay} />}
     </main>
