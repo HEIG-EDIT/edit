@@ -82,7 +82,7 @@ npx prisma migrate dev --name some_descriptive_name
   * Apply it to our local dev database.
   * Update the generated Prisma Client.
 
-### 3. Push schema without migration (only in dev/prototyping!)
+### 2. Push schema without migration (only in dev/prototyping!)
 
 When we just want to force the schema onto the DB, without keeping the migration history, we simply run:
 
@@ -92,7 +92,7 @@ npx prisma db push
 
 ⚠️ Warning: this **does not generate migration files** (we loose schema history). It’s useful for quick prototyping but not for production.
 
-### 4. Generate Prisma Client (if needed)
+### 3. Generate Prisma Client (if needed)
 
 If not already done by the command above, we run this command to regenerate our client:
 
@@ -123,6 +123,28 @@ Run:
 ```bash
 docker compose up
 ```
+This will create, with docker, a local instance of the postgres database and of the S3 service using Localstack. The S3-compatible endpoint will be available at: `http://localhost:4566`. Running this command will also seed Localstack.
+
+### 1. Check creation of a test bucket
+
+Install AWS CLI if not done already. You can follow this guide:
+`https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions`
+
+Configure AWS CLI to point to Localstack:
+```bash
+aws configure
+# Use dummy values:
+# AWS Access Key ID: test
+# AWS Secret Access Key: test
+# Default region: us-east-1
+```
+
+Check that a test bucket and object exist:
+```bash
+aws --endpoint-url=http://localhost:4566 s3 ls s3://test-bucket
+```
+
+### 2. Manage database
 
 Apply last migration:
 ```bash
@@ -133,7 +155,7 @@ or, to reset the database and reapply all migrations:
 npx prisma migrate reset
 ```
 
-Seed the database (if not already done/if reset):
+Seed the database (if not already done):
 ```bash
 npx prisma db seed
 ```
@@ -143,8 +165,11 @@ Optionally, verify the database:
 npx prisma studio
 ```
 
+### 3. Run the app
+
 Run the backend to be able to reach the APIs at `http://localhost:4000/projects`:
 ```bash
+cp .env.local .env
 npm run start:dev
 ```
 
