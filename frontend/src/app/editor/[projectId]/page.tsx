@@ -206,6 +206,7 @@ export default function EditorPage() {
                 layers={layers}
                 updateLayer={updateLayer}
                 setLayers={setLayers}
+                canvasSize={{ x: canvasSize.width, y: canvasSize.height }}
               />
             </div>
           </div>

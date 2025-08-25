@@ -12,13 +12,11 @@ import { Layer, LayerUpdateCallback } from "@/models/editor/layers/layer";
 import { LayerReordering } from "./layerReordering";
 import KeyboardReturnRoundedIcon from "@mui/icons-material/KeyboardReturnRounded";
 
-// FIXME: Maybe pass only required information
-// I don't know if this impacts performance, I think the component is re-rendered
-// whenever an attribute of Layer is updated, even if it's not used in here.
 export const LayersManagement = ({
   layers,
   updateLayer,
   setLayers,
+  canvasSize,
 }: LayersManagementProps) => {
   const [isNewLayerDisplayed, setIsNewLayerDisplayed] =
     useState<boolean>(false);
@@ -86,6 +84,12 @@ export const LayersManagement = ({
     </div>
   );
 
+  const handleNewEmptyLayer = () => {
+    const newLayer = new Layer(null, null, canvasSize.x, canvasSize.y);
+
+    setLayers((prev) => [...prev, newLayer]);
+  };
+
   const addLayer = (
     <div className="flex flex-row p-2 items-center justify-between">
       <ConfigurationButton
@@ -104,7 +108,7 @@ export const LayersManagement = ({
         icon={AddToPhotosRoundedIcon}
         text={"Empty layer"}
         // TODO : gerer logique pour charger layer vide
-        onClick={() => {}}
+        onClick={handleNewEmptyLayer}
       />
       <ConfigurationButton
         icon={KeyboardReturnRoundedIcon}
