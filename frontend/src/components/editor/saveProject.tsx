@@ -20,12 +20,41 @@ const setTransformersVisibility = (layer: Layer, visible: boolean) => {
   }
 };
 
-export const handleExport = (layerRef: React.RefObject<Layer | null>) => {
+const THUMBNAIL_SIZE = {
+  x: 160,
+  y: 90,
+};
+
+export const exportToURI = (
+  layerRef: React.RefObject<Layer | null>,
+  thumbnail: boolean = false,
+) => {
+  let result: string;
   if (layerRef && layerRef.current) {
-    console.log("children", layerRef.current.getChildren());
     setTransformersVisibility(layerRef.current, false);
-    const uri = layerRef.current.toDataURL();
-    downloadURI(uri, "project.png");
+    // Hide stuff outside of the Canvas
+    layerRef.current.clipFunc(function (ctx) {
+      ctx.rect(0, 0, layerRef.current.width(), layerRef.current.height());
+    });
+
+    if (thumbnail) {
+      const pixelRatio = THUMBNAIL_SIZE.x / layerRef.current.width();
+
+      result = layerRef.current.toDataURL({
+        pixelRatio: pixelRatio,
+        height: THUMBNAIL_SIZE.y / pixelRatio, // To keep aspect ratio
+      });
+    } else {
+      result = layerRef.current.toDataURL();
+    }
+    layerRef.current.clipFunc(undefined);
     setTransformersVisibility(layerRef.current, true);
+    return result;
   }
+  throw new Error("Could not get layer ref for export");
+};
+
+export const handleExport = (layerRef: React.RefObject<Layer | null>) => {
+  const uri = exportToURI(layerRef, false);
+  downloadURI(uri, "project.png");
 };
