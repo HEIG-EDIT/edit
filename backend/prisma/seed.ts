@@ -3,6 +3,21 @@ import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
+// Helper to generate random strings
+function randomString(length: number) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// Helper to get random integer between min and max (inclusive)
+function randomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 async function main() {
   // -------------------
   // Roles
@@ -50,6 +65,18 @@ async function main() {
     },
   });
 
+  // New user with long name
+  const longNameUser = await prisma.user.create({
+    data: {
+      email: 'longuser@example.com',
+      userName: randomString(100),
+      passwordHash,
+      isEmailVerified: true,
+    },
+  });
+
+  const users = [alice, bob, charlie, longNameUser];
+
   // -------------------
   // Projects
   // -------------------
@@ -76,6 +103,55 @@ async function main() {
     },
   });
 
+  // Long-name project
+  const longNameProject = await prisma.project.create({
+    data: {
+      name: randomString(100),
+      creatorId: longNameUser.id,
+      lastSavedAt: new Date(),
+    },
+  });
+
+  const extraProject1 = await prisma.project.create({
+    data: {
+      name: `Project ${randomString(15)}`,
+      creatorId: alice.id,
+      lastSavedAt: new Date(),
+    },
+  });
+
+  const extraProject2 = await prisma.project.create({
+    data: {
+      name: `Project ${randomString(15)}`,
+      creatorId: bob.id,
+      lastSavedAt: new Date(),
+    },
+  });
+
+  const extraProject3 = await prisma.project.create({
+    data: {
+      name: `Project ${randomString(15)}`,
+      creatorId: charlie.id,
+      lastSavedAt: new Date(),
+    },
+  });
+
+  const extraProject4 = await prisma.project.create({
+    data: {
+      name: `Project ${randomString(15)}`,
+      creatorId: longNameUser.id,
+      lastSavedAt: new Date(),
+    },
+  });
+
+  const extraProject5 = await prisma.project.create({
+    data: {
+      name: `Project ${randomString(15)}`,
+      creatorId: alice.id,
+      lastSavedAt: new Date(),
+    },
+  });
+
   // -------------------
   // Collaborations
   // -------------------
@@ -94,9 +170,7 @@ async function main() {
       userId: charlie.id,
       projectId: project1.id,
       roles: {
-        connect: [
-          { id: roleRecords.find((r) => r.name === 'viewer')!.id },
-        ],
+        connect: [{ id: roleRecords.find((r) => r.name === 'viewer')!.id }],
       },
     },
   });
@@ -106,13 +180,67 @@ async function main() {
       userId: alice.id,
       projectId: project2.id,
       roles: {
-        connect: [
-          { id: roleRecords.find((r) => r.name === 'viewer')!.id },
-        ],
+        connect: [{ id: roleRecords.find((r) => r.name === 'viewer')!.id }],
       },
     },
   });
 
+  await prisma.collaboration.create({
+    data: {
+      userId: bob.id,
+      projectId: extraProject1.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'editor')!.id }] },
+    },
+  });
+
+  await prisma.collaboration.create({
+    data: {
+      userId: charlie.id,
+      projectId: extraProject1.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'viewer')!.id }] },
+    },
+  });
+
+  await prisma.collaboration.create({
+    data: {
+      userId: alice.id,
+      projectId: extraProject2.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'viewer')!.id }] },
+    },
+  });
+
+  await prisma.collaboration.create({
+    data: {
+      userId: bob.id,
+      projectId: extraProject3.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'editor')!.id }] },
+    },
+  });
+
+  await prisma.collaboration.create({
+    data: {
+      userId: alice.id,
+      projectId: extraProject4.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'viewer')!.id }] },
+    },
+  });
+
+  await prisma.collaboration.create({
+    data: {
+      userId: bob.id,
+      projectId: extraProject4.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'editor')!.id }] },
+    },
+  });
+
+  await prisma.collaboration.create({
+    data: {
+      userId: charlie.id,
+      projectId: extraProject5.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'viewer')!.id }] },
+    },
+  });
+  
   // -------------------
   // Refresh Tokens
   // -------------------
