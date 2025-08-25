@@ -91,6 +91,8 @@ export default function EditorPage() {
   // TODO : a supprimer des que gestion du state global ok
   useEffect(() => console.log(toolsConfiguration), [toolsConfiguration]);
 
+  const layerRef = useRef<Konva.Layer>(null);
+
   const stageRef = useRef<Konva.Stage>(null);
   const [canvasState, setCanvasState] = useState<CanvasState>({
     position: {
@@ -186,6 +188,7 @@ export default function EditorPage() {
           canvasState,
           setCanvasState,
           stageRef,
+          layerRef,
 
           toolEventHandlers,
           setToolEventHandlers,

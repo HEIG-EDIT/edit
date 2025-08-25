@@ -8,7 +8,7 @@ import { useEditorContext } from "../editor/editorContext";
 
 export const ProjectSettings = () => {
   const currentPage = usePathname().split("/")[1];
-  const { stageRef } = useEditorContext();
+  const { layerRef } = useEditorContext();
 
   // TODO : recuperer id + nom + thumbnail des projets via appel au backend et creer un record pour stocker tout ca
   const projectsName = ["tata", "toto", "tutu"];
@@ -51,7 +51,7 @@ export const ProjectSettings = () => {
           <EntryButton
             icon={<FileDownloadRoundedIcon />}
             text="Export project"
-            onClick={() => handleExport({ stageRef })}
+            onClick={() => handleExport(layerRef)}
             style={"bg-violet-50 border-2 border-violet-500"}
           />
         </div>

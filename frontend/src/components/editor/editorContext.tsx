@@ -39,6 +39,7 @@ interface EditorContextType {
   canvasState: CanvasState;
   setCanvasState: React.Dispatch<React.SetStateAction<CanvasState>>;
   stageRef: React.RefObject<Konva.Stage | null>;
+  layerRef: React.RefObject<Konva.Layer | null>;
 
   toolEventHandlers: React.RefObject<EventHandlers>;
   setToolEventHandlers: (eventHandlers: EventHandlers) => void;
