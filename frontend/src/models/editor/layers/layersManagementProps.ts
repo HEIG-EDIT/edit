@@ -1,3 +1,4 @@
+import { Vector2d } from "konva/lib/types";
 import { Layer, LayerId, LayerUpdateCallback } from "./layer";
 
 export interface LayersManagementProps {
@@ -8,4 +9,5 @@ export interface LayersManagementProps {
     virtual?: boolean,
   ) => void;
   setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
+  canvasSize: Vector2d;
 }
