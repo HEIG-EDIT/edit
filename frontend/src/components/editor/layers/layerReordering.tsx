@@ -97,7 +97,7 @@ export const LayerReordering = ({
   }
 
   return (
-    <div>
+    <div className="flex flex-col">
       <LayerReorderingButton
         onClick={bringLayerToFront}
         icon={KeyboardDoubleArrowUpRoundedIcon}
