@@ -33,6 +33,22 @@ export class Layer {
 
   size: Vector2d;
 
+  static duplicate(other: Layer): Layer {
+    const result = new Layer(
+      other.name,
+      other.image.cloneNode() as HTMLImageElement,
+    );
+
+    result.isVisible = other.isVisible;
+
+    result.position = { ...other.position };
+    result.scale = { ...other.scale };
+    result.rotation = other.rotation;
+    result.lines = [...other.lines];
+
+    return result;
+  }
+
   constructor(
     name: string | null = null,
     image: HTMLImageElement | null = null,

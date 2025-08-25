@@ -221,7 +221,7 @@ export const Canvas = ({
             width={width}
             stroke={"#7c3aed"}
             strokeWidth={2}
-            strokeEnabled={true /* TODO: Link with editor setting */}
+            strokeEnabled={true}
             scale={{
               x: canvasState.scale,
               y: canvasState.scale,
