@@ -5,10 +5,32 @@ import { ActionButton } from "@/components/actionButton";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import { Menu } from "@/components/menu/menu";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Project } from "@/models/api/project/project";
+import api from "@/lib/api";
 
 export default function ProjectSelection() {
   const [menuDisplay, setMenuDisplay] = useState<boolean>(false);
+
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  // TODO : finir de gerer
+  //const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasError, setHasError] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      api.get("");
+      // TODO : utiliser authentification
+      api
+        .get("/api/projects/accessible/1")
+        .then((res) => setProjects(res.data))
+        .catch(() => setHasError(true));
+    };
+    fetchData();
+    // TODO : a supprimer
+    console.log({ hasError });
+  }, []);
 
   return (
     <main className="bg-gray-900 min-h-screen p-6">
@@ -38,7 +60,7 @@ export default function ProjectSelection() {
           </div>
         </div>
         {/* TODO : call endpoint pour recuperer projets selon current user + creer composant projectDescription */}
-        <div>...</div>
+        <div>{JSON.stringify(projects)}</div>
       </div>
       {menuDisplay && <Menu setMenuDisplay={setMenuDisplay} />}
     </main>
