@@ -8,28 +8,28 @@ import { Menu } from "@/components/menu/menu";
 import { useEffect, useState } from "react";
 import { Project } from "@/models/api/project/project";
 import api from "@/lib/api";
+import { ListProjects } from "@/components/projects/listProjects";
 
 export default function ProjectSelection() {
   const [menuDisplay, setMenuDisplay] = useState<boolean>(false);
 
-  const [projects, setProjects] = useState<Project[]>([]);
-
-  // TODO : finir de gerer
-  //const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      api.get("");
-      // TODO : utiliser authentification
-      api
-        .get("/api/projects/accessible/1")
-        .then((res) => setProjects(res.data))
-        .catch(() => setHasError(true));
+      try {
+        // TODO : utiliser authentification
+        const res = await api.get("/api/projects/accessible/1");
+        setProjects(res.data);
+      } catch {
+        setHasError(true);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchData();
-    // TODO : a supprimer
-    console.log({ hasError });
   }, []);
 
   return (
@@ -59,8 +59,14 @@ export default function ProjectSelection() {
             />
           </div>
         </div>
-        {/* TODO : call endpoint pour recuperer projets selon current user + creer composant projectDescription */}
-        <div>{JSON.stringify(projects)}</div>
+        {/* TODO : gerer ca plus joliment */}
+        {isLoading && <p>Loading...</p>}
+        {hasError && <p>Error while loading projects</p>}
+        {projects && (
+          <div className="p-4">
+            <ListProjects projects={projects} />
+          </div>
+        )}
       </div>
       {menuDisplay && <Menu setMenuDisplay={setMenuDisplay} />}
     </main>
