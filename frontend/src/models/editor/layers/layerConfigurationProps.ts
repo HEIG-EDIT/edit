@@ -4,5 +4,5 @@ export interface LayerConfigurationProps {
   name: string;
   isSelected: boolean;
   isVisible: boolean;
-  updateLayer: (callback: LayerUpdateCallback) => void;
+  updateLayer: (callback: LayerUpdateCallback, virtual?: boolean) => void;
 }

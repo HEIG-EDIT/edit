@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
 import { CircularBuffer } from "@/models/editor/utils/CircularBuffer";
 
+export type VirtualStateSetter<T> = (newState: T | ((prev: T) => T)) => void;
+
 /// Hook to store state with undo / redo capabilities.
 /// It has the ability to group multiple smaller modifications into one.
 /// capacity sets the maximum number of states to keep in memory.
@@ -14,12 +16,14 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
     virtualState: T;
     // Index of the current state in the stateHistory
     index: number;
+    isLatestChange: boolean;
   }
 
   const [state, setState] = useState<UndoRedoState>({
     stateHistory: new CircularBuffer<T>(capacity, [initialState]),
     virtualState: initialState,
     index: 0,
+    isLatestChange: true,
   });
 
   /// Public function to update the state while keeping the history
@@ -30,15 +34,18 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
           ? (newState as (prev: T) => T)
           : () => newState;
       setState((prev) => {
-        const { stateHistory, index } = prev;
+        const { stateHistory, index, virtualState } = prev;
         const newHistory = stateHistory.getCopy();
-        const newState = func(stateHistory.get(index));
+        const newState = func(virtualState);
 
-        newHistory.push(newState);
+        const newIndex = index + 1;
+        newHistory.set(newIndex, newState);
+
         return {
           stateHistory: newHistory,
           virtualState: newState,
-          index: index + 1,
+          index: newIndex,
+          isLatestChange: true,
         };
       });
     },
@@ -49,7 +56,7 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
   /// for calling commitVirtualState once all grouped changes are added to the
   /// virtual state.
   const setVirtualState = useCallback(
-    (newState: T) => {
+    (newState: T | ((prev: T) => T)) => {
       const func =
         typeof newState === "function"
           ? (newState as (prev: T) => T)
@@ -76,6 +83,7 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
         ...prev,
         index: prev.index - 1,
         virtualState: prev.stateHistory.get(prev.index - 1),
+        isLatestChange: false,
       };
     });
   }, [setState]);
@@ -88,6 +96,7 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
         ...prev,
         index: index,
         virtualState: prev.stateHistory.get(index),
+        isLatestChange: index == prev.stateHistory.length - 1,
       };
     });
   }, [setState]);
@@ -95,7 +104,8 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
   const canUndo =
     state.stateHistory.getStartIndex() >= 0 &&
     state.index > state.stateHistory.getStartIndex();
-  const canRedo = state.index < state.stateHistory.length - 1;
+  const canRedo =
+    !state.isLatestChange && state.index < state.stateHistory.length - 1;
 
   return {
     get state() {

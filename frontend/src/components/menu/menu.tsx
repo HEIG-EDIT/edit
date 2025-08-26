@@ -1,7 +1,7 @@
-import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
-import { EntryButton } from "@/components/editor/menu/entryButton";
+import { EntryButton } from "@/components/menu/entryButton";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
+import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import { useRouter } from "next/navigation";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
@@ -14,9 +14,9 @@ import React, {
 } from "react";
 import { MenuEntry } from "@/models/editor/menu/menuEntry";
 import { UserSettings } from "./userSettings";
-import { EditorSettings } from "./editorSettings";
 import { ProjectSettings } from "./projectSettings";
 import useOnClickOutside from "@/hooks/useOnClickOutside";
+import { usePathname } from "next/navigation";
 
 export const Menu = ({
   setMenuDisplay,
@@ -24,6 +24,7 @@ export const Menu = ({
   setMenuDisplay: Dispatch<SetStateAction<boolean>>;
 }) => {
   const router = useRouter();
+  const currentPage = usePathname().split("/")[1];
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const handleClickOutside = useCallback(() => {
@@ -41,16 +42,6 @@ export const Menu = ({
         onClick: () => setNameSelectedMenuEntry(MENU_ENTRIES["user"].name),
       },
       associatedComponent: UserSettings,
-    },
-    editorSettings: {
-      name: "editorSettings",
-      button: {
-        icon: <SettingsRoundedIcon />,
-        text: "Editor settings",
-        onClick: () =>
-          setNameSelectedMenuEntry(MENU_ENTRIES["editorSettings"].name),
-      },
-      associatedComponent: EditorSettings,
     },
     projectSettings: {
       name: "projectSettings",
@@ -79,8 +70,8 @@ export const Menu = ({
           className="relative bg-gray-600 rounded-2xl border border-violet-300 p-2 w-2/3 h-2/3"
           ref={containerRef}
         >
-          <div className="flex flex-row gap-6 p-4 h-full">
-            <div className="rounded-2xl bg-gray-900 w-1/3 p-6 flex flex-col justify-between">
+          <div className="flex flex-row gap-6 p-2 h-full">
+            <div className="rounded-2xl bg-gray-900 w-1/4 p-2 flex flex-col justify-between">
               <div className="flex flex-col gap-4">
                 {Object.keys(MENU_ENTRIES).map((key) => {
                   const isSelected =
@@ -100,17 +91,25 @@ export const Menu = ({
                   );
                 })}
               </div>
-              <div className="flex justify-end">
-                {/* TODO : comportement du bouton (composant a droite = ? et nouvel onglet ?) pour aller sur la page principale, qui est ? */}
+              <div className="flex flex-col gap-4">
+                {currentPage != "projects" && (
+                  <EntryButton
+                    icon={<HomeRoundedIcon />}
+                    text="View projects"
+                    onClick={() => router.push("./projects")}
+                    style={"bg-violet-50 border-2 border-violet-500"}
+                  />
+                )}
+                {/* TODO : @Elbu -> gerer la deconnexion du user */}
                 <EntryButton
-                  icon={<HomeRoundedIcon />}
-                  text="Home"
-                  onClick={() => router.push("./landing_page")}
+                  icon={<LogoutRoundedIcon />}
+                  text="Log out"
+                  onClick={() => router.push("./")}
                   style={"bg-violet-50 border-2 border-violet-500"}
                 />
               </div>
             </div>
-            <div className="w-2/3">
+            <div className="w-3/4">
               <MenuEntryConfigurationComponent />
             </div>
           </div>

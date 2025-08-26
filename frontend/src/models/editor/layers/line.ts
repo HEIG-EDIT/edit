@@ -6,5 +6,5 @@ export interface Line {
   points: Points;
   color: string;
   width: number;
-  tool: string | null;
+  tool: GlobalCompositeOperation;
 }

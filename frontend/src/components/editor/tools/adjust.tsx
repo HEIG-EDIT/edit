@@ -7,6 +7,8 @@ import { SubToolConfigurationProps } from "@/models/editor/tools/subToolConfigur
 import { SubTool } from "@/models/editor/tools/subTool";
 import ContrastRoundedIcon from "@mui/icons-material/ContrastRounded";
 
+// TODO (last) : s'occuper de ce composant une fois qu'on sait ce qu'on aura le temps d'implementer
+
 export type BlackWhiteConfiguration = SubToolConfiguration;
 
 export interface GaussianBlurConfiguration extends SubToolConfiguration {
@@ -27,7 +29,6 @@ export interface PixelateConfiguration extends SubToolConfiguration {
   amount: number;
 }
 
-// TODO : definir plusieurs attributs avec boolean
 export interface FlipConfiguration extends SubToolConfiguration {
   horizontal_flip: boolean;
   vertical_flip: boolean;
@@ -247,7 +248,7 @@ export interface AdjustToolConfiguration extends ToolConfiguration {
   subConfigurations: Record<string, SubToolConfiguration>;
 }
 
-// TODO : ajouter un bouton pour save sous-configuration et pop up si chgmt de filtre alors que sous-configuration pas save
+// TODO : changement de tool amene a une sauvegarde de l'etat du projet (plus dans virtual)
 export const AdjustToolConfigurationComponent = ({
   configuration,
   setConfiguration,

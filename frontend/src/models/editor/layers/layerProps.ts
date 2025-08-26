@@ -1,6 +1,12 @@
 import { Vector2d } from "konva/lib/types";
-import { LayerId } from "./layer";
+import { LayerId, LayerUpdateCallback } from "./layer";
 import { Line } from "./line";
+
+export interface TransformDiff {
+  scale: Vector2d;
+  position: Vector2d;
+  rotation: number;
+}
 
 export interface LayerProps {
   id: LayerId;
@@ -8,9 +14,9 @@ export interface LayerProps {
   rotation: number;
   scale: Vector2d;
   image: HTMLImageElement;
+  size: Vector2d;
   isVisible: boolean;
+  isSelected: boolean;
   lines: Line[];
-
-  onDragEnd: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  onTransformEnd: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  updateLayer: (callback: LayerUpdateCallback, virtual: boolean) => void;
 }

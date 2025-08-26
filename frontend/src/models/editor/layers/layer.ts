@@ -1,6 +1,7 @@
 import { Vector2d } from "konva/lib/types";
-import { createRef } from "react";
+import { createRef, RefObject } from "react";
 import { Line } from "./line";
+import Konva from "konva";
 
 export type LayerId = string;
 
@@ -12,12 +13,14 @@ export class Layer {
   isSelected: boolean = false;
 
   // Refs to the underlying Konva components
-  groupRef: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  // FIXME: Check if useful
-  imageRef: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  groupRef: RefObject<Konva.Group | null>;
 
   isVisible: boolean = true;
   position: Vector2d = {
+    x: 0,
+    y: 0,
+  };
+  positionBeforeDrag: Vector2d = {
     x: 0,
     y: 0,
   };
@@ -28,6 +31,8 @@ export class Layer {
   rotation: number = 0;
   lines: Array<Line> = []; // Lines drawn free-hand on a Layer
 
+  size: Vector2d;
+
   constructor(
     name: string | null = null,
     image: HTMLImageElement | null = null,
@@ -36,7 +41,6 @@ export class Layer {
   ) {
     this.id = crypto.randomUUID();
     this.groupRef = createRef();
-    this.imageRef = createRef();
 
     if (name) {
       this.name = name;
@@ -49,6 +53,11 @@ export class Layer {
     } else {
       this.image = new Image(width, height);
     }
+
+    this.size = {
+      x: this.image.width,
+      y: this.image.height,
+    };
   }
 }
 

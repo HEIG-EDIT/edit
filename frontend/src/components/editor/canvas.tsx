@@ -2,10 +2,17 @@
 
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
-import { Stage, Layer as KonvaLayer, Rect, Transformer } from "react-konva";
-import Konva from "konva";
-import KonvaEventObject from "konva";
+import React, { useRef, useState } from "react";
+import { Stage, Layer as KonvaLayer, Rect } from "react-konva";
+import {
+  CANVAS_DRAG_MOUSE_BUTTON,
+  KonvaMouseEvent,
+  KonvaScrollEvent,
+  MOUSE_DOWN,
+  MOUSE_MOVE,
+  MOUSE_UP,
+  PRIMARY_MOUSE_BUTTON,
+} from "@/models/editor/utils/events";
 import {
   Layer,
   LayerId,
@@ -13,155 +20,142 @@ import {
 } from "@/models/editor/layers/layer";
 import { LayerComponent } from "./layers/layer";
 import { Vector2d } from "konva/lib/types";
+import {
+  CanvasState,
+  useEditorContext,
+} from "@/components/editor/editorContext";
 
 type CanvasProps = {
   layers: Layer[];
-  setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
-  updateLayer: (id: LayerId, callback: LayerUpdateCallback) => void;
+  updateLayer: (
+    id: LayerId,
+    callback: LayerUpdateCallback,
+    virtual?: boolean,
+  ) => void;
+  setVirtualLayers: (layer: Layer[] | ((layer: Layer[]) => Layer[])) => void;
+  commitVirtualLayers: () => void;
   nameSelectedTool: string;
   height: number;
   width: number;
 };
 
-type CanvasState = {
-  scale: number;
-  position: Vector2d;
-};
-
-type KonvaMouseEvent = KonvaEventObject.KonvaEventObject<MouseEvent>;
-
 export const Canvas = ({
   layers: layers,
-  setLayers: setLayers,
   updateLayer,
-  nameSelectedTool,
   width,
   height,
 }: CanvasProps) => {
-  // TODO : to remove, usefull to pass deployment with eslint check ("'nameSelectedTool' is defined but never used.  @typescript-eslint/no-unused-vars")
-  console.log(nameSelectedTool);
-
-  const transformerRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-  const stageRef = useRef<Konva.Stage>(null);
-  const canvasRef = useRef<Konva.Layer>(null);
-
-  const [canvasState, setCanvasState] = useState<CanvasState>({
-    scale: 1,
-    position: {
+  const isDraggingCanvas = useRef(false);
+  const [canvasDragStartPosition, setCanvasDragStartPosition] =
+    useState<Vector2d>({
       x: 0,
       y: 0,
-    },
-  });
+    });
 
-  // TODO : to remove, usefull to pass deployment with eslint check ("'setCanvasState' is assigned a value but never used.  @typescript-eslint/no-unused-vars")
-  console.log(setCanvasState);
+  const {
+    getCanvasPointerPosition,
+    canvasState,
+    setCanvasState,
+    stageRef,
+    toolEventHandlers,
+    isHoldingPrimary,
+  } = useEditorContext();
 
-  // Update transformer (blue bounding box around the image) when selection changes
-  useEffect(() => {
-    console.log(layers);
-    if (transformerRef.current) {
-      const nodes = [];
-      for (const layer of layers) {
-        if (layer.isSelected) {
-          console.log("Layer is selected: ", layer.name);
-          nodes.push(layer.groupRef.current);
-        }
+  const handleMouseDown = (e: KonvaMouseEvent) => {
+    e.evt.preventDefault();
+
+    if (e.evt.button == CANVAS_DRAG_MOUSE_BUTTON) {
+      setCanvasDragStartPosition({
+        x: e.evt.clientX - canvasState.position.x,
+        y: e.evt.clientY - canvasState.position.y,
+      });
+
+      isDraggingCanvas.current = true;
+    } else if (e.evt.button == PRIMARY_MOUSE_BUTTON) {
+      const handler = toolEventHandlers.current[MOUSE_DOWN];
+      if (handler) {
+        handler(e);
       }
-      transformerRef.current.nodes(nodes);
-      transformerRef.current.getLayer()?.batchDraw();
     }
-  }, [layers]);
+  };
 
-  const getCanvasPointerPosition = () => {
-    const stagePosition = stageRef?.current?.getPointerPosition();
-    if (!stagePosition) {
-      // Should not happen
-      throw new Error("Could not get the stage pointer position");
+  const handleMouseMove = (e: KonvaMouseEvent) => {
+    if (!isDraggingCanvas.current) {
+      const handler = toolEventHandlers.current[MOUSE_MOVE];
+      if (handler) {
+        return handler(e);
+      }
     }
 
-    const state = canvasState;
+    if (e.evt.buttons != 4) {
+      isDraggingCanvas.current = false;
+    }
 
-    return {
-      x: (stagePosition.x - state.position.x) / state.scale,
-      y: (stagePosition.y - state.position.y) / state.scale,
+    const newPos = {
+      x: e.evt.clientX - canvasDragStartPosition.x,
+      y: e.evt.clientY - canvasDragStartPosition.y,
     };
-  };
 
-  // Click handler for stage, allows selecting layers
-  const handleStageClick = (e: KonvaMouseEvent) => {
-    // TODO : to remove
-    console.log(e);
-
-    let hasClickedLayer = false;
-
-    for (const layer of layers) {
-      const targets = layer.groupRef.current.getAllIntersections(
-        getCanvasPointerPosition(),
-      );
-
-      if (targets.length && !hasClickedLayer) {
-        hasClickedLayer = true;
-        updateLayer(layer.id, (prev) => {
-          return {
-            ...prev,
-            isSelected: true,
-          };
-        });
-      }
-      // De-select all other layers
-      else {
-        updateLayer(layer.id, (prev) => {
-          return {
-            ...prev,
-            isSelected: false,
-          };
-        });
-      }
-    }
-  };
-
-  // Drag handler for image
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleDragEnd = (e: any) => {
-    const node = e.target;
-    const id = node.id();
-
-    setLayers((prevLayers) => {
-      const newlayers = [...prevLayers];
-      const index = newlayers.findIndex((img) => img.id === id);
-      if (index !== -1) {
-        newlayers[index] = {
-          ...newlayers[index],
-          position: {
-            x: node.x(),
-            y: node.y(),
-          },
-        };
-      }
-      return newlayers;
+    setCanvasState((prev: CanvasState) => {
+      return {
+        ...prev,
+        position: newPos,
+      };
     });
   };
 
-  // Resize + Rotate handler for image
-  // TODO: Maybe move transformers to LayerComponent? If we want to select multiple layers it will be required
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleTransformEnd = (e: any) => {
-    const node = e.target;
-    const id = node.id();
+  const handleMouseUp = (e: KonvaMouseEvent) => {
+    isDraggingCanvas.current = false;
+    isHoldingPrimary.current = false;
 
-    updateLayer(id, (layer: Layer) => {
+    if (e.evt.button == PRIMARY_MOUSE_BUTTON) {
+      const handler = toolEventHandlers.current[MOUSE_UP];
+      if (handler) {
+        handler(e);
+        return;
+      }
+    }
+  };
+
+  const handleScroll = (e: KonvaScrollEvent) => {
+    e.evt.preventDefault();
+
+    // Arbitrary
+    const MINIMUM_SCALE = 0.02;
+
+    // Avoid accidental scrolling when moving aroung
+    if (e.evt.buttons == 4) {
+      return;
+    }
+
+    // In or out
+    const direction = e.evt.deltaY < 0 ? 1 : -1;
+    const scaleFactor = 1.1;
+    const scaleBy = direction > 0 ? scaleFactor : 1 / scaleFactor;
+
+    setCanvasState((prev) => {
+      const stagePointerPosition = stageRef.current?.getPointerPosition();
+      if (!stagePointerPosition) {
+        return prev;
+      }
+
+      const { scale } = prev;
+      const canvasPointerPosition = getCanvasPointerPosition();
+
+      const newScale = scale * scaleBy;
+
+      if (newScale < MINIMUM_SCALE) {
+        return prev;
+      }
+
+      const newPos = {
+        x: stagePointerPosition.x - canvasPointerPosition.x * newScale,
+        y: stagePointerPosition.y - canvasPointerPosition.y * newScale,
+      };
+
       return {
-        ...layer,
-        scale: {
-          x: node.scaleX(),
-          y: node.scaleY(),
-        },
-        rotation: node.rotation(),
-        position: {
-          x: node.x(),
-          y: node.y(),
-        },
+        scale: newScale,
+        position: newPos,
       };
     });
   };
@@ -170,18 +164,19 @@ export const Canvas = ({
     <div>
       <Stage
         className="bg-violet-200"
-        // TODO : voir avec code d'Alessio si taille respectée et plus modifier la taille du canvas
-        // FIXME: Find a way to use all available space
-        height={1000}
-        width={1000}
-        onClick={handleStageClick}
+        height={height}
+        width={width}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onWheel={handleScroll}
         ref={stageRef}
+        listening
       >
         {/* Unique Konva Layer of the stage representing the Canvas.
           EDIT Layers are "mapped" to Konva Groups */}
         <KonvaLayer
-          ref={canvasRef}
-          onClick={handleStageClick}
+          listening
           imageSmoothingEnabled={false}
           width={width}
           height={height}
@@ -193,7 +188,6 @@ export const Canvas = ({
           y={canvasState.position.y}
         >
           {layers.map((layer) => {
-            console.log("Layer: ", layer);
             return (
               <LayerComponent
                 id={layer.id}
@@ -202,33 +196,36 @@ export const Canvas = ({
                 rotation={layer.rotation}
                 scale={layer.scale}
                 image={layer.image}
+                size={layer.size}
                 isVisible={layer.isVisible}
+                isSelected={layer.isSelected}
                 lines={layer.lines}
                 ref={layer.groupRef}
-                onDragEnd={handleDragEnd}
-                onTransformEnd={handleTransformEnd}
-                // setSelected={() => updateLayer(layer.id)}
+                updateLayer={(
+                  callback: LayerUpdateCallback,
+                  virtual: boolean,
+                ) => updateLayer(layer.id, callback, virtual)}
               />
             );
           })}
+        </KonvaLayer>
 
+        <KonvaLayer listening={false}>
           {/* Canvas outline, drawn as a Konva element */}
           <Rect
+            listenting={false}
             draggable={false}
             height={height}
             width={width}
             stroke={"#7c3aed"}
             strokeWidth={2}
             strokeEnabled={true /* TODO: Link with editor setting */}
-          />
-          <Transformer
-            ref={transformerRef}
-            boundBoxFunc={(oldBox, newBox) => {
-              if (newBox.width < 5 || newBox.height < 5) {
-                return oldBox;
-              }
-              return newBox;
+            scale={{
+              x: canvasState.scale,
+              y: canvasState.scale,
             }}
+            x={canvasState.position.x}
+            y={canvasState.position.y}
           />
         </KonvaLayer>
       </Stage>

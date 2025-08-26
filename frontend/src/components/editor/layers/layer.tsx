@@ -1,65 +1,132 @@
 "use client";
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useRef, RefObject } from "react";
 import {
   Image as KonvaImage,
   Group as KonvaGroup,
   Line as KonvaLine,
+  Transformer as KonvaTransformer,
+  Rect as KonvaRect,
 } from "react-konva";
+import Konva from "konva";
 
-import { LayerProps } from "@/models/editor/layers/layerProps";
+import { v2Add, v2Sub } from "@/models/editor/layers/layerUtils";
+import { LayerProps, TransformDiff } from "@/models/editor/layers/layerProps";
+import { useEditorContext } from "../editorContext";
 
-// TODO : replace "any" to another type due to :
-/* Type error: Type 'ForwardedRef<unknown>' is not assignable to type 'Ref<Group> | undefined'.
-#11 17.90   Type 'RefObject<unknown>' is not assignable to type 'Ref<Group> | undefined'.
-#11 17.90     Type 'RefObject<unknown>' is not assignable to type 'RefObject<Group | null>'.
-#11 17.90       Type 'unknown' is not assignable to type 'Group | null'.*/
+export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
+  (props, ref) => {
+    const {
+      id,
+      position,
+      rotation,
+      scale,
+      image,
+      isVisible,
+      isSelected,
+      lines,
+      size,
+    }: Partial<LayerProps> = props;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const LayerComponent = forwardRef((props: LayerProps, ref: any) => {
-  const {
-    id,
-    position,
-    rotation,
-    scale,
-    image,
-    isVisible,
-    lines,
+    const { editSelectedLayers, isTransforming } = useEditorContext();
 
-    onDragEnd,
-    onTransformEnd,
-  }: Partial<LayerProps> = props;
-  return (
-    <KonvaGroup
-      listening
-      x={position.x}
-      y={position.y}
-      scale={scale}
-      rotation={rotation}
-      width={image.width}
-      height={image.height}
-      id={id}
-      // FIXME: This will probably not work when moving multiple layers
-      draggable
-      ref={ref}
-      visible={isVisible}
-      onDragEnd={onDragEnd}
-      onTransformEnd={onTransformEnd}
-    >
-      <KonvaImage image={image} />
-      {lines?.map((line, i) => (
-        <KonvaLine
-          key={i}
-          points={line.points}
-          stroke={line.color}
-          strokeWidth={line.width}
-          tension={0.5}
-          lineCap="round"
-          lineJoin="round"
-          globalCompositeOperation={"source-over"}
-        />
-      ))}
-    </KonvaGroup>
-  );
-});
+    const groupRef = ref as RefObject<Konva.Group>;
+    const transformerRef = useRef<Konva.Transformer>(null);
+
+    const transformSelectedLayers = (diff: TransformDiff) => {
+      editSelectedLayers((layer) => {
+        return {
+          ...layer,
+          scale: v2Add(layer.scale, diff.scale),
+          position: v2Add(layer.position, diff.position),
+          rotation: layer.rotation + diff.rotation,
+        };
+      });
+    };
+
+    useEffect(() => {
+      if (isSelected && groupRef) {
+        transformerRef.current?.nodes([groupRef?.current]);
+      }
+    }, [isSelected, groupRef, transformerRef]);
+
+    const handleTransformEnd = () => {
+      const node = groupRef?.current;
+
+      const transformDiff = {
+        scale: {
+          x: node.scaleX() - scale.x,
+          y: node.scaleY() - scale.y,
+        },
+        position: v2Sub(node.position(), position),
+        rotation: node.rotation() - rotation,
+      };
+
+      transformSelectedLayers(transformDiff);
+    };
+
+    return (
+      <>
+        {isSelected && isVisible && (
+          <KonvaTransformer
+            onTransformStart={() => {
+              isTransforming.current = true;
+            }}
+            onTransformEnd={handleTransformEnd}
+            ref={transformerRef}
+            boundBoxFunc={(oldBox, newBox) => {
+              if (newBox.width < 5 || newBox.height < 5) {
+                return oldBox;
+              }
+              return newBox;
+            }}
+          />
+        )}
+        <KonvaGroup
+          listening
+          x={position.x}
+          y={position.y}
+          clip={{
+            x: 0,
+            y: 0,
+            width: size.x,
+            height: size.y,
+          }}
+          scale={scale}
+          rotation={rotation}
+          width={image.width}
+          height={image.height}
+          id={id}
+          ref={ref}
+          visible={isVisible}
+          size={{
+            width: size.x,
+            height: size.y,
+          }}
+        >
+          {/* Dummy rectangle, used to select layers with Canvas click */}
+          <KonvaRect
+            width={image.width}
+            height={image.height}
+            fill={"transparent"}
+            listening
+          />
+          <KonvaImage listening={false} image={image} />
+          {lines?.map((line, i) => (
+            <KonvaLine
+              key={i}
+              points={line.points}
+              stroke={line.color}
+              strokeWidth={line.width}
+              tension={0.5}
+              lineCap="round"
+              lineJoin="round"
+              globalCompositeOperation={line.tool}
+            />
+          ))}
+        </KonvaGroup>
+      </>
+    );
+  },
+);
 
 LayerComponent.displayName = "LayerComponent";
