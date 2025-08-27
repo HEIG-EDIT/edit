@@ -58,7 +58,6 @@ export default function EditorPage() {
 
   const {
     layers,
-    setLayers,
     setVirtualLayers,
     commitVirtualLayers,
     undo,
@@ -72,6 +71,8 @@ export default function EditorPage() {
     editSelectedLayers,
     deleteSelectedLayers,
     duplicateSelectedLayers,
+
+    layersReorderingLogic,
   } = useLayersState();
 
   useEffect(() => {
@@ -150,6 +151,8 @@ export default function EditorPage() {
 
           toolEventHandlers,
           setToolEventHandlers,
+
+          layersReorderingLogic,
         }}
       >
         <div className="flex flex-row gap-4 px-4">
@@ -163,7 +166,6 @@ export default function EditorPage() {
               <LayersManagement
                 layers={layers}
                 updateLayer={updateLayer}
-                setLayers={setLayers}
                 canvasSize={{ x: canvasSize.width, y: canvasSize.height }}
               />
             </div>
