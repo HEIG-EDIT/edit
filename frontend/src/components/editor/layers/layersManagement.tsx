@@ -17,7 +17,6 @@ import { useEditorContext } from "@/components/editor/editorContext";
 export const LayersManagement = ({
   layers,
   updateLayer,
-  setLayers,
   canvasSize,
 }: LayersManagementProps) => {
   const [isNewLayerDisplayed, setIsNewLayerDisplayed] =
@@ -134,9 +133,7 @@ export const LayersManagement = ({
                 ))}
             </div>
             <div className="flex flex-col w-1/6 justify-center">
-              {layers.length > 1 && (
-                <LayerReordering layers={layers} setLayers={setLayers} />
-              )}
+              {layers.length > 1 && <LayerReordering />}
             </div>
           </div>
         </div>

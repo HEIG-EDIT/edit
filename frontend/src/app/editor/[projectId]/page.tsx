@@ -63,7 +63,6 @@ export default function EditorPage() {
 
   const {
     layers,
-    setLayers,
     setVirtualLayers,
     commitVirtualLayers,
     undo,
@@ -71,12 +70,15 @@ export default function EditorPage() {
     canUndo,
     canRedo,
 
+    setLayers,
     updateLayer,
     addLayer,
 
     editSelectedLayers,
     deleteSelectedLayers,
     duplicateSelectedLayers,
+
+    layersReorderingLogic,
   } = useLayersState();
 
 
@@ -224,6 +226,8 @@ export default function EditorPage() {
           layerRef,
           toolEventHandlers,
           setToolEventHandlers,
+
+          layersReorderingLogic,
         }}
       >
         <div className="flex flex-row gap-4 px-4">
@@ -237,7 +241,6 @@ export default function EditorPage() {
               <LayersManagement
                 layers={layers}
                 updateLayer={updateLayer}
-                setLayers={setLayers}
                 canvasSize={canvasSize}
               />
             </div>

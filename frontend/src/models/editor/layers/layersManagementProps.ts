@@ -8,6 +8,5 @@ export interface LayersManagementProps {
     callback: LayerUpdateCallback,
     virtual?: boolean,
   ) => void;
-  setLayers: React.Dispatch<React.SetStateAction<Layer[]>>;
   canvasSize: Vector2d;
 }
