@@ -9,14 +9,10 @@ export const LayerReordering = () => {
   const { layersReorderingLogic } = useEditorContext();
   const {
     bringLayersToFront,
-    canBringLayersToFront,
-
     moveLayersForward,
     canMoveLayersForward,
 
     sendLayersToBack,
-    canSendLayersToBack,
-
     moveLayersBackward,
     canMoveLayersBackward,
   } = layersReorderingLogic;
@@ -25,7 +21,7 @@ export const LayerReordering = () => {
       <LayerReorderingButton
         onClick={bringLayersToFront}
         icon={KeyboardDoubleArrowUpRoundedIcon}
-        canUse={canBringLayersToFront}
+        canUse={canMoveLayersForward}
       />
       <LayerReorderingButton
         onClick={moveLayersForward}
@@ -40,7 +36,7 @@ export const LayerReordering = () => {
       <LayerReorderingButton
         onClick={sendLayersToBack}
         icon={KeyboardDoubleArrowDownRoundedIcon}
-        canUse={canSendLayersToBack}
+        canUse={canMoveLayersBackward}
       />
     </div>
   );
