@@ -121,7 +121,11 @@ export default function useLayersState() {
     setLayers((prev) => [...prev, layer]);
   };
 
-  const layersReorderingLogic = useLayersReordering(layers, setLayers);
+  const layersReorderingLogic = useLayersReordering(
+    layers,
+    setLayers,
+    deleteSelectedLayers,
+  );
 
   const result: LayersStateResult = {
     layers,
