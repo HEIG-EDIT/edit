@@ -58,7 +58,6 @@ export default function EditorPage() {
 
   const {
     layers,
-    setVirtualLayers,
     commitVirtualLayers,
     undo,
     redo,
@@ -132,7 +131,6 @@ export default function EditorPage() {
           isTransforming,
 
           layers,
-          setVirtualLayers,
           updateLayer,
           addLayer,
 
@@ -175,7 +173,6 @@ export default function EditorPage() {
               <div className="h-5/6" ref={canvasContainerRef}>
                 <Canvas
                   layers={layers}
-                  setVirtualLayers={setVirtualLayers}
                   commitVirtualLayers={commitVirtualLayers}
                   updateLayer={updateLayer}
                   nameSelectedTool={nameSelectedTool}
