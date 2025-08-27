@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { useUndoRedo } from "@/components/editor/undoRedo";
+import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { renderHook } from "@testing-library/react";
 import { act } from "react";
 

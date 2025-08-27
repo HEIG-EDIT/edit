@@ -18,7 +18,7 @@ import {
   LayerId,
   LayerUpdateCallback,
 } from "@/models/editor/layers/layer";
-import { useUndoRedo } from "@/components/editor/undoRedo";
+import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { TOOLS, TOOLS_INITIAL_STATE } from "@/models/editor/utils/tools";
 
 import {
