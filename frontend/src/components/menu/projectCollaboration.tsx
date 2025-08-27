@@ -4,7 +4,7 @@ import { AuthorizedUsers } from "./authorizedUsers";
 import { EntryButton } from "./entryButton";
 import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
 
-export const ProjectSettings = () => {
+export const ProjectCollaboration = () => {
   const currentPage = usePathname().split("/")[1];
 
   // TODO : recuperer id + nom + thumbnail des projets via appel au backend et creer un record pour stocker tout ca
@@ -17,7 +17,7 @@ export const ProjectSettings = () => {
     <div className="flex flex-col justify-between gap-4">
       <div className="flex">
         <p className="text-violet-50 font-bold text-xl mb-2">
-          Project settings
+          Project collaboration
         </p>
       </div>
       {currentPage == "projects" && (
