@@ -4,7 +4,7 @@ import Konva from "konva";
 import { Vector2d } from "konva/lib/types";
 import React, { createContext, useContext } from "react";
 import { Layer } from "@/models/editor/layers/layer";
-import { VirtualStateSetter } from "./undoRedo";
+import { VirtualStateSetter } from "@/hooks/useUndoRedo";
 
 export type CanvasState = {
   scale: number;
