@@ -5,7 +5,31 @@ import {
   LayerId,
   LayerUpdateCallback,
 } from "@/models/editor/layers/layer";
-import useLayersReordering from "@/hooks/useLayersReordering";
+import useLayersReordering, {
+  LayersReorderingLogic,
+} from "@/hooks/useLayersReordering";
+
+export interface LayersStateResult {
+  layers: Layer[];
+  commitVirtualLayers: () => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+
+  updateLayer: (
+    id: LayerId,
+    callback: LayerUpdateCallback,
+    virtual: boolean,
+  ) => void;
+  addLayer: (layer: Layer) => void;
+
+  editSelectedLayers: (callback: LayerUpdateCallback) => void;
+  deleteSelectedLayers: () => void;
+  duplicateSelectedLayers: () => void;
+
+  layersReorderingLogic: LayersReorderingLogic;
+}
 
 export default function useLayersState() {
   const {
@@ -99,9 +123,8 @@ export default function useLayersState() {
 
   const layersReorderingLogic = useLayersReordering(layers, setLayers);
 
-  return {
+  const result: LayersStateResult = {
     layers,
-    setVirtualLayers,
     commitVirtualLayers,
     undo,
     redo,
@@ -118,4 +141,6 @@ export default function useLayersState() {
 
     layersReorderingLogic,
   };
+
+  return result;
 }
