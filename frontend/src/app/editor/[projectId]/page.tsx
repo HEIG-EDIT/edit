@@ -72,7 +72,11 @@ export default function EditorPage() {
     canRedo,
 
     updateLayer,
+    addLayer,
+
     editSelectedLayers,
+    deleteSelectedLayers,
+    duplicateSelectedLayers,
   } = useLayersState();
 
 
@@ -206,7 +210,12 @@ export default function EditorPage() {
           layers,
           setVirtualLayers,
           updateLayer,
+          addLayer,
+
           editSelectedLayers,
+          deleteSelectedLayers,
+          duplicateSelectedLayers,
+
           commitVirtualLayers,
           getCanvasPointerPosition,
           canvasState,
