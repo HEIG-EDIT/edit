@@ -4,13 +4,7 @@ import api from "@/lib/api";
 
 import Konva from "konva";
 import dynamic from "next/dynamic";
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo,
-} from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 
 import { MOVE_TOOL } from "@/components/editor/tools/move";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
@@ -21,12 +15,6 @@ import { LayersManagement } from "@/components/editor/layers/layersManagement";
 import { Menu } from "@/components/menu/menu";
 import { Toolbar } from "@/components/editor/toolbar/toolbar";
 
-import {
-  Layer,
-  LayerId,
-  LayerUpdateCallback,
-} from "@/models/editor/layers/layer";
-import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { TOOLS, TOOLS_INITIAL_STATE } from "@/models/editor/utils/tools";
 
 import {
@@ -42,6 +30,7 @@ import { LoadingComponent } from "@/components/api/loadingComponent";
 import { ErrorComponent } from "@/components/api/errorComponent";
 import { isAxiosError, statusMessage } from "@/lib/auth.tools";
 import { useRequireAuthState } from "@/hooks/auth";
+import useLayersState from "@/hooks/useLayersState";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
@@ -68,20 +57,24 @@ export default function EditorPage() {
   const params = useParams();
   const projectId = useMemo(() => String(params.projectId), [params.projectId]);
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [statusNote, setStatusNote] = useState<string | null>(null);
+
   const {
-    state: layers,
-    setState: setLayers,
-    setVirtualState: setVirtualLayers,
-    commitVirtualState: commitVirtualLayers,
+    layers,
+    setLayers,
+    setVirtualLayers,
+    commitVirtualLayers,
     undo,
     redo,
     canUndo,
     canRedo,
-  } = useUndoRedo(Array<Layer>());
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [statusNote, setStatusNote] = useState<string | null>(null);
+    updateLayer,
+    editSelectedLayers,
+  } = useLayersState();
+
 
   useEffect(() => {
     if (!authReady || !projectId) return;
@@ -181,41 +174,6 @@ export default function EditorPage() {
       x: (stagePosition.x - canvas.position.x) / canvas.scale,
       y: (stagePosition.y - canvas.position.y) / canvas.scale,
     };
-  };
-
-  /// Find the layer's state and it's index in the list from it's id
-  const findLayer = useCallback(
-    (layerId: string): [number, Layer] => {
-      for (const [i, layer] of layers.entries()) {
-        if (layer.id === layerId) return [i, layer];
-      }
-      throw Error(`Could not find layer with id ${layerId}`);
-    },
-    [layers],
-  );
-
-  const updateLayer = useCallback(
-    (layerId: LayerId, callback: LayerUpdateCallback, virtual = false) => {
-      const [i, layer] = findLayer(layerId);
-      const newLayer = callback(layer);
-      const fun = virtual ? setVirtualLayers : setLayers;
-      fun((prev: Layer[]) => [
-        ...prev.slice(0, i),
-        newLayer,
-        ...prev.slice(i + 1),
-      ]);
-    },
-    [findLayer, setLayers, setVirtualLayers],
-  );
-
-  const editSelectedLayers = (
-    callback: LayerUpdateCallback,
-    virtual = false,
-  ) => {
-    const fun = virtual ? setVirtualLayers : setLayers;
-    fun((prev) =>
-      prev.map((layer) => (layer.isSelected ? callback(layer) : layer)),
-    );
   };
 
   // ELBU UPDATED : Gated render: show loader / error until project is fetched
