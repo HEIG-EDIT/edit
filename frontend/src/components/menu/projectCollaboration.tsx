@@ -1,19 +1,53 @@
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AuthorizedUsers } from "./authorizedUsers";
 import { EntryButton } from "./entryButton";
 import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
+import { Project } from "@/models/api/project/project";
+import api from "@/lib/api";
+import { ErrorComponent } from "../api/errorComponent";
+import { LoadingComponent } from "../api/loadingComponent";
 
 export const ProjectCollaboration = () => {
   const currentPage = usePathname().split("/")[1];
 
-  // TODO : recuperer id + nom + thumbnail des projets via appel au backend et creer un record pour stocker tout ca
-  const projectsName = ["tata", "toto", "tutu"];
-  const [currentProjectName, setCurrentProjectName] = useState<string>(
-    projectsName[0],
-  );
+  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasError, setHasError] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // TODO : utiliser authentification
+        const res = await api.get("/api/projects/accessible/1");
+        setProjects(res.data);
+      } catch {
+        setHasError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (projects && projects.length > 0) {
+      setSelectedProject(projects[0]);
+    }
+  }, [projects]);
+
+  if (hasError) {
+    return <ErrorComponent subject="projects" />;
+  }
+
+  if (isLoading) {
+    return <LoadingComponent />;
+  }
 
   return (
+    // TODO : afficher uniquement projets ou user=owner et si aucun projet alors owner nul part et message
+
     <div className="flex flex-col justify-between gap-4">
       <div className="flex">
         <p className="text-violet-50 font-bold text-xl mb-2">
@@ -23,20 +57,30 @@ export const ProjectCollaboration = () => {
       {currentPage == "projects" && (
         <div className="flex flex-row justify-between">
           <div>
+            {/* TODO : gerer ... pour rester dans parent + gerer scroll vertical si beaucoup de projets + gerer image */}
             <select
-              className="bg-violet-500 text-violet-50 rounded p-2 cursor-pointer"
-              value={currentProjectName}
+              className="bg-violet-500 text-violet-50 rounded p-2 cursor-pointer w-24"
+              value={selectedProject?.projectName}
               onChange={(e) => {
-                setCurrentProjectName(e.target.value);
+                setSelectedProject(
+                  projects?.find((p) => p.projectName == e.target.value) ||
+                    null,
+                );
               }}
             >
-              {projectsName.map((name) => (
-                // TODO : utiliser comme cle id du projet car unicite
-                <option key={name}>{name}</option>
-              ))}
+              {projects?.map((p: Project) => {
+                return <option key={p.projectId}>{p.projectName}</option>;
+              })}
             </select>
           </div>
-          <div>THUMBNAIL</div>
+          <div>
+            <img
+              src={`data:image/png;base64,${selectedProject?.thumbnail}`}
+              width={160}
+              height={90}
+              className="object-cover w-full h-full"
+            />
+          </div>
         </div>
       )}
       <div className="bg-gray-700 rounded-xl p-2 mb-4">

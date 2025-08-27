@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import { Project } from "@/models/api/project/project";
 import api from "@/lib/api";
 import { ListProjects } from "@/components/projects/listProjects";
+import { LoadingComponent } from "@/components/api/loadingComponent";
+import { ErrorComponent } from "@/components/api/errorComponent";
 
 export default function ProjectSelection() {
   const [menuDisplay, setMenuDisplay] = useState<boolean>(false);
@@ -60,8 +62,16 @@ export default function ProjectSelection() {
           </div>
         </div>
         {/* TODO : gerer ca plus joliment */}
-        {isLoading && <p>Loading...</p>}
-        {hasError && <p>Error while loading projects</p>}
+        {isLoading && (
+          <div className="p-4">
+            <LoadingComponent />
+          </div>
+        )}
+        {hasError && (
+          <div className="p-4">
+            <ErrorComponent subject="projects" />
+          </div>
+        )}
         {projects && (
           <div className="p-4">
             <ListProjects projects={projects} />
