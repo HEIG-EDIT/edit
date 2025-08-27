@@ -27,10 +27,15 @@ interface EditorContextType {
     callback: LayerUpdateCallback,
     virtual?: boolean,
   ) => void;
+  addLayer: (layer: Layer) => void;
+
   editSelectedLayers: (
     callback: LayerUpdateCallback,
     virtual?: boolean,
   ) => void;
+  deleteSelectedLayers: () => void;
+  duplicateSelectedLayers: () => void;
+
   commitVirtualLayers: () => void;
   setVirtualLayers: VirtualStateSetter<Layer[]>;
 

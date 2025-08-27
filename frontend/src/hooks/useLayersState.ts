@@ -67,6 +67,35 @@ export default function useLayersState() {
     });
   };
 
+  const deleteSelectedLayers = () => {
+    setLayers((prev) => {
+      const result = [];
+      for (const layer of prev) {
+        if (!layer.isSelected) {
+          result.push(layer);
+        }
+      }
+      return result;
+    });
+  };
+
+  const duplicateSelectedLayers = () => {
+    setLayers((prev) => {
+      const result = [];
+      for (const layer of prev) {
+        result.push(layer);
+        if (layer.isSelected) {
+          result.push(Layer.duplicate(layer));
+        }
+      }
+      return result;
+    });
+  };
+
+  const addLayer = (layer: Layer) => {
+    setLayers((prev) => [...prev, layer]);
+  };
+
   return {
     layers,
     setLayers,
@@ -78,6 +107,10 @@ export default function useLayersState() {
     canRedo,
 
     updateLayer,
+    addLayer,
+
     editSelectedLayers,
+    deleteSelectedLayers,
+    duplicateSelectedLayers,
   };
 }
