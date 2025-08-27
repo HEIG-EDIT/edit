@@ -25,7 +25,6 @@ export const MoveToolConfigurationComponent = ({
     setToolEventHandlers,
     getCanvasPointerPosition,
     commitVirtualLayers,
-    setVirtualLayers,
     stageRef,
     updateLayer,
   } = useEditorContext();
@@ -50,14 +49,12 @@ export const MoveToolConfigurationComponent = ({
   const handleLayerSelection = (e: KonvaMouseEvent | undefined) => {
     if (!e?.evt.ctrlKey) {
       // Start by de-selecting all layers
-      setVirtualLayers((prev) => {
-        return prev.map((layer) => {
-          return {
-            ...layer,
-            isSelected: false,
-          };
-        });
-      });
+      editSelectedLayers((layer) => {
+        return {
+          ...layer,
+          isSelected: false,
+        };
+      }, true);
     }
 
     const pointer = stageRef.current?.getPointerPosition();
