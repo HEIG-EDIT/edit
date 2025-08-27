@@ -2,117 +2,96 @@ import { Layer } from "@/models/editor/layers/layer";
 
 export interface LayersReorderingLogic {
   bringLayersToFront: () => void;
-  canBringLayersToFront: boolean;
-
   moveLayersForward: () => void;
   canMoveLayersForward: boolean;
 
   sendLayersToBack: () => void;
-  canSendLayersToBack: boolean;
-
   moveLayersBackward: () => void;
   canMoveLayersBackward: boolean;
 }
 
-// TODO: Use type for setLayers
-export default function useLayersReordering(layers: Layer[], setLayers) {
-  const nbLayers = layers.length;
-  const nbSelectedLayers = layers.filter((l) => l.isSelected == true).length;
-  const indexSelectedLayer = layers.findIndex((l) => l.isSelected == true);
-  const indexBackLayer = 0;
-  const indexFrontLayer = nbLayers - 1;
+export default function useLayersReordering(
+  layers: Layer[],
+  setLayers: React.Dispatch<React.SetStateAction<Layer[]>>,
+  removeSelectedLayers: () => void,
+) {
+  const selectedLayers = layers.filter((layer) => layer.isSelected);
 
-  const canBringLayersToFront =
-    nbSelectedLayers == 1 && indexSelectedLayer != indexFrontLayer;
-  const canSendLayersToBack =
-    nbSelectedLayers == 1 && indexSelectedLayer != indexBackLayer;
-  const canMoveLayersForward = nbSelectedLayers > 1 || canBringLayersToFront;
-  const canMoveLayersBackward = nbSelectedLayers > 1 || canSendLayersToBack;
+  // If there is at least one selected layer not already at the front/back
+  const canMoveLayer = (toFront: boolean) => {
+    let foundUnselected = false;
+
+    for (const layer of toFront ? layers.slice().reverse() : layers) {
+      if (!layer.isSelected) {
+        foundUnselected = true;
+      } else if (foundUnselected) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const canMoveLayersForward = canMoveLayer(true);
+  const canMoveLayersBackward = canMoveLayer(false);
 
   function bringLayersToFront(): void {
-    if (!canBringLayersToFront) {
+    if (!canMoveLayersForward) {
       return;
     }
 
-    const reorderedLayers = [...layers];
-
-    for (let i = indexSelectedLayer; i < indexFrontLayer; ++i) {
-      [reorderedLayers[i], reorderedLayers[i + 1]] = [
-        reorderedLayers[i + 1],
-        reorderedLayers[i],
-      ];
-    }
-
-    setLayers(reorderedLayers);
+    removeSelectedLayers();
+    setLayers((prev) => {
+      return [...prev, ...selectedLayers];
+    });
   }
 
   function moveLayersForward(): void {
-    const reorderedLayers = [...layers];
-
     if (!canMoveLayersForward) {
-      // no need to iterate over layers if only the first layer is selected
       return;
     }
 
-    for (let i = nbLayers - 2; i >= 0; --i) {
-      if (reorderedLayers[i].isSelected) {
-        [reorderedLayers[i], reorderedLayers[i + 1]] = [
-          reorderedLayers[i + 1],
-          reorderedLayers[i],
-        ];
+    setLayers((layers) => {
+      const result = layers.slice();
+      for (let i = result.length - 2; i >= 0; --i) {
+        if (result[i].isSelected) {
+          [result[i], result[i + 1]] = [result[i + 1], result[i]];
+        }
       }
-    }
-
-    setLayers(reorderedLayers);
+      return result;
+    });
   }
 
   function moveLayersBackward(): void {
-    const reorderedLayers = [...layers];
-
     if (!canMoveLayersBackward) {
-      // no need to iterate over layers if only the last layer is selected
       return;
     }
 
-    for (let i = 1; i < nbLayers; ++i) {
-      if (reorderedLayers[i].isSelected) {
-        [reorderedLayers[i - 1], reorderedLayers[i]] = [
-          reorderedLayers[i],
-          reorderedLayers[i - 1],
-        ];
+    setLayers((layers) => {
+      const result = layers.slice();
+      for (let i = 1; i < layers.length; ++i) {
+        if (result[i].isSelected) {
+          [result[i - 1], result[i]] = [result[i], result[i - 1]];
+        }
       }
-    }
-
-    setLayers(reorderedLayers);
+      return result;
+    });
   }
 
   function sendLayersToBack(): void {
-    if (!canSendLayersToBack) {
+    if (!canMoveLayersBackward) {
       return;
     }
 
-    const reorderedLayers = [...layers];
-
-    for (let i = indexSelectedLayer; i > 0; --i) {
-      [reorderedLayers[i], reorderedLayers[i - 1]] = [
-        reorderedLayers[i - 1],
-        reorderedLayers[i],
-      ];
-    }
-
-    setLayers(reorderedLayers);
+    removeSelectedLayers();
+    setLayers((prev) => [...selectedLayers, ...prev]);
   }
 
   return {
     bringLayersToFront,
-    canBringLayersToFront,
-
     moveLayersForward,
     canMoveLayersForward,
 
     sendLayersToBack,
-    canSendLayersToBack,
-
     moveLayersBackward,
     canMoveLayersBackward,
   };
