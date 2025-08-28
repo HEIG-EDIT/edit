@@ -3,8 +3,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CollaborationService } from '../collaboration.service';
 import { CreateCollaborationDto } from '../dto/create-collaboration.dto';
 import { EditCollaborationDto } from '../dto/edit-collaboration.dto';
-import { ListCollaborationsDto } from '../dto/list-collaborations.dto';
-import { RemoveCollaborationDto } from '../dto/remove-collaboration.dto';
 import { execSync } from 'child_process';
 
 describe('CollaborationService (integration)', () => {
@@ -88,9 +86,7 @@ describe('CollaborationService (integration)', () => {
       roles: ['contributor'],
     });
 
-    const result = await service.listPrjCollaborations({
-      projectId: project.id,
-    } as ListCollaborationsDto);
+    const result = await service.listPrjCollaborations(project.id);
 
     expect(result).toEqual(
       expect.arrayContaining([
@@ -126,9 +122,7 @@ describe('CollaborationService (integration)', () => {
     };
     collaboration = await service.addPrjCollaboration(dto);
 
-    const removed = await service.removeCollaboration({
-      collaborationId: collaboration.id,
-    } as RemoveCollaborationDto);
+    const removed = await service.removeCollaboration(collaboration.id);
 
     expect(removed.id).toBe(collaboration.id);
 

@@ -1,7 +1,6 @@
 import { Body, Controller, Post, Patch , Get, Param, Delete } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { SaveProjectDto } from './dto/save-project.dto';
-import { DeleteProjectDto } from './dto/delete-project.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { RenameProjectDto } from './dto/rename-project.dto';
 
@@ -31,15 +30,20 @@ export class ProjectController {
     return this.projectService.getJSONProject(Number(id));
   }
 
-  @Delete()
-  async deleteProject(@Body() dto: DeleteProjectDto) {
-    await this.projectService.deleteProject(dto);
+  @Delete(':id')
+  async deleteProject(@Param('id') id: string) {
+    await this.projectService.deleteProject(Number(id));
     return;
   }
 
   @Get('accessible/:userId')
     async listAccessibleProjects(@Param('userId') userId: string) {
     return this.projectService.listAccessibleProjects(Number(userId));
+  }
+
+  @Get('owned/:userId')
+    async listOwnedProjects(@Param('userId') userId: string) {
+    return this.projectService.listOwnedProjects(Number(userId));
   }
 
 }

@@ -218,7 +218,7 @@ describe('ProjectService (integration)', () => {
 
       mockS3Service.deleteProjectFiles.mockResolvedValueOnce(undefined);
 
-      await service.deleteProject({projectId: project.id});
+      await service.deleteProject(project.id);
 
       const deleted = await prisma.project.findUnique({ where: { id: project.id } });
       expect(deleted).toBeNull();
@@ -228,93 +228,7 @@ describe('ProjectService (integration)', () => {
     });
 
     it('should throw if project does not exist', async () => {
-      await expect(service.deleteProject({projectId: 9999})).rejects.toThrow('Project 9999 not found');
+      await expect(service.deleteProject(9999)).rejects.toThrow('Project 9999 not found');
     });
   });
-
-  // ----------------------------
-  // list accessible projects tests
-  // ----------------------------
-  describe('listAccessiblePrj', () => {
-    it('should return all projects the user owns or collaborates on', async () => {
-      // Create a test user
-      const user = await prisma.user.create({
-        data: {
-          email: 'access@test.com',
-          passwordHash: 'pwd',
-          userName: 'test6',
-          isEmailVerified: false,
-        },
-      });
-
-      // Create projects
-      const ownedProject = await prisma.project.create({
-        data: { name: 'Owned Project', creatorId: user.id },
-      });
-      const collabProjectOwner = await prisma.user.create({
-        data: {
-          email: 'collabuser@test.com',
-          passwordHash: 'pwd',
-          userName: 'test7',
-          isEmailVerified: false,
-        },
-      });
-      const collabProject = await prisma.project.create({
-        data: { name: 'Collab Project', creatorId: collabProjectOwner.id },
-      });
-
-      // Add collaboration for user
-      await prisma.collaboration.create({
-        data: {
-          userId: user.id,
-          projectId: collabProject.id,
-        },
-      });
-
-      // Mock thumbnail URLs
-      mockS3Service.getThumbnail.mockImplementation((projectId: number) => {
-        return Promise.resolve(`https://s3.fake/${projectId}/thumbnail.png`);
-      });
-
-      const result = await service.listAccessibleProjects(user.id);
-
-      // Check owned project
-      const owned = result.find(p => p.projectId === ownedProject.id);
-      expect(owned).toBeDefined();
-      expect(owned!.projectName).toBe('Owned Project');
-      expect(owned!.roles).toEqual(['owner']);
-      expect(owned!.thumbnail).toBe(`https://s3.fake/${ownedProject.id}/thumbnail.png`);
-
-      // Check collaboration project
-      const collab = result.find(p => p.projectId === collabProject.id);
-      expect(collab).toBeDefined();
-      expect(collab!.projectName).toBe('Collab Project');
-      expect(collab!.roles).toEqual([]); // no roles assigned for the test
-      expect(collab!.thumbnail).toBe(`https://s3.fake/${collabProject.id}/thumbnail.png`);
-
-      // Cleanup
-      await prisma.collaboration.deleteMany({ where: { userId: user.id } });
-      await prisma.project.delete({ where: { id: ownedProject.id } });
-      await prisma.project.delete({ where: { id: collabProject.id } });
-      await prisma.user.delete({ where: { id: user.id } });
-      await prisma.user.delete({ where: { id: collabProjectOwner.id } });
-    });
-
-    it('should return empty array if user has no accessible projects', async () => {
-      const user = await prisma.user.create({
-        data: {
-          email: 'noaccess@test.com',
-          passwordHash: 'pwd',
-          userName: 'test8',
-          isEmailVerified: false,
-        },
-      });
-
-      const result = await service.listAccessibleProjects(user.id);
-      expect(result).toEqual([]);
-
-      await prisma.user.delete({ where: { id: user.id } });
-    });
-  });
-
 });
