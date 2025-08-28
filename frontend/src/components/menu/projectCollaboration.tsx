@@ -63,9 +63,8 @@ export const ProjectCollaboration = () => {
       {currentPage == "projects" && (
         <div className="flex flex-row justify-between">
           <div>
-            {/* TODO : gerer ... pour rester dans parent + gerer scroll vertical si beaucoup de projets + gerer image */}
             <select
-              className="bg-violet-500 text-violet-50 rounded p-2 cursor-pointer w-24"
+              className="bg-violet-500 text-violet-50 rounded p-2 cursor-pointer w-80"
               value={selectedProject?.projectName}
               onChange={(e) => {
                 setSelectedProject(
@@ -84,7 +83,7 @@ export const ProjectCollaboration = () => {
               src={`data:image/png;base64,${selectedProject?.thumbnail}`}
               width={160}
               height={90}
-              className="object-cover w-full h-full"
+              className="object-cover mr-6"
             />
           </div>
         </div>
