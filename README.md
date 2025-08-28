@@ -45,8 +45,13 @@ npm install
 
 2) Before starting the backend, move and rename the *./.dev_env* file to *./backend/.env*. Then, run these commands to start the backend :
 
+TODO : creer ou non dossier keys ?
+
 ```bash
 cd backend
+mkdir keys
+openssl genpkey -algorithm RSA -out ./keys/private.pem -pkeyopt rsa_keygen_bits:2048 # generate keys to TODO
+openssl rsa -pubout -in ./keys/private.pem -out ./keys/public.pub.pem # TODO
 docker compose up # start postgres and s3 + introduce dummy data in s3
 npx prisma migrate deploy # TODO
 npx prisma generate # TODO
