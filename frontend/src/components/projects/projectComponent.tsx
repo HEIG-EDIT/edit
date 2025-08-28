@@ -1,4 +1,3 @@
-import { Project } from "@/models/api/project/project";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
@@ -7,10 +6,15 @@ import colors from "tailwindcss/colors";
 import { useState } from "react";
 import api from "@/lib/api";
 import { ConfirmDeletePopUp } from "./confirmDeletePopUp";
+import { ProjectProps } from "@/models/projects/projectProps";
 
 // TODO : taille du composant a adapter selon taille de la thumbnail
 
-export const ProjectComponent = ({ project }: { project: Project }) => {
+export const ProjectComponent = ({
+  project,
+  updateProjectName,
+  deleteProject,
+}: ProjectProps) => {
   const lastModifiedDate = project.lastSavedAt
     ? format(new Date(project.lastSavedAt), "dd.MM.yy 'at' HH:mm", {
         locale: enUS,
@@ -38,6 +42,7 @@ export const ProjectComponent = ({ project }: { project: Project }) => {
         id: projectId,
         name: newProjectName,
       });
+      updateProjectName(projectId, newProjectName);
     } catch {
       setCurrentProjectName(project.projectName);
     } finally {
@@ -87,7 +92,6 @@ export const ProjectComponent = ({ project }: { project: Project }) => {
             {lastModifiedDate}
           </p>
         </div>
-        {/* TODO : gerer logique pour supprimer projet + pop up de confirmation*/}
         <button
           className="flex-shrink-0 cursor-pointer"
           onClick={() => setConfirmDeleteDisplay(true)}
@@ -99,6 +103,7 @@ export const ProjectComponent = ({ project }: { project: Project }) => {
         <ConfirmDeletePopUp
           setConfirmDeleteDisplay={setConfirmDeleteDisplay}
           projectId={project.projectId}
+          deleteProject={deleteProject}
         />
       )}
     </div>

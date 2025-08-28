@@ -5,17 +5,20 @@ import { createPortal } from "react-dom";
 export const ConfirmDeletePopUp = ({
   setConfirmDeleteDisplay,
   projectId,
+  deleteProject,
 }: {
   setConfirmDeleteDisplay: Dispatch<SetStateAction<boolean>>;
   projectId: number;
+  deleteProject: (id: number) => void;
 }) => {
   // TODO : supprimer les console.log()
-  const deleteProject = async (projectId: number) => {
+  const callDeleteProject = async (projectId: number) => {
     console.log(projectId);
     try {
       // TODO : gerer appel en etant authentifie
       // TODO : tester appel car pour le moment ko cote backend
       await api.delete(`/api/projects${projectId}`);
+      deleteProject(projectId);
     } catch {
       // TODO : si erreur lors du delete, afficher message ou ?
       console.log("erreur api");
@@ -33,6 +36,7 @@ export const ConfirmDeletePopUp = ({
             Are you sure you want to delete this project? This action cannot be
             undone.
           </p>
+          {/* TODO : tester la suppression d'un projet car pour l'instan ko cote backend */}
           <div className="flex flex-row gap-4 justify-end">
             <button
               className="bg-violet-50 border-2 border-violet-500 rounded-2xl p-2 w-auto cursor-pointer"
@@ -42,7 +46,7 @@ export const ConfirmDeletePopUp = ({
             </button>
             <button
               className="bg-violet-50 border-2 border-violet-500 rounded-2xl p-2 w-auto cursor-pointer"
-              onClick={() => deleteProject(projectId)}
+              onClick={() => callDeleteProject(projectId)}
             >
               Delete
             </button>

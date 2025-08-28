@@ -21,7 +21,13 @@ export const ProjectCollaboration = () => {
       try {
         // TODO : utiliser authentification
         const res = await api.get("/api/projects/accessible/1");
-        setProjects(res.data);
+        setProjects(
+          res.data.sort((p1: Project, p2: Project) =>
+            p1.projectName.localeCompare(p2.projectName, "en", {
+              sensitivity: "base",
+            }),
+          ),
+        );
       } catch {
         setHasError(true);
       } finally {
