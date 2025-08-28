@@ -10,7 +10,6 @@ export const AuthorizedUsers = ({
 }: {
   projectId: number | undefined;
 }) => {
-  // TODO : recuperer le nom des roles via appel au backend ?
   const ROLES = ["owner", "editor", "viewer"];
 
   const [collaborators, setCollaborators] = useState<Collaborator[] | null>(
@@ -24,8 +23,6 @@ export const AuthorizedUsers = ({
 
     const fetchData = async () => {
       try {
-        // TODO : utiliser authentification
-        // TODO : tester endpoint
         const res = await api.get(`/api/collaborations/${projectId}`);
         setCollaborators(res.data);
       } catch {
@@ -37,35 +34,6 @@ export const AuthorizedUsers = ({
     fetchData();
   }, [projectId]);
 
-  // TODO : to remove
-  /*
-  let ownerCollaborators = new Set<Collaborator>();
-  let editorCollaborators = new Set<Collaborator>();
-  let viewerCollaborators = new Set<Collaborator>();
-
-  const ownerUsers = [
-    "moi",
-    "tttttttttt",
-    "sssssssssssssssss",
-    "rrrrrrrrrsssssssssssssrrrrrrr",
-  ];
-  const editorUsers = [
-    "moi",
-    "toi",
-    "a",
-    "b",
-    "c",
-    "d",
-    "e",
-    "f",
-    "g",
-    "h",
-    "i",
-    "ssssssssssssrrrrrrrrsssss",
-  ];
-  const viewerUsers = ["vous", "sssrrrrrrrrrrrrrrrssssssssssssss"];*/
-
-  // TODO : collaborations potentiellement vides, a tester...
   const USERS_BY_ROLE = useMemo(() => {
     if (!collaborators) return {};
     return ROLES.reduce(
@@ -86,12 +54,10 @@ export const AuthorizedUsers = ({
     );
   }, [collaborators]);
 
-  // TODO : tester si nest down
   if (hasError) {
     return <ErrorComponent subject="collaborators" />;
   }
 
-  // TODO : tester en ralentissant
   if (isLoading) {
     return <LoadingComponent />;
   }
@@ -118,25 +84,27 @@ export const AuthorizedUsers = ({
             className="flex flex-col gap-4 items-center"
           >
             <p className="text-violet-50">{USERS_BY_ROLE[key].title}</p>
-            <div
-              className="bg-gray-900 rounded-xl p-2 flex flex-col max-h-44 w-full overflow-y-auto
+            {USERS_BY_ROLE[key].collaborators.size > 0 && (
+              <div
+                className="bg-gray-900 rounded-xl p-2 flex flex-col max-h-44 w-full overflow-y-auto
                          [&::-webkit-scrollbar]:w-2
                        [&::-webkit-scrollbar-track]:bg-gray-400
                          [&::-webkit-scrollbar-track]:rounded-xl
                        [&::-webkit-scrollbar-thumb]:bg-violet-400
                          [&::-webkit-scrollbar-thumb]:rounded-xl"
-            >
-              {Array.from(USERS_BY_ROLE[key].collaborators).map(
-                (c: Collaborator) => {
-                  return (
-                    <div key={c.collaborationId} className="mb-2 last:mb-0">
-                      <DisplayUser userEmail={c.userEmail} />
-                    </div>
-                  );
-                },
-              )}
-              {/* TODO : ajouter logique et ui pour nouveau user */}
-            </div>
+              >
+                {Array.from(USERS_BY_ROLE[key].collaborators).map(
+                  (c: Collaborator) => {
+                    return (
+                      <div key={c.collaborationId} className="mb-2 last:mb-0">
+                        <DisplayUser userEmail={c.userEmail} />
+                      </div>
+                    );
+                  },
+                )}
+                {/* TODO : ajouter logique et ui pour nouveau user */}
+              </div>
+            )}
           </div>
         );
       })}
