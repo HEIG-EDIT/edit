@@ -5,12 +5,12 @@ import { ErrorComponent } from "../api/errorComponent";
 import { LoadingComponent } from "../api/loadingComponent";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 
+// TODO : finalise composant une fois que ok cote Elbu
+
 export const UserSettings = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
-
-  // TODO : afficher infos du user (username, mdp et email) et possibilite de les modifier
 
   const fakeUser = {
     userName: "saskya",
@@ -21,7 +21,7 @@ export const UserSettings = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // TODO : utiliser authentification
+        // TODO : @Elbu -> utiliser authentification
         const res = await api.get("/api/user/me");
         setUser(res.data);
       } catch {

@@ -37,7 +37,7 @@ export const ProjectComponent = ({
       return;
     }
     try {
-      // TODO : gerer appel en etant authentifie
+      // TODO : @Elbu -> gerer appel en etant authentifie
       await api.patch("/api/projects/rename", {
         id: projectId,
         name: newProjectName,

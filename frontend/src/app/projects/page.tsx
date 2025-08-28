@@ -80,7 +80,7 @@ export default function ProjectSelection() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // TODO : utiliser authentification
+        // TODO : @Elbu -> utiliser authentification
         const res = await api.get("/api/projects/accessible/1");
         setProjects(res.data);
       } catch {
