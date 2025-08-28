@@ -15,8 +15,6 @@ export const ConfirmDeletePopUp = ({
   const callDeleteProject = async (projectId: number) => {
     console.log(projectId);
     try {
-      // TODO : @Elbu -> gerer appel en etant authentifie
-      // TODO : @Diana -> tester appel car pour le moment ko cote backend
       await api.delete(`/api/projects${projectId}`);
       deleteProject(projectId);
     } catch {

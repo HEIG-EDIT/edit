@@ -15,17 +15,15 @@ export const UserSettings = () => {
   const fakeUser = {
     userName: "saskya",
     email: "saskya.panchaud@heig-vd.ch",
-    twoFaMethod: "?", // TODO : boolean
   };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // TODO : @Elbu -> utiliser authentification
         const res = await api.get("/api/user/me");
         setUser(res.data);
       } catch {
-        // TODO : supprimer une fois que call ok
+        // TODO : voir avec Elbu
         setUser(fakeUser);
         console.log(setHasError);
         //setHasError(true);
@@ -59,9 +57,6 @@ export const UserSettings = () => {
         </div>
         {/* TODO : creer composant pour style */}
         <p className="text-violet-50">Email : {user?.email}</p>
-        <p className="text-violet-50">
-          2FA : {user?.twoFaMethod != null ? user?.twoFaMethod : "-"}
-        </p>
       </div>
     </div>
   );
