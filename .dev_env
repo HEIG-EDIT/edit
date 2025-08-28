@@ -1,0 +1,7 @@
+DATABASE_URL="postgresql://prisma:prisma@localhost:5433/tests"
+
+AWS_S3_ENDPOINT=http://localhost:4566
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=test
+AWS_SECRET_ACCESS_KEY=test
+AWS_S3_BUCKET=test-bucket
