@@ -20,8 +20,7 @@ export const ProjectCollaboration = () => {
     const fetchData = async () => {
       try {
         // TODO : utiliser authentification
-        // TODO : utiliser nouvel endpoint avec uniquement owner role
-        const res = await api.get("/api/projects/accessible/1");
+        const res = await api.get("/api/projects/owned/1");
         setOwnerProjects(
           res.data.sort((p1: Project, p2: Project) =>
             p1.projectName.localeCompare(p2.projectName, "en", {

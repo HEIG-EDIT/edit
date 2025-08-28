@@ -20,11 +20,13 @@ export const AuthorizedUsers = ({
   const [hasError, setHasError] = useState<boolean>(false);
 
   useEffect(() => {
+    if (!projectId) return;
+
     const fetchData = async () => {
       try {
         // TODO : utiliser authentification
         // TODO : tester endpoint
-        const res = await api.get(`{/api/collaborations/${projectId}}`);
+        const res = await api.get(`/api/collaborations/${projectId}`);
         setCollaborators(res.data);
       } catch {
         setHasError(true);
@@ -33,7 +35,7 @@ export const AuthorizedUsers = ({
       }
     };
     fetchData();
-  }, []);
+  }, [projectId]);
 
   // TODO : to remove
   /*
