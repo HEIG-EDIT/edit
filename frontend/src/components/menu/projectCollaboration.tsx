@@ -11,7 +11,7 @@ import { LoadingComponent } from "../api/loadingComponent";
 export const ProjectCollaboration = () => {
   const currentPage = usePathname().split("/")[1];
 
-  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [ownerProjects, setOwnerProjects] = useState<Project[] | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
@@ -20,8 +20,9 @@ export const ProjectCollaboration = () => {
     const fetchData = async () => {
       try {
         // TODO : utiliser authentification
+        // TODO : utiliser nouvel endpoint avec uniquement owner role
         const res = await api.get("/api/projects/accessible/1");
-        setProjects(
+        setOwnerProjects(
           res.data.sort((p1: Project, p2: Project) =>
             p1.projectName.localeCompare(p2.projectName, "en", {
               sensitivity: "base",
@@ -38,10 +39,10 @@ export const ProjectCollaboration = () => {
   }, []);
 
   useEffect(() => {
-    if (projects && projects.length > 0) {
-      setSelectedProject(projects[0]);
+    if (ownerProjects && ownerProjects.length > 0) {
+      setSelectedProject(ownerProjects[0]);
     }
-  }, [projects]);
+  }, [ownerProjects]);
 
   if (hasError) {
     return <ErrorComponent subject="projects" />;
@@ -68,12 +69,12 @@ export const ProjectCollaboration = () => {
               value={selectedProject?.projectName}
               onChange={(e) => {
                 setSelectedProject(
-                  projects?.find((p) => p.projectName == e.target.value) ||
+                  ownerProjects?.find((p) => p.projectName == e.target.value) ||
                     null,
                 );
               }}
             >
-              {projects?.map((p: Project) => {
+              {ownerProjects?.map((p: Project) => {
                 return <option key={p.projectId}>{p.projectName}</option>;
               })}
             </select>
@@ -89,7 +90,7 @@ export const ProjectCollaboration = () => {
         </div>
       )}
       <div className="bg-gray-700 rounded-xl p-2 mb-4">
-        <AuthorizedUsers />
+        <AuthorizedUsers projectId={selectedProject?.projectId} />
       </div>
       {/* TODO : gerer logique pour download projet */}
       {currentPage != "projects" && (
