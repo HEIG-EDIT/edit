@@ -75,12 +75,12 @@ export class CollaborationService {
     });
   }
 
-  async listPrjCollaborations(id: number) {
+  async listPrjCollaborations(projectId: number) {
     const project = await this.prisma.project.findUnique({
-      where: { id: id },
+      where: { id: projectId },
       include: { collaborations: { include: { user: true, roles: true } } },
     });
-    if (!project) throw new NotFoundException(`Project ${id} not found`);
+    if (!project) throw new NotFoundException(`Project ${projectId} not found`);
 
     const collaborations = project.collaborations.map(c => ({
       collaborationId: c.id,

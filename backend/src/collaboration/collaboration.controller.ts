@@ -14,8 +14,8 @@ export class CollaborationController {
   }
 
   @Get(':projectId')
-  listPrjCollaborations(@Param('projectId') id: string) {
-    return this.collaborationService.listPrjCollaborations(Number(id));
+  listPrjCollaborations(@Param('projectId') projectId: string) {
+    return this.collaborationService.listPrjCollaborations(Number(projectId));
   }
 
   @Patch()
