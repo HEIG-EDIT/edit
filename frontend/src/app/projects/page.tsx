@@ -11,13 +11,24 @@ import api from "@/lib/api";
 import { ListProjects } from "@/components/projects/listProjects";
 import { LoadingComponent } from "@/components/api/loadingComponent";
 import { ErrorComponent } from "@/components/api/errorComponent";
+import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import { useRouter } from "next/navigation";
+import { Vector2d } from "konva/lib/types";
 
 export default function ProjectSelection() {
+  const router = useRouter();
+
   const [menuDisplay, setMenuDisplay] = useState<boolean>(false);
 
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
+
+  const [isNewProjectDisplayed, setIsNewProjectDisplayed] = useState(false);
+  const [projectSize, setProjectSize] = useState<Vector2d>({ x: 800, y: 800 });
+  const [projectName, setProjectName] = useState<string>("project");
+  const [projectId, setProjectId] = useState<number | null>(null);
 
   type sortType = Record<
     string,
@@ -135,14 +146,104 @@ export default function ProjectSelection() {
     );
   };
 
+  const projectCreationButton = (
+    <ConfigurationButton
+      icon={AddRoundedIcon}
+      onClick={() => setIsNewProjectDisplayed(true)}
+    />
+  );
+
+  // TODO : limiter taille du projet en fonction de la taille de l'ecran de l'utilisateur
+  // TODO : passer dimensions du projet
+  // TODO : adapter page editor
+  const handleProjectCreation = async () => {
+    try {
+      // TODO : utiliser id du user
+      const res = await api.post("api/projects", {
+        name: projectName,
+        creatorId: 1,
+      });
+      setProjectId(res.data.id);
+    } catch {
+      // TODO : gerer si erreur cote backend
+    } finally {
+      setIsNewProjectDisplayed(false);
+    }
+  };
+
+  useEffect(() => {
+    if (projectId) {
+      router.push(`/editor/${projectId}`);
+    }
+  }, [projectId]);
+
+  const projectCreationPopup = (
+    <div className="flex flex-row border-2 border-violet-300 p-2 bg-gray-500 rounded-xl gap-4">
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-row gap-2 items-center">
+          <p className="text-violet-50">Width:</p>
+          <input
+            className="w-24 rounded-xl text-gray-900 bg-violet-300 p-1"
+            name="width"
+            id="width"
+            type="number"
+            min="1"
+            defaultValue="800"
+            onChange={(e) => {
+              setProjectSize({ ...projectSize, x: Number(e.target.value) });
+            }}
+          />
+        </div>
+        <div className="flex flex-row gap-2 items-center">
+          <p className="text-violet-50">Height:</p>
+          <input
+            className="w-24 rounded-xl text-gray-900 bg-violet-300 p-1"
+            name="height"
+            id="height"
+            type="number"
+            min="1"
+            defaultValue="800"
+            onChange={(e) => {
+              setProjectSize({ ...projectSize, y: Number(e.target.value) });
+            }}
+          />
+        </div>
+        <div className="flex flex-row gap-2 items-center">
+          <p className="text-violet-50">Project name:</p>
+          <input
+            className="w-24 rounded-xl text-gray-900 bg-violet-300 p-1"
+            type="text"
+            value={projectName}
+            onChange={(e) => {
+              setProjectName(e.target.value);
+            }}
+          />
+        </div>
+      </div>
+      <div className="inline-flex items-center justify-center">
+        <ConfigurationButton
+          icon={CheckRoundedIcon}
+          onClick={handleProjectCreation}
+        />
+      </div>
+      <div className="inline-flex items-center justify-center">
+        <ConfigurationButton
+          icon={CloseRoundedIcon}
+          onClick={() => setIsNewProjectDisplayed(false)}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <main className="bg-gray-900 min-h-screen p-6">
       <div className="bg-gray-700 rounded-xl">
         <div className="bg-gray-600 flex flex-row rounded-xl p-4 items-center justify-between">
           <div className="flex flex-row gap-12 items-center">
             <p className="text-violet-50 font-bold text-xl">Projects</p>
-            {/* TODO : gerer logique pour creer un nouveau projet */}
-            <ConfigurationButton icon={AddRoundedIcon} onClick={() => {}} />
+            {isNewProjectDisplayed
+              ? projectCreationPopup
+              : projectCreationButton}
           </div>
           <div className="flex flex-row gap-12 items-center">
             <div className="flex flex-col gap-2">

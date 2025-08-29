@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import React, { Dispatch, Fragment, SetStateAction } from "react";
+import React, { Dispatch, Fragment, SetStateAction, useState } from "react";
 import { createPortal } from "react-dom";
 
 export const ConfirmDeletePopUp = ({
@@ -11,17 +11,15 @@ export const ConfirmDeletePopUp = ({
   projectId: number;
   deleteProject: (id: number) => void;
 }) => {
-  // TODO : supprimer les console.log()
+  const [hasError, setHasError] = useState<boolean>(false);
+
   const callDeleteProject = async (projectId: number) => {
-    console.log(projectId);
     try {
-      await api.delete(`/api/projects${projectId}`);
+      await api.delete(`/api/projects/${projectId}`);
       deleteProject(projectId);
-    } catch {
-      // TODO : si erreur lors du delete, afficher message ou ?
-      console.log("erreur api");
-    } finally {
       setConfirmDeleteDisplay(false);
+    } catch {
+      setHasError(true);
     }
   };
 
@@ -31,10 +29,10 @@ export const ConfirmDeletePopUp = ({
       <div className="fixed inset-0 flex justify-center items-center z-100">
         <div className="relative bg-gray-600 rounded-2xl border border-violet-300 p-4">
           <p className="text-violet-50 font-bold mb-4">
-            Are you sure you want to delete this project? This action cannot be
-            undone.
+            {hasError
+              ? "Error while deleting project, try later..."
+              : "Are you sure you want to delete this project? This action cannot be undone."}
           </p>
-          {/* TODO : tester la suppression d'un projet car pour l'instan ko cote backend */}
           <div className="flex flex-row gap-4 justify-end">
             <button
               className="bg-violet-50 border-2 border-violet-500 rounded-2xl p-2 w-auto cursor-pointer"

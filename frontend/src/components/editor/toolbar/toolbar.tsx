@@ -1,9 +1,12 @@
 import { ToolSelector } from "@/components/editor/toolbar/toolSelector";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
+import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
 import { Dispatch, SetStateAction } from "react";
 import { ActionButton } from "@/components/actionButton";
 import { UndoRedoSelector } from "./undoRedoSelector";
+import { useEditorContext } from "../editorContext";
+import { handleExport } from "../saveProject";
 
 export interface ToolBarProps {
   nameSelectedTool: string;
@@ -24,6 +27,8 @@ export const Toolbar = ({
   redo,
   canRedo,
 }: ToolBarProps) => {
+  const { layerRef } = useEditorContext();
+
   return (
     <div className="bg-gray-800 rounded-2xl p-2 flex flex-row items-center gap-4">
       <ToolSelector
@@ -40,6 +45,11 @@ export const Toolbar = ({
       <ActionButton
         icon={<SaveRoundedIcon style={{ color: "white" }} />}
         onClick={() => {}} // TODO : remplacer fonction pour ouvrir une save pop up
+        style="bg-violet-500 border-gray-800 border-violet-50"
+      />
+      <ActionButton
+        icon={<FileDownloadRoundedIcon style={{ color: "white" }} />}
+        onClick={() => handleExport(layerRef)}
         style="bg-violet-500 border-gray-800 border-violet-50"
       />
       <div className="border-l border-violet-50 h-6 mx-2 rounded" />

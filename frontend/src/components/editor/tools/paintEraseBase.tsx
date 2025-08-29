@@ -89,7 +89,6 @@ export const PaintEraseBaseComponent = <
       return;
     }
 
-    // TODO: Restrict drawing to inside the layer
     editSelectedLayers((layer) => {
       const pointPosition = getLayerCursorPosition(layer);
       const lines = layer.lines.slice();

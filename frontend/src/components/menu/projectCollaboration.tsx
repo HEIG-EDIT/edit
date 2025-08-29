@@ -1,8 +1,6 @@
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthorizedUsers } from "./authorizedUsers";
-import { EntryButton } from "./entryButton";
-import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
 import { Project } from "@/models/api/project/project";
 import api from "@/lib/api";
 import { ErrorComponent } from "../api/errorComponent";
@@ -10,6 +8,8 @@ import { LoadingComponent } from "../api/loadingComponent";
 
 export const ProjectCollaboration = () => {
   const currentPage = usePathname().split("/")[1];
+
+  const params = useParams();
 
   const [ownerProjects, setOwnerProjects] = useState<Project[] | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -21,13 +21,15 @@ export const ProjectCollaboration = () => {
       try {
         // TODO : utiliser authentification
         const res = await api.get("/api/projects/owned/1");
-        setOwnerProjects(
-          res.data.sort((p1: Project, p2: Project) =>
-            p1.projectName.localeCompare(p2.projectName, "en", {
-              sensitivity: "base",
-            }),
-          ),
-        );
+        if (res.data.length > 0) {
+          setOwnerProjects(
+            res.data.sort((p1: Project, p2: Project) =>
+              p1.projectName.localeCompare(p2.projectName, "en", {
+                sensitivity: "base",
+              }),
+            ),
+          );
+        }
       } catch {
         setHasError(true);
       } finally {
@@ -39,9 +41,18 @@ export const ProjectCollaboration = () => {
 
   useEffect(() => {
     if (ownerProjects && ownerProjects.length > 0) {
-      setSelectedProject(ownerProjects[0]);
+      if (currentPage == "projects") {
+        setSelectedProject(ownerProjects[0]);
+      } else {
+        const urlProject = ownerProjects.find(
+          (p) => String(p.projectId) === params.projectId,
+        );
+        if (urlProject !== undefined) {
+          setSelectedProject(urlProject);
+        }
+      }
     }
-  }, [ownerProjects]);
+  }, [ownerProjects, params.projectId]);
 
   if (hasError) {
     return <ErrorComponent subject="projects" />;
@@ -51,9 +62,23 @@ export const ProjectCollaboration = () => {
     return <LoadingComponent />;
   }
 
-  return (
-    // TODO : afficher uniquement projets ou user=owner et si aucun projet alors owner nul part et message
+  if (currentPage == "projects" && !ownerProjects) {
+    return (
+      <p className="text-violet-50 font-bold text-xl">
+        No owned project found.
+      </p>
+    );
+  }
 
+  if (!selectedProject) {
+    return (
+      <p className="text-violet-50 font-bold text-xl">
+        Not owner of this project.
+      </p>
+    );
+  }
+
+  return (
     <div className="flex flex-col justify-between gap-4">
       <div className="flex">
         <p className="text-violet-50 font-bold text-xl mb-2">
@@ -91,17 +116,6 @@ export const ProjectCollaboration = () => {
       <div className="bg-gray-700 rounded-xl p-2 mb-4">
         <AuthorizedUsers projectId={selectedProject?.projectId} />
       </div>
-      {/* TODO : gerer logique pour download projet */}
-      {currentPage != "projects" && (
-        <div className="flex w-fit mx-auto">
-          <EntryButton
-            icon={<FileDownloadRoundedIcon />}
-            text="Download project"
-            onClick={() => {}}
-            style={"bg-violet-50 border-2 border-violet-500"}
-          />
-        </div>
-      )}
     </div>
   );
 };

@@ -57,6 +57,7 @@ export const Canvas = ({
     canvasState,
     setCanvasState,
     stageRef,
+    layerRef,
     toolEventHandlers,
     isHoldingPrimary,
   } = useEditorContext();
@@ -176,6 +177,7 @@ export const Canvas = ({
         {/* Unique Konva Layer of the stage representing the Canvas.
           EDIT Layers are "mapped" to Konva Groups */}
         <KonvaLayer
+          ref={layerRef}
           listening
           imageSmoothingEnabled={false}
           width={width}
@@ -219,7 +221,7 @@ export const Canvas = ({
             width={width}
             stroke={"#7c3aed"}
             strokeWidth={2}
-            strokeEnabled={true /* TODO: Link with editor setting */}
+            strokeEnabled={true}
             scale={{
               x: canvasState.scale,
               y: canvasState.scale,

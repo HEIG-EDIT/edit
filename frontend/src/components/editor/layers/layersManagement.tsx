@@ -12,13 +12,11 @@ import { Layer, LayerUpdateCallback } from "@/models/editor/layers/layer";
 import { LayerReordering } from "./layerReordering";
 import KeyboardReturnRoundedIcon from "@mui/icons-material/KeyboardReturnRounded";
 
-// FIXME: Maybe pass only required information
-// I don't know if this impacts performance, I think the component is re-rendered
-// whenever an attribute of Layer is updated, even if it's not used in here.
 export const LayersManagement = ({
   layers,
   updateLayer,
   setLayers,
+  canvasSize,
 }: LayersManagementProps) => {
   const [isNewLayerDisplayed, setIsNewLayerDisplayed] =
     useState<boolean>(false);
@@ -44,18 +42,53 @@ export const LayersManagement = ({
     reader.readAsDataURL(file);
   };
 
+  const handleLayerDuplication = () => {
+    setLayers((prev) => {
+      const result = [];
+      for (const layer of prev) {
+        result.push(layer);
+        if (layer.isSelected) {
+          result.push(Layer.duplicate(layer));
+        }
+      }
+      return result;
+    });
+  };
+
+  const handleLayerDeletion = () => {
+    setLayers((prev) => {
+      const result = [];
+      for (const layer of prev) {
+        if (!layer.isSelected) {
+          result.push(layer);
+        }
+      }
+      return result;
+    });
+  };
+
   const displayLayers = (
     <div className="flex flex-row gap-4 justify-center items-center p-2">
       <ConfigurationButton
         icon={AddRoundedIcon}
         onClick={() => setIsNewLayerDisplayed(true)}
       />
-      {/* TODO : gerer logique pour dupliquer */}
-      <ConfigurationButton icon={ContentCopyRoundedIcon} onClick={() => {}} />
-      {/* TODO : gerer logique pour supprimer */}
-      <ConfigurationButton icon={DeleteForeverRoundedIcon} onClick={() => {}} />
+      <ConfigurationButton
+        icon={ContentCopyRoundedIcon}
+        onClick={handleLayerDuplication}
+      />
+      <ConfigurationButton
+        icon={DeleteForeverRoundedIcon}
+        onClick={handleLayerDeletion}
+      />
     </div>
   );
+
+  const handleNewEmptyLayer = () => {
+    const newLayer = new Layer(null, null, canvasSize.x, canvasSize.y);
+
+    setLayers((prev) => [...prev, newLayer]);
+  };
 
   const addLayer = (
     <div className="flex flex-row p-2 items-center justify-between">
@@ -74,8 +107,7 @@ export const LayersManagement = ({
       <ConfigurationButton
         icon={AddToPhotosRoundedIcon}
         text={"Empty layer"}
-        // TODO : gerer logique pour charger layer vide
-        onClick={() => {}}
+        onClick={handleNewEmptyLayer}
       />
       <ConfigurationButton
         icon={KeyboardReturnRoundedIcon}
@@ -102,7 +134,7 @@ export const LayersManagement = ({
         [&::-webkit-scrollbar-track]:rounded-full
         [&::-webkit-scrollbar-thumb]:border-2
         [&::-webkit-scrollbar-thumb]:border-gray-900
-        [&::-webkit-scrollbar-thumb]:bg-gray-600 
+        [&::-webkit-scrollbar-thumb]:bg-gray-600
         [&::-webkit-scrollbar-thumb]:rounded-full"
             >
               {layers
