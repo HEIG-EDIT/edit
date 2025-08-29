@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
-import process from 'node:process';
+
+import * as process from 'node:process';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -19,9 +20,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     refreshToken: string,
     profile: any,
     done: Function,
-  ): Promise<false | unknown | null> | false | unknown | null {
+  ) {
     return {
-      undefined,
+      email: profile.emails[0].value,
+      oauthId: profile.id,
+      provider: profile.provider,
     };
   }
 }

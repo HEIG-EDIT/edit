@@ -1,0 +1,22 @@
+meta {
+  name: Register
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:4000/auth/register
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "alice@example.com",
+    "password": "S3cure!Passw0rd"
+  }
+}
