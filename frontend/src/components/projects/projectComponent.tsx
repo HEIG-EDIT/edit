@@ -52,8 +52,7 @@ export const ProjectComponent = ({
   return (
     <div className="w-[160px] h-[160px] rounded-2xl bg-gray-600 border-2 border-violet-400 flex flex-col overflow-hidden">
       <Link
-        // TODO : gerer redirection sur projet (/editor/projectId)
-        href="/editor"
+        href={`/editor/${project.projectId}`}
         className="w-[160px] h-[90px] overflow-hidden cursor-pointer"
       >
         <img

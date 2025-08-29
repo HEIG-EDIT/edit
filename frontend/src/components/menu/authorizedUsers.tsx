@@ -1,10 +1,12 @@
 import api from "@/lib/api";
 import { Collaborator } from "@/models/api/collaborator/collaborator";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { useEffect, useMemo, useState } from "react";
 import { ErrorComponent } from "../api/errorComponent";
 import { LoadingComponent } from "../api/loadingComponent";
 
+// TODO : checker que user connecte ne peut pas s'enlever lui-meme le droit owner
 export const AuthorizedUsers = ({
   projectId,
 }: {
@@ -34,6 +36,17 @@ export const AuthorizedUsers = ({
     fetchData();
   }, [projectId]);
 
+  const removeCollaboration = async (collaborationId: number) => {
+    try {
+      await api.delete(`/api/collaborations/${collaborationId}`);
+      setCollaborators((prev) =>
+        prev ? prev.filter((c) => c.collaborationId !== collaborationId) : prev,
+      );
+    } catch {
+      // TODO : comment gerer au niveau affichage si erreur (pour le moment si erreur alors rien ne change) ?
+    }
+  };
+
   const USERS_BY_ROLE = useMemo(() => {
     if (!collaborators) return {};
     return ROLES.reduce(
@@ -62,15 +75,21 @@ export const AuthorizedUsers = ({
     return <LoadingComponent />;
   }
 
-  // TODO : finir de gerer logique et ui
-  const DisplayUser = ({ userEmail }: { userEmail: string }) => {
+  const DisplayUser = ({
+    collaborationId,
+    userEmail,
+  }: {
+    userEmail: string;
+    collaborationId: number;
+  }) => {
     return (
       <div className="bg-violet-50 rounded-xl p-1 flex items-center justify-between">
         <p className="truncate whitespace-nowrap" title={userEmail}>
           {userEmail}
         </p>
-        {/* TODO : gerer suppression de la collab */}
-        <CloseRoundedIcon className="shrink-0 cursor-pointer" />
+        <button onClick={() => removeCollaboration(collaborationId)}>
+          <CloseRoundedIcon className="shrink-0 cursor-pointer" />
+        </button>
       </div>
     );
   };
@@ -93,16 +112,31 @@ export const AuthorizedUsers = ({
                        [&::-webkit-scrollbar-thumb]:bg-violet-400
                          [&::-webkit-scrollbar-thumb]:rounded-xl"
               >
-                {Array.from(USERS_BY_ROLE[key].collaborators).map(
-                  (c: Collaborator) => {
-                    return (
-                      <div key={c.collaborationId} className="mb-2 last:mb-0">
-                        <DisplayUser userEmail={c.userEmail} />
-                      </div>
-                    );
-                  },
-                )}
-                {/* TODO : ajouter logique et ui pour nouveau user */}
+                <div>
+                  {Array.from(USERS_BY_ROLE[key].collaborators).map(
+                    (c: Collaborator) => {
+                      return (
+                        <div key={c.collaborationId} className="mb-2 last:mb-0">
+                          <DisplayUser
+                            collaborationId={c.collaborationId}
+                            userEmail={c.userEmail}
+                          />
+                        </div>
+                      );
+                    },
+                  )}
+                  {/* TODO : ajouter logique et ui pour nouveau user */}
+                  <div className="bg-violet-50 rounded-xl p-1 flex items-center justify-between">
+                    <input
+                      type="text"
+                      placeholder="New collab. email"
+                      className="truncate whitespace-nowrap min-w-0"
+                    ></input>
+                    <button onClick={() => {}}>
+                      <AddRoundedIcon className="shrink-0 cursor-pointer" />
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
