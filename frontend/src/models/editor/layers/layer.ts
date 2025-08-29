@@ -2,6 +2,7 @@ import { Vector2d } from "konva/lib/types";
 import { createRef, RefObject } from "react";
 import { Line } from "./line";
 import Konva from "konva";
+import { Filter } from "konva/lib/Node";
 
 export type LayerId = string;
 
@@ -42,6 +43,7 @@ export class Layer {
   };
   rotation: number = 0;
   lines: Array<Line> = []; // Lines drawn free-hand on a Layer
+  filters: Array<Filter> = [];
 
   size: Vector2d;
 

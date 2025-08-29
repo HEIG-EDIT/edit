@@ -25,6 +25,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       isSelected,
       lines,
       size,
+      filters,
     }: Partial<LayerProps> = props;
 
     const { editSelectedLayers, isTransforming } = useEditorContext();
@@ -102,6 +103,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
             width: size.x,
             height: size.y,
           }}
+          filters={filters}
         >
           {/* Dummy rectangle, used to select layers with Canvas click */}
           <KonvaRect

@@ -6,8 +6,10 @@ import { SubToolConfiguration } from "@/models/editor/tools/subToolConfiguration
 import { SubToolConfigurationProps } from "@/models/editor/tools/subToolConfigurationProps";
 import { SubTool } from "@/models/editor/tools/subTool";
 import ContrastRoundedIcon from "@mui/icons-material/ContrastRounded";
+import { Layer } from "@/models/editor/layers/layer";
 
-// TODO (last) : s'occuper de ce composant une fois qu'on sait ce qu'on aura le temps d'implementer
+import Konva from "konva";
+import { useEditorContext } from "../editorContext";
 
 export type BlackWhiteConfiguration = SubToolConfiguration;
 
@@ -42,16 +44,20 @@ export const BlackWhiteConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
 }: SubToolConfigurationProps<BlackWhiteConfiguration>) => {
-  // TODO : to remove, just for eslink check
-  console.log(configuration);
-  console.log(setConfiguration);
-
   return <div>Black/white</div>;
 };
 
 export const BlackWhite: SubTool<BlackWhiteConfiguration> = {
   name: "Black/white",
-  initialConfiguration: {},
+  initialConfiguration: {
+    applyTool: (layer: Layer) => {
+      console.log('Applying grayscale')
+      return {
+        ...layer,
+        filters: [...layer.filters, Konva.Filters.Grayscale]
+      }
+    }
+  },
   configurationComponent: BlackWhiteConfigurationSubcomponent,
 };
 
@@ -83,7 +89,16 @@ export const GaussianBlurConfigurationSubcomponent = ({
 
 export const GaussianBlur: SubTool<GaussianBlurConfiguration> = {
   name: "Gaussian blur",
-  initialConfiguration: { blurAmount: 10 },
+  initialConfiguration: {
+    blurAmount: 10,
+    applyTool: (layer: Layer) => {
+      layer.groupRef.current?.blurRadius(this.initialConfiguration.blurAmount);
+      return {
+        ...layer,
+        filters: [...layer.filters, Konva.Filters.Blur],
+      }
+    }
+  },
   configurationComponent: GaussianBlurConfigurationSubcomponent,
 };
 
@@ -253,8 +268,17 @@ export const AdjustToolConfigurationComponent = ({
   configuration,
   setConfiguration,
 }: ToolConfigurationProps<AdjustToolConfiguration>) => {
+  const { editSelectedLayers } = useEditorContext();
+
   const AdjustToolConfigurationSubcomponent =
     ADJUST_SUB_TOOLS[configuration.filterType].configurationComponent;
+
+  const handleApply = () => {
+    editSelectedLayers((layer) => {
+      layer.groupRef.current?.cache()
+      return configuration.subConfigurations[configuration.filterType].applyTool(layer);
+    })
+  }
 
   return (
     <div>
@@ -287,6 +311,9 @@ export const AdjustToolConfigurationComponent = ({
             });
           }}
         />
+        <button onClick={handleApply}>
+          Apply
+        </button>
       </OutsideCard>
     </div>
   );
