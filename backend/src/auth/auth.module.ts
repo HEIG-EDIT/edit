@@ -15,8 +15,6 @@ import { UsersService } from '../users/users.service';
 import { TokensModule } from './tokens/tokens.module';
 import { TokensService } from './tokens/tokens.service';
 
-import { JwtService } from '@nestjs/jwt';
-
 import config from '../config/auth.config';
 
 @Module({

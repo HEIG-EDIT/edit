@@ -1,0 +1,11 @@
+meta {
+  name: Auth_Google_Login
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}:{{portBack}}/auth/google
+  body: json
+  auth: inherit
+}

@@ -35,8 +35,8 @@ export class AuthController {
   ) {
     this.frontendUrl = (
       process.env.NODE_ENV === 'prod'
-        ? process.env.PROD_FRONTEND_URL
-        : process.env.LOCAL_FRONTEND_URL
+        ? process.env.FRONTEND_URL_PROD
+        : process.env.FRONTEND_URL_LOCAL
     ) as string;
   }
 
@@ -113,7 +113,7 @@ export class AuthController {
     });
 
     // Redirect home (or projects) on your FE
-    return res.redirect(this.frontendUrl ?? '/');
+    return res.redirect(this.frontendUrl ?? process.env.PROD_FRONTEND_URL);
   }
 
   //-------------------LinkedIn OAUTH2 LOGIN-------------------------------
