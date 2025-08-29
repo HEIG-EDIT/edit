@@ -206,6 +206,7 @@ export const Canvas = ({
                   callback: LayerUpdateCallback,
                   virtual: boolean,
                 ) => updateLayer(layer.id, callback, virtual)}
+                filters={layer.filters}
               />
             );
           })}
