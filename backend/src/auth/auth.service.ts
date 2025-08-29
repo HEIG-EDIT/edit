@@ -21,6 +21,7 @@ import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { TwoFaService } from './twoFA/twofa.service';
 import { TokensService } from './tokens/tokens.service';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 const FRONTEND_BASE_URL = process.env.FRONTEND_URL_LOCAL;
 //const API_BASE_URL = process.env.API_URL_LOCAL;
@@ -93,7 +94,7 @@ export class AuthService {
     } catch (err: any) {
       if (
         err instanceof ConflictException ||
-        (err instanceof Prisma.PrismaClientKnownRequestError &&
+        (err instanceof PrismaClientKnownRequestError &&
           err.code === 'P2002')
       ) {
         await this.emailService.sendExistingAccountEmail(dto.email);
