@@ -10,24 +10,53 @@ import useLayersReordering, {
 } from "@/hooks/useLayersReordering";
 
 export interface LayersStateResult {
+  /// Array of layers, ordered from the back to the front
   layers: Layer[];
+
+  /// Commit the virtual state of the layers to create a history step
   commitVirtualLayers: () => void;
+
+  /// If canUndo, undo the last done step in the history
   undo: () => void;
+
+  /// If canRedo, redo the last undone step in the history
   redo: () => void;
+
+  /// True if undo can be performed
   canUndo: boolean;
+
+  /// True if redo can be performed
   canRedo: boolean;
 
+  /// Update the layer with a given id
+  /// @param id The id of the layer to update
+  /// @param callback A callback returning the updated layer
+  /// @param virtual If true, the change will be virtual, meaning that no step in the
+  ///                history is created.
   updateLayer: (
     id: LayerId,
     callback: LayerUpdateCallback,
     virtual: boolean,
   ) => void;
-  addLayer: (layer: Layer) => void;
 
+  /// Add a new layer
+  /// @param layer The new layer to add
+  /// @param atTheFront If true, the new layer is added at the front, otherwise
+  ///                   it is added at the back of the canvas.
+  addLayer: (layer: Layer, atTheFront: boolean) => void;
+
+  /// Apply a modification to all selected layers
+  /// @param callback The callback to apply to all selected layers
   editSelectedLayers: (callback: LayerUpdateCallback) => void;
+
+  /// Remove the selected layers
   deleteSelectedLayers: () => void;
+
+  /// Duplicate the selected layers. The added layers will be right on top of the
+  /// selected ones.
   duplicateSelectedLayers: () => void;
 
+  /// The logic of the layers reordering.
   layersReorderingLogic: LayersReorderingLogic;
 }
 
@@ -117,8 +146,12 @@ export default function useLayersState() {
     });
   };
 
-  const addLayer = (layer: Layer) => {
-    setLayers((prev) => [...prev, layer]);
+  const addLayer = (layer: Layer, atTheFront: boolean = true) => {
+    if (atTheFront) {
+      setLayers((prev) => [...prev, layer]);
+    } else {
+      setLayers((prev) => [layer, ...prev]);
+    }
   };
 
   const layersReorderingLogic = useLayersReordering(
