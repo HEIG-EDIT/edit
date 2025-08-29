@@ -1,8 +1,6 @@
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthorizedUsers } from "./authorizedUsers";
-import { EntryButton } from "./entryButton";
-import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
 import { Project } from "@/models/api/project/project";
 import api from "@/lib/api";
 import { ErrorComponent } from "../api/errorComponent";
@@ -118,17 +116,6 @@ export const ProjectCollaboration = () => {
       <div className="bg-gray-700 rounded-xl p-2 mb-4">
         <AuthorizedUsers projectId={selectedProject?.projectId} />
       </div>
-      {/* TODO : gerer logique pour download projet (avec id) */}
-      {currentPage != "projects" && (
-        <div className="flex w-fit mx-auto">
-          <EntryButton
-            icon={<FileDownloadRoundedIcon />}
-            text="Download project"
-            onClick={() => {}}
-            style={"bg-violet-50 border-2 border-violet-500"}
-          />
-        </div>
-      )}
     </div>
   );
 };
