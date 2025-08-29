@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt';
 
 import { EmailService } from '../email/email.service';
 import { conflict } from '../common/helpers/responses/responses.helper';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class UsersService {
@@ -63,7 +64,7 @@ export class UsersService {
         });
       } catch (err: unknown) {
         if (
-          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err instanceof PrismaClientKnownRequestError &&
           err.code === 'P2002'
         ) {
           const target = err.meta?.target as string[] | undefined;
@@ -266,7 +267,7 @@ export class UsersService {
       return { updated: true, userName: updated.userName };
     } catch (e: any) {
       if (
-        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e instanceof PrismaClientKnownRequestError &&
         e.code === 'P2002' &&
         Array.isArray(e.meta?.target) &&
         e.meta.target.includes('userName')
@@ -320,7 +321,7 @@ export class UsersService {
       return 'READY';
     } catch (e: unknown) {
       if (
-        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e instanceof PrismaClientKnownRequestError &&
         e.code === 'P2002' &&
         Array.isArray(e.meta?.target) &&
         e.meta.target.includes('email')
