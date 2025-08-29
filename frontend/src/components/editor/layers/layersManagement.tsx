@@ -107,7 +107,6 @@ export const LayersManagement = ({
       <ConfigurationButton
         icon={AddToPhotosRoundedIcon}
         text={"Empty layer"}
-        // TODO : gerer logique pour charger layer vide
         onClick={handleNewEmptyLayer}
       />
       <ConfigurationButton
