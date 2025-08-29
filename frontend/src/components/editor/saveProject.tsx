@@ -31,10 +31,11 @@ export const exportToURI = (
 ) => {
   let result: string;
   if (layerRef && layerRef.current) {
-    setTransformersVisibility(layerRef.current, false);
+    const layer = layerRef.current;
+    setTransformersVisibility(layer, false);
     // Hide stuff outside of the Canvas
     layerRef.current.clipFunc(function (ctx) {
-      ctx.rect(0, 0, layerRef.current.width(), layerRef.current.height());
+      ctx.rect(0, 0, layer.width(), layer.height());
     });
 
     if (thumbnail) {
