@@ -96,7 +96,7 @@ export const Menu = ({
                   <EntryButton
                     icon={<HomeRoundedIcon />}
                     text="View projects"
-                    onClick={() => router.push("./projects")}
+                    onClick={() => router.push("/projects")}
                     style={"bg-violet-50 border-2 border-violet-500"}
                   />
                 )}
