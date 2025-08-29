@@ -1,12 +1,18 @@
 import { Layer } from "@/models/editor/layers/layer";
 
 export interface LayersReorderingLogic {
+  /// Move all selected layers to the front of the canvas.
   bringLayersToFront: () => void;
+  /// Move all selected layers one "step" to the front.
   moveLayersForward: () => void;
+  /// True if the selected layers can be moved forward or to the front.
   canMoveLayersForward: boolean;
 
+  /// Move all selected layers to the back of the canvas.
   sendLayersToBack: () => void;
+  /// Move all selected layers one "step" backward.
   moveLayersBackward: () => void;
+  /// True if the selected layers can be moved backward or to the back.
   canMoveLayersBackward: boolean;
 }
 
