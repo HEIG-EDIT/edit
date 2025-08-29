@@ -20,86 +20,107 @@ model User {
   email           String    @unique
   passwordHash    String?
   isEmailVerified Boolean
-  twoFaMethod     String?
-  twoFaSecret     String?
+  twoFaMethod     String? // 'totp' | 'email'
+  twoFaSecret     String? // needed for TOTP verification
   createdAt       DateTime  @default(now())
   updatedAt       DateTime? @updatedAt
-  
-  refreshToken    RefreshToken? @relation()
-  emailVerificationToken EmailVerificationToken? @relation()
 
-  projects        Project[]
-  collaborations  Collaboration[]
-  auditLogs       AuditLog[]
+  refreshToken           RefreshToken[]          @relation()
+  emailVerificationToken EmailVerificationToken? @relation()
+  twoFaChallenge         TwoFaChallenge[]
+
+  projects       Project[]
+  collaborations Collaboration[]
+  auditLogs      AuditLog[]
 }
 
 model RefreshToken {
-  id              Int       @id @default(autoincrement())
-  tokenHash       String    
-  deviceId        String    @unique
-  oauthProvider   String?
-  createdAt       DateTime
-  expiresAt       DateTime  
-  updatedAt       DateTime?  
-  
-  user            User?     @relation(fields: [userId], references: [id])
-  userId          Int?      @unique
+  id            Int      @id @default(autoincrement())
+  tokenHash     String   @unique
+  deviceId      String
+  oauthProvider String?
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+  updatedAt     DateTime @updatedAt
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId]) // one token per device per user
+  @@index([userId])
+  @@index([expiresAt]) // optional: helps cleanup jobs
 }
 
 model EmailVerificationToken {
-  id              Int       @id @default(autoincrement())
-  tokenHash       String    
-  deviceId        String    @unique
-  createdAt       DateTime
-  expiresAt       DateTime 
-  usedAt          DateTime? 
-  
-  user            User?     @relation(fields: [userId], references: [id])
-  userId          Int?      @unique
+  id        Int       @id @default(autoincrement())
+  tokenHash String    @unique
+  deviceId  String?   @unique
+  createdAt DateTime? @default(now())
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int?  @unique
+}
+
+model TwoFaChallenge {
+  id         Int       @id @default(autoincrement())
+  tokenHash  String    @unique
+  userId     Int
+  action     String // 'enable2fa' | 'disable2fa' | 'login' | 'changePassword' | 'passwordRecovery'
+  method     String // 'totp' | 'email'
+  secret     String? // provisional TOTP secret for ENABLE flow only
+  codeHash   String? // hashed email/sms code if used
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  usedAt     DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model AuditLog {
-  id              Int       @id @default(autoincrement())
-  eventType       String    
-  ipAddress       String?
-  userAgent       String?
-  createdAt       DateTime  @default(now())
-  
-  user            User      @relation(fields: [userId], references: [id])
-  userId          Int
+  id        Int      @id @default(autoincrement())
+  eventType String
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
 }
 
 model Project {
-  id              Int       @id @default(autoincrement())
-  createdAt       DateTime  @default(now())
-  openedAt        DateTime?  
-  lastSavedAt     DateTime?  
-  s3Url           String
-  projectJson     String
-  userCurrentlyEditing Boolean @default(false)
+  id                   Int       @id @default(autoincrement())
+  name                 String
+  createdAt            DateTime  @default(now())
+  openedAt             DateTime?
+  lastSavedAt          DateTime?
+  userCurrentlyEditing Boolean   @default(false)
 
-  collaborations  Collaboration[]
-  creator            User @relation(fields: [creatorId], references: [id])
-  creatorId          Int
+  collaborations Collaboration[]
+  creator        User            @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId      Int
 }
 
-
 model Role {
-  id              Int       @id @default(autoincrement())
-  name            String
+  id   Int    @id @default(autoincrement())
+  name String @unique
 
   collaborations Collaboration[]
 }
 
 model Collaboration {
-  id              Int       @id @default(autoincrement())
-  createdAt       DateTime
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
 
-  user            User @relation(fields: [userId], references: [id])
-  userId          Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
 
-  project         Project @relation(fields: [projectId], references: [id])
-  projectId       Int
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId Int
 
   roles Role[]
 }

@@ -14,7 +14,7 @@ import React, {
 } from "react";
 import { MenuEntry } from "@/models/editor/menu/menuEntry";
 import { UserSettings } from "./userSettings";
-import { ProjectSettings } from "./projectSettings";
+import { ProjectCollaboration } from "./projectCollaboration";
 import useOnClickOutside from "@/hooks/useOnClickOutside";
 import { usePathname } from "next/navigation";
 
@@ -43,15 +43,15 @@ export const Menu = ({
       },
       associatedComponent: UserSettings,
     },
-    projectSettings: {
-      name: "projectSettings",
+    projectCollaboration: {
+      name: "projectCollaboration",
       button: {
         icon: <TuneRoundedIcon />,
-        text: "Project settings",
+        text: "Project collab.",
         onClick: () =>
-          setNameSelectedMenuEntry(MENU_ENTRIES["projectSettings"].name),
+          setNameSelectedMenuEntry(MENU_ENTRIES["projectCollaboration"].name),
       },
-      associatedComponent: ProjectSettings,
+      associatedComponent: ProjectCollaboration,
     },
   };
 
