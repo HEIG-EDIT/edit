@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCollaborationDto } from './dto/create-collaboration.dto';
 import { EditCollaborationDto } from './dto/edit-collaboration.dto';
@@ -104,9 +104,19 @@ export class CollaborationService {
   async editCollaborationRole(dto: EditCollaborationDto) {
     const collaboration = await this.prisma.collaboration.findUnique({
       where: { id: dto.collaborationId },
+      include: { project: true }, // include project to get creatorId
     });
-    if (!collaboration) throw new NotFoundException(`Collaboration ${dto.collaborationId} not found`);
 
+    if (!collaboration)
+      throw new NotFoundException(`Collaboration ${dto.collaborationId} not found`);
+
+    // Ensure project creator always has "owner" role
+    if (collaboration.userId === collaboration.project.creatorId) {
+      if (!dto.roles.includes('owner')) {
+        throw new BadRequestException('Cannot remove "owner" role from project creator');
+      }
+    }
+    
     const roleRecords = await Promise.all(
       dto.roles.map(name =>
         this.prisma.role.upsert({
@@ -129,6 +139,18 @@ export class CollaborationService {
   }
 
   async removeCollaboration(id: number) {
+    const collaboration = await this.prisma.collaboration.findUnique({
+      where: { id },
+      include: { project: true }, // include project to get creatorId
+    });
+
+    if (!collaboration)
+      throw new NotFoundException(`Collaboration ${id} not found`);
+
+    // Prevent deleting collaboration for project creator
+    if (collaboration.userId === collaboration.project.creatorId) {
+      throw new BadRequestException('Cannot remove collaboration for project creator');
+    }
     return this.prisma.collaboration.delete({
       where: { id: id },
     });
