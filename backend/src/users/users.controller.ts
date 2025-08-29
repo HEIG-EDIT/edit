@@ -200,7 +200,6 @@ export class UsersController {
    * @throws 202 if the email change process has started and a verification email is sent
    * @thros 204 if the email is unchanged (idempotent no-op).
    */
-  //TODO: cache this endpoint
   @UseGuards(JwtAuthGuard)
   @UsePipes(
     new ValidationPipe({
@@ -274,7 +273,6 @@ export class UsersController {
    * @param dto - DTO containing currentPassword, newPassword, and repeatPassword.
    * @returns Success message or 2FA requirement status.
    */
-  //TODO: cache this endpoint
   @Post('me/change-password')
   @UseGuards(JwtAuthGuard)
   async changePassword(
