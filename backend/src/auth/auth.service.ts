@@ -2,7 +2,6 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
-  ForbiddenException,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
@@ -18,8 +17,14 @@ import { LoginDto } from './dto/login.dto';
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { TokensService } from './tokens/tokens.service';
 
+//import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+
+const ACCESS_TTL_SEC = Number(process.env.ACCESS_TOKEN_TTL_SEC || 15 * 60); // 15 min
+const REFRESH_TTL_SEC = Number(
+  process.env.REFRESH_TOKEN_TTL_SEC || 30 * 24 * 3600,
+); // 30 days
 const DUMMY_BCRYPT_HASH =
   '$2b$12$1w8i2LQyC6z9Yl2wq3FZeu5Vb7J1.2q6oV2Qy1q3bJxJkQe5Lxk1a';
 
@@ -29,15 +34,16 @@ export class AuthService {
    *
    * @param userService
    * @param jwtService
-   * @param emailService
    * @param prisma
    * @param configService
+   * @param tokensService
    */
   constructor(
     private readonly userService: UsersService,
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly tokensService: TokensService,
   ) {}
 
   // ---------------------------------------------------------------
@@ -78,10 +84,166 @@ export class AuthService {
   }
 
   // -------------------LOCAL LOGIN---------------------------------------
+  /**
+   * Logs in a user.
+   * This method checks the user's credentials and generates an access token if they are valid.
+   * - Always runs exactly one bcrypt.compare (dummy on unknown users)
+   * - Applies a timing floor + jitter
+   * - Returns generic failures (no “unverified” vs “invalid” split)
+   * - Issues refresh token only on successful & verified login
+   * @param dto - The login data transfer object containing email and password.
+   */
+  async loginLocal(dto: LoginDto) {
+    const start = Date.now();
+    const TIMING_FLOOR_MS = 500; // floor to blur DB/cache noise
+    const JITTER_MS = Math.floor(Math.random() * 150); // small randomness
+
+    // 1) Look up user by email (or undefined)
+    const user = await this.userService.findUserByEmail(dto.email);
+
+    // 2) Exactly one compare
+    const hashToCheck = user?.passwordHash ?? DUMMY_BCRYPT_HASH;
+    const passwordOk = await bcrypt.compare(dto.password, hashToCheck);
+
+    // 3) Decide if sign-in is allowed (user exists, pw ok)
+    const canLogin = Boolean(user && passwordOk);
+    let access: { token: string; ttlSec: number } | null = null;
+    let refresh: { plain: string; ttlSec: number; deviceId: string } | null =
+      null;
+
+    const deviceId = crypto.randomUUID();
+    if (canLogin) {
+      // 4) Issue tokens (only on verified success)
+      access = await this.issueAccessToken({
+        id: user!.id,
+        email: user!.email,
+      });
+      // Refresh token: created on first real successful login (bind to device)
+      // --> Avoid generating useless tokens for unverified users
+      refresh = await this.mintRefreshToken({
+        userId: user!.id,
+        provider: 'local',
+        deviceId,
+      });
+    }
+
+    // 5) Timing floor + jitter
+    const elapsed = Date.now() - start;
+    const wait = TIMING_FLOOR_MS + JITTER_MS - elapsed;
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+
+    if (!canLogin) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // 7) Success: return tokens & minimal user info
+    return {
+      accessToken: access!.token,
+      accessTtlSec: access!.ttlSec,
+      refreshToken: refresh!.plain,
+      refreshTtlSec: refresh!.ttlSec,
+      deviceId: refresh!.deviceId,
+      user: { id: user!.id, email: user!.email, userName: user!.userName },
+    };
+  }
+
+  //--------------Providers Login---------------------------------------
+  /**
+   * Use this for Google/Microsoft/LinkedIn callbacks:
+   * - find or create user by email
+   * - mark email verified
+   * - issue tokens the same way
+   */
+  async providerLogin(params: {
+    userInfo: any;
+    provider: 'google' | 'microsoft' | 'linkedin';
+  }) {
+    // Ensure user exists (create minimal account if necessary)
+    const email = params.userInfo.email;
+    let user = await this.userService.findUserByEmail(email);
+    if (!user) {
+      // Create a minimal user with a random username (your UsersService likely has a method)
+      user = await this.userService.createUser(email, null);
+    }
+
+    // Treat OAuth emails as verified
+    if (!user.isEmailVerified) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { isEmailVerified: true },
+      });
+      user.isEmailVerified = true;
+    }
+
+    const access = await this.issueAccessToken({
+      id: user.id,
+      email: user.email,
+    });
+    const refresh = await this.mintRefreshToken({
+      userId: user.id,
+      provider: params.provider,
+    });
+
+    return {
+      accessToken: access.token,
+      accessTtlSec: access.ttlSec,
+      refreshToken: refresh.plain,
+      refreshTtlSec: refresh.ttlSec,
+      deviceId: refresh.deviceId,
+      user: { id: user.id, email: user.email, userName: user.userName },
+    };
+  }
 
   // ---------------------------------------------------------------
   //Token Management Services
   // ---------------------------------------------------------------
+
+  /**
+   * Create a short-lived JWT access token.
+   * @param user - The user object containing at least `id` and `email`.
+   * @returns An object containing the access token and its TTL in seconds.
+   */
+  async issueAccessToken(user: { id: number; email: string }) {
+    const payload = { sub: user.id, email: user.email };
+    const token = await this.jwtService.signAsync(payload);
+    return { token, ttlSec: ACCESS_TTL_SEC };
+  }
+
+  /**
+   * Create & persist a refresh token bound to a device.
+   * Returns the plain token (for cookie) and deviceId.
+   * @param params - Parameters for minting the refresh token.
+   * @returns An object containing the plain refresh token, its TTL in seconds,
+   * and the device ID.
+   */
+  async mintRefreshToken(params: {
+    userId: number;
+    provider: 'local' | 'google' | 'microsoft' | 'linkedin';
+    deviceId?: string;
+  }) {
+    const deviceId = params.deviceId ?? crypto.randomUUID();
+
+    // generate a random token, store only its hash
+    const { plain, hash, expiresAt } = this.tokensService.pair(
+      REFRESH_TTL_SEC * 1000,
+    );
+
+    await this.prisma.refreshToken.create({
+      data: {
+        tokenHash: hash,
+        deviceId,
+        oauthProvider: params.provider,
+        expiresAt,
+        userId: params.userId,
+      },
+    });
+
+    return {
+      plain, // send to client
+      ttlSec: REFRESH_TTL_SEC,
+      deviceId, // for cookie
+    };
+  }
 
   // ---------------------------------------------------------------
   //Logout Services

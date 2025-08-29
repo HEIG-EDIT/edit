@@ -1,11 +1,11 @@
 meta {
   name: get_user_info
   type: http
-  seq: 2
+  seq: 1
 }
 
 get {
-  url: http://localhost:4000/user/username/alice
+  url: {{baseUrl}}:{{portBack}}/user/username/alice
   body: none
   auth: inherit
 }

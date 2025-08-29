@@ -5,12 +5,9 @@ import {
   Post,
   Req,
   Res,
-  Query,
   UseGuards,
-  UsePipes,
   HttpCode,
   Headers,
-  ValidationPipe,
   HttpStatus,
   BadRequestException,
 } from '@nestjs/common';
@@ -26,6 +23,7 @@ import { UsersService } from '../users/users.service';
 import { ConfigService } from '@nestjs/config';
 
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import * as authHelp from '../common/helpers/auth.helpers';
 
 @Controller('auth')
 export class AuthController {
@@ -53,6 +51,29 @@ export class AuthController {
   }
 
   //-------------------LOCAL LOGIN---------------------------------------
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async login(
+    @Body() body: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.loginLocal(body);
+
+    // Set cookies (httpOnly for tokens; device_id readable by FE)
+    authHelp.setAuthCookies(res, {
+      accessToken: result.accessToken,
+      accessTtlSec: result.accessTtlSec,
+      refreshToken: result.refreshToken,
+      refreshTtlSec: result.refreshTtlSec,
+      deviceId: result.deviceId,
+    });
+
+    // Return minimal public profile
+    return {
+      user: result.user,
+      message: 'Login successful',
+    };
+  }
 
   //-------------------GOOGLE OAUTH2 LOGIN-------------------------------
   /**
@@ -77,7 +98,23 @@ export class AuthController {
   async googleAuthCallback(
     @Req() req: Request & { user: any },
     @Res() res: Response,
-  ) {}
+  ) {
+    const result = await this.authService.providerLogin({
+      userInfo: req.user,
+      provider: 'google',
+    });
+
+    authHelp.setAuthCookies(res, {
+      accessToken: result.accessToken,
+      accessTtlSec: result.accessTtlSec,
+      refreshToken: result.refreshToken,
+      refreshTtlSec: result.refreshTtlSec,
+      deviceId: result.deviceId,
+    });
+
+    // Redirect home (or projects) on your FE
+    return res.redirect(this.frontendUrl ?? '/');
+  }
 
   //-------------------LinkedIn OAUTH2 LOGIN-------------------------------
   //TODO

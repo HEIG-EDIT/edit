@@ -12,6 +12,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
 import { UsersService } from '../users/users.service';
 
+import { TokensModule } from './tokens/tokens.module';
+import { TokensService } from './tokens/tokens.service';
+
 import { JwtService } from '@nestjs/jwt';
 
 import config from '../config/auth.config';
@@ -20,16 +23,23 @@ import config from '../config/auth.config';
   imports: [
     PrismaModule,
     PassportModule,
+    TokensModule,
     forwardRef(() => UsersModule),
     JwtModule.registerAsync({
-      useFactory: () => ({
-        privateKey: config().auth.privateKey,
-        publicKey: config().auth.publicKey,
-        signOptions: {
-          algorithm: config().auth.algorithm,
-          expiresIn: config().auth.accessTokenExpiry,
-        },
-      }),
+      useFactory: () => {
+        const cfg = config().auth;
+        return {
+          privateKey: cfg.privateKey, // UPDATED
+          publicKey: cfg.publicKey, // UPDATED
+          signOptions: {
+            algorithm: cfg.algorithm, // RS256
+            expiresIn: cfg.accessTokenExpiry,
+          },
+          verifyOptions: {
+            algorithms: [cfg.algorithm], // ensure verifier uses RS256
+          },
+        };
+      },
     }),
   ],
   controllers: [AuthController],
@@ -37,9 +47,9 @@ import config from '../config/auth.config';
     AuthService,
     JwtStrategy,
     UsersService,
-    JwtService,
     GoogleStrategy,
+    TokensService,
   ],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

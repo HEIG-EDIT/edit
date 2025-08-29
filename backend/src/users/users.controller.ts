@@ -58,7 +58,6 @@ export class UsersController {
    * @throws 404 if user profile is not found.
    * @throws 200 with user profile information if successful.
    */
-  //TODO: cache this endpoint
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getProfile(
@@ -67,7 +66,7 @@ export class UsersController {
       user?: { userId?: number; id?: number; auth_id?: number };
     },
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ userName: string; email: string; twoFaMethod: string | null }> {
+  ): Promise<{ id: number; userName: string; email: string }> {
     setNoStore(res); /// Ensure no caching for this endpoint
 
     const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
@@ -131,7 +130,6 @@ export class UsersController {
    * @throws 204 if the username is unchanged (idempotent no-op).
    * @throws 200 with updated username if successful.
    */
-  //TODO: cache this endpoint
   @UseGuards(JwtAuthGuard)
   @UsePipes(
     new ValidationPipe({

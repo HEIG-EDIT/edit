@@ -1,11 +1,11 @@
 meta {
-  name: Register
+  name: Auth_Email_Login
   type: http
-  seq: 4
+  seq: 2
 }
 
 post {
-  url: http://localhost:4000/auth/register
+  url: {{baseUrl}}:{{portBack}}/auth/login
   body: json
   auth: inherit
 }
@@ -16,7 +16,7 @@ headers {
 
 body:json {
   {
-    "email": "alice@example.com",
+    "email": "Hanna@example.com",
     "password": "S3cure!Passw0rd"
   }
 }

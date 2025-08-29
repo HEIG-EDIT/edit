@@ -38,7 +38,7 @@ export class UsersService {
    * @throws ConflictException if the email already exists or if no unique username could be generated.
    * @returns The newly created user object (id, email, userName, createdAt, isEmailVerified).
    */
-  async createUser(inputEmail: string, passwordHash: string) {
+  async createUser(inputEmail: string, passwordHash: string | null) {
     for (let i = 0; i < 10; i++) {
       const gen_username = this.generateRandomUsername();
 
@@ -46,13 +46,14 @@ export class UsersService {
         return await this.prisma.user.create({
           data: {
             email: inputEmail,
-            passwordHash,
+            passwordHash: passwordHash || null,
             userName: gen_username,
-            isEmailVerified: false,
+            isEmailVerified: true,
           },
           select: {
             id: true,
             email: true,
+            passwordHash: true,
             userName: true,
             createdAt: true,
             isEmailVerified: true,
@@ -165,25 +166,24 @@ export class UsersService {
    * @returns Object with userName, email, and twoFaMethod.
    */
   async getUserProfile(userId: number): Promise<{
+    id: number;
     userName: string;
     email: string;
-    twoFaMethod: string | null;
   } | null> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         userName: true,
         email: true,
-        twoFaMethod: true,
       },
     });
 
     if (!user) return null;
 
     return {
+      id: userId,
       userName: user.userName,
       email: user.email,
-      twoFaMethod: user.twoFaMethod,
     };
   }
 
