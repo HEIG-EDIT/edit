@@ -118,12 +118,16 @@ With Mau, you can deploy your application in just a few clicks, allowing you to 
 
 ## How to run backend locally
 
-Copy the .env file inside the ./backend folder.
+Copy the .env file for local execution (call it simply `.env`) inside the`./backend` folder.
+From the teminal where you will run the following commands, go into the `./backend` folder. 
+
 Run:
 ```bash
 docker compose up
 ```
 This will create, with docker, a local instance of the postgres database and of the S3 service using Localstack. The S3-compatible endpoint will be available at: `http://localhost:4566`. Running this command will also seed Localstack.
+
+If this command doesn't work, it is very likely because the `./backend/localstack-init/init-s3.sh` file is using the wrong end of file. In visual studio code, you can change it from CRLF to LF within the user interface, down on the right.
 
 ### 1. Check creation of a test bucket
 
@@ -169,7 +173,6 @@ npx prisma studio
 
 Run the backend to be able to reach the APIs at `http://localhost:4000/projects`:
 ```bash
-cp .env.local .env
 npm run start:dev
 ```
 
