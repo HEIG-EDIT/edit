@@ -26,6 +26,7 @@ import {
   CanvasState,
   EventHandlers,
 } from "@/components/editor/editorContext";
+import { Vector2d } from "konva/lib/types";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
@@ -70,7 +71,7 @@ export default function EditorPage() {
   const toolEventHandlers = useRef<EventHandlers>({});
 
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const [canvasSize, setCanvasSize] = useState<Vector2d>({ x: 0, y: 0 });
 
   useEffect(() => {
     const container = canvasContainerRef.current;
@@ -79,7 +80,7 @@ export default function EditorPage() {
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        setCanvasSize({ width, height });
+        setCanvasSize({ x: width, y: height });
       }
     });
 
@@ -206,7 +207,7 @@ export default function EditorPage() {
                 layers={layers}
                 updateLayer={updateLayer}
                 setLayers={setLayers}
-                canvasSize={{ x: canvasSize.width, y: canvasSize.height }}
+                canvasSize={canvasSize}
               />
             </div>
           </div>
@@ -219,8 +220,8 @@ export default function EditorPage() {
                   commitVirtualLayers={commitVirtualLayers}
                   updateLayer={updateLayer}
                   nameSelectedTool={nameSelectedTool}
-                  height={canvasSize.height}
-                  width={canvasSize.width}
+                  width={canvasSize.x}
+                  height={canvasSize.y}
                 />
               </div>
               <div className="flex justify-center">
