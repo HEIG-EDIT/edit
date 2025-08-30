@@ -32,7 +32,6 @@ type CanvasProps = {
     callback: LayerUpdateCallback,
     virtual?: boolean,
   ) => void;
-  setVirtualLayers: (layer: Layer[] | ((layer: Layer[]) => Layer[])) => void;
   commitVirtualLayers: () => void;
   nameSelectedTool: string;
   height: number;

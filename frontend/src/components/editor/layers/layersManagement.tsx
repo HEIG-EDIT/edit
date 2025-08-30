@@ -12,15 +12,18 @@ import { Layer, LayerUpdateCallback } from "@/models/editor/layers/layer";
 import { LayerReordering } from "./layerReordering";
 import KeyboardReturnRoundedIcon from "@mui/icons-material/KeyboardReturnRounded";
 
+import { useEditorContext } from "@/components/editor/editorContext";
+
 export const LayersManagement = ({
   layers,
   updateLayer,
-  setLayers,
   canvasSize,
 }: LayersManagementProps) => {
   const [isNewLayerDisplayed, setIsNewLayerDisplayed] =
     useState<boolean>(false);
 
+  const { addLayer, duplicateSelectedLayers, deleteSelectedLayers } =
+    useEditorContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUploadClick = () => {
@@ -36,35 +39,10 @@ export const LayersManagement = ({
       const img = new window.Image();
       img.src = reader.result as string;
       img.onload = () => {
-        setLayers((prev) => [...prev, new Layer(file.name, img)]);
+        addLayer(new Layer(file.name, img));
       };
     };
     reader.readAsDataURL(file);
-  };
-
-  const handleLayerDuplication = () => {
-    setLayers((prev) => {
-      const result = [];
-      for (const layer of prev) {
-        result.push(layer);
-        if (layer.isSelected) {
-          result.push(Layer.duplicate(layer));
-        }
-      }
-      return result;
-    });
-  };
-
-  const handleLayerDeletion = () => {
-    setLayers((prev) => {
-      const result = [];
-      for (const layer of prev) {
-        if (!layer.isSelected) {
-          result.push(layer);
-        }
-      }
-      return result;
-    });
   };
 
   const displayLayers = (
@@ -75,22 +53,20 @@ export const LayersManagement = ({
       />
       <ConfigurationButton
         icon={ContentCopyRoundedIcon}
-        onClick={handleLayerDuplication}
+        onClick={duplicateSelectedLayers}
       />
       <ConfigurationButton
         icon={DeleteForeverRoundedIcon}
-        onClick={handleLayerDeletion}
+        onClick={deleteSelectedLayers}
       />
     </div>
   );
 
   const handleNewEmptyLayer = () => {
-    const newLayer = new Layer(null, null, canvasSize.x, canvasSize.y);
-
-    setLayers((prev) => [...prev, newLayer]);
+    addLayer(new Layer(null, null, canvasSize.x, canvasSize.y));
   };
 
-  const addLayer = (
+  const addLayerUI = (
     <div className="flex flex-row p-2 items-center justify-between">
       <ConfigurationButton
         icon={CollectionsRoundedIcon}
@@ -125,7 +101,7 @@ export const LayersManagement = ({
       </div>
       <div className="p-4">
         <div className="bg-gray-600 rounded-2xl">
-          {isNewLayerDisplayed ? addLayer : displayLayers}
+          {isNewLayerDisplayed ? addLayerUI : displayLayers}
           <div className="flex flex-row p-2 gap-4 items-center">
             <div
               className="flex flex-col gap-2 w-5/6 max-h-64 overflow-y-auto
@@ -157,9 +133,7 @@ export const LayersManagement = ({
                 ))}
             </div>
             <div className="flex flex-col w-1/6 justify-center">
-              {layers.length > 1 && (
-                <LayerReordering layers={layers} setLayers={setLayers} />
-              )}
+              {layers.length > 1 && <LayerReordering />}
             </div>
           </div>
         </div>
