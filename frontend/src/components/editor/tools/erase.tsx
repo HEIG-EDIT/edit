@@ -24,7 +24,6 @@ export const EraseToolConfigurationComponent = ({
           setConfiguration({ ...configuration, radius: newRadius })
         }
       />
-      <span className="text-violet-50"> {configuration.radius}</span>
     </div>
   );
 };

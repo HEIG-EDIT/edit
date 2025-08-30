@@ -2,22 +2,23 @@ import { OutsideCard } from "@/components/outsideCard";
 import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
-import { SubToolConfiguration } from "@/models/editor/tools/subToolConfiguration";
-import { SubToolConfigurationProps } from "@/models/editor/tools/subToolConfigurationProps";
-import { SubTool } from "@/models/editor/tools/subTool";
+import { FilterConfiguration } from "@/models/editor/tools/filterConfiguration";
+import { FilterConfigurationProps } from "@/models/editor/tools/filterConfigurationProps";
+import { Filter } from "@/models/editor/tools/subTool";
 import ContrastRoundedIcon from "@mui/icons-material/ContrastRounded";
 import { Layer } from "@/models/editor/layers/layer";
 
 import Konva from "konva";
 import { useEditorContext } from "../editorContext";
+import { RangeInput } from "./rangeInput";
 
-export type BlackWhiteConfiguration = SubToolConfiguration;
+export type BlackWhiteConfiguration = FilterConfiguration;
 
-export interface GaussianBlurConfiguration extends SubToolConfiguration {
+export interface GaussianBlurConfiguration extends FilterConfiguration {
   blurAmount: number;
 }
 
-export interface ColorAndToneConfiguration extends SubToolConfiguration {
+export interface ColorAndToneConfiguration extends FilterConfiguration {
   saturation: number;
   brightness: number;
   contrast: number;
@@ -25,29 +26,26 @@ export interface ColorAndToneConfiguration extends SubToolConfiguration {
   opacity: number;
 }
 
-export type InvertConfiguration = SubToolConfiguration;
+export type InvertConfiguration = FilterConfiguration;
 
-export interface PixelateConfiguration extends SubToolConfiguration {
+export interface PixelateConfiguration extends FilterConfiguration {
   amount: number;
 }
 
-export interface FlipConfiguration extends SubToolConfiguration {
+export interface FlipConfiguration extends FilterConfiguration {
   horizontal_flip: boolean;
   vertical_flip: boolean;
 }
 
-export type ThresholdConfiguration = SubToolConfiguration;
+export type ThresholdConfiguration = FilterConfiguration;
 
-export type SharpenConfiguration = SubToolConfiguration;
+export type SharpenConfiguration = FilterConfiguration;
 
-export const BlackWhiteConfigurationSubcomponent = ({
-  configuration,
-  setConfiguration,
-}: SubToolConfigurationProps<BlackWhiteConfiguration>) => {
+export const BlackWhiteConfigurationSubcomponent = () => {
   return <div>Black/white</div>;
 };
 
-export const BlackWhite: SubTool<BlackWhiteConfiguration> = {
+export const BlackWhite: Filter<BlackWhiteConfiguration> = {
   name: "Black/white",
   initialConfiguration: {
     applyTool: (layer: Layer) => {
@@ -64,35 +62,30 @@ export const BlackWhite: SubTool<BlackWhiteConfiguration> = {
 export const GaussianBlurConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
-}: SubToolConfigurationProps<GaussianBlurConfiguration>) => {
+}: FilterConfigurationProps<GaussianBlurConfiguration>) => {
   return (
     <div>
-      <p className="text-violet-50">
-        Blur amount :<br></br>
-      </p>
-      <input
-        type="range"
-        min="1"
-        max="100"
+      <RangeInput
+        property="Blur amount"
         value={configuration.blurAmount}
-        onChange={(e) => {
+        onChange={(value) => {
           setConfiguration({
             ...configuration,
-            blurAmount: Number(e.target.value),
+            blurAmount: Number(value),
           });
         }}
       />
-      <span className="text-violet-50"> {configuration.blurAmount}</span>
     </div>
   );
 };
 
-export const GaussianBlur: SubTool<GaussianBlurConfiguration> = {
+export const GaussianBlur: Filter<GaussianBlurConfiguration> = {
   name: "Gaussian blur",
   initialConfiguration: {
     blurAmount: 10,
-    applyTool: (layer: Layer) => {
-      layer.groupRef.current?.blurRadius(this.initialConfiguration.blurAmount);
+    applyTool: (layer: Layer, config) => {
+      const blurConfig = config as GaussianBlurConfiguration;
+      layer.groupRef.current?.blurRadius(blurConfig.blurAmount);
       return {
         ...layer,
         filters: [...layer.filters, Konva.Filters.Blur],
@@ -105,15 +98,40 @@ export const GaussianBlur: SubTool<GaussianBlurConfiguration> = {
 export const ColorAndToneConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
-}: SubToolConfigurationProps<ColorAndToneConfiguration>) => {
-  // TODO : to remove, just for eslink check
+}: FilterConfigurationProps<ColorAndToneConfiguration>) => {
   console.log(configuration);
   console.log(setConfiguration);
 
-  return <div>ColorAndTone</div>;
+  return (
+    <div>
+      <RangeInput
+        property="Saturation"
+        value={1}
+        step={0.01}
+        onChange={(value) => {
+          setConfiguration({ ...configuration, saturation: value });
+        }}
+      />
+      <RangeInput
+        property="Brightness"
+        value={1}
+        step={0.01}
+        onChange={(value) => {
+          setConfiguration({ ...configuration, brightness: value })
+        }}
+      />
+      <RangeInput
+        property="Contrast"
+        value={1}
+        onChange={(value) => {
+          setConfiguration({ ...configuration, contrast: value })
+        }}
+      />
+    </div>
+  )
 };
 
-export const ColorAndTone: SubTool<ColorAndToneConfiguration> = {
+export const ColorAndTone: Filter<ColorAndToneConfiguration> = {
   name: "Color & tone",
   initialConfiguration: {
     saturation: 1,
@@ -121,6 +139,13 @@ export const ColorAndTone: SubTool<ColorAndToneConfiguration> = {
     contrast: 3,
     hue: 4,
     opacity: 5,
+    applyTool(layer, config) {
+      const colorToneConfig = config as ColorAndToneConfiguration;
+      return {
+        ...layer,
+        filters: []
+      }
+    }
   },
   configurationComponent: ColorAndToneConfigurationSubcomponent,
 };
@@ -128,7 +153,7 @@ export const ColorAndTone: SubTool<ColorAndToneConfiguration> = {
 export const InvertConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
-}: SubToolConfigurationProps<InvertConfiguration>) => {
+}: FilterConfigurationProps<InvertConfiguration>) => {
   // TODO : to remove, just for eslink check
   console.log(configuration);
   console.log(setConfiguration);
@@ -136,7 +161,7 @@ export const InvertConfigurationSubcomponent = ({
   return <div>Invert</div>;
 };
 
-export const Invert: SubTool<InvertConfiguration> = {
+export const Invert: Filter<InvertConfiguration> = {
   name: "Invert",
   initialConfiguration: {},
   configurationComponent: InvertConfigurationSubcomponent,
@@ -145,18 +170,20 @@ export const Invert: SubTool<InvertConfiguration> = {
 export const PixelateConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
-}: SubToolConfigurationProps<PixelateConfiguration>) => {
-  // TODO : to remove, just for eslink check
-  console.log(configuration);
-  console.log(setConfiguration);
-
+}: FilterConfigurationProps<PixelateConfiguration>) => {
   return <div>Pixelate</div>;
 };
 
-export const Pixelate: SubTool<PixelateConfiguration> = {
+export const Pixelate: Filter<PixelateConfiguration> = {
   name: "Pixelate",
   initialConfiguration: {
     amount: 5,
+    applyTool: (layer, config) => {
+      const pixConfig = config as PixelateConfiguration;
+      return {
+
+      }
+    }
   },
   configurationComponent: PixelateConfigurationSubcomponent,
 };
@@ -164,7 +191,7 @@ export const Pixelate: SubTool<PixelateConfiguration> = {
 export const FlipConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
-}: SubToolConfigurationProps<FlipConfiguration>) => {
+}: FilterConfigurationProps<FlipConfiguration>) => {
   return (
     <div>
       <label>
@@ -197,7 +224,7 @@ export const FlipConfigurationSubcomponent = ({
   );
 };
 
-export const Flip: SubTool<FlipConfiguration> = {
+export const Flip: Filter<FlipConfiguration> = {
   name: "Flip (mirror)",
   initialConfiguration: {
     horizontal_flip: false,
@@ -209,7 +236,7 @@ export const Flip: SubTool<FlipConfiguration> = {
 export const ThresholdConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
-}: SubToolConfigurationProps<ThresholdConfiguration>) => {
+}: FilterConfigurationProps<ThresholdConfiguration>) => {
   // TODO : to remove, just for eslink check
   console.log(configuration);
   console.log(setConfiguration);
@@ -217,7 +244,7 @@ export const ThresholdConfigurationSubcomponent = ({
   return <div>Threshold</div>;
 };
 
-export const Threshold: SubTool<ThresholdConfiguration> = {
+export const Threshold: Filter<ThresholdConfiguration> = {
   name: "Threshold",
   initialConfiguration: {},
   configurationComponent: ThresholdConfigurationSubcomponent,
@@ -226,7 +253,7 @@ export const Threshold: SubTool<ThresholdConfiguration> = {
 export const SharpenConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
-}: SubToolConfigurationProps<SharpenConfiguration>) => {
+}: FilterConfigurationProps<SharpenConfiguration>) => {
   // TODO : to remove, just for eslink check
   console.log(configuration);
   console.log(setConfiguration);
@@ -234,14 +261,14 @@ export const SharpenConfigurationSubcomponent = ({
   return <div>Sharpen</div>;
 };
 
-export const Sharpen: SubTool<SharpenConfiguration> = {
+export const Sharpen: Filter<SharpenConfiguration> = {
   name: "Sharpen",
   initialConfiguration: {},
   configurationComponent: SharpenConfigurationSubcomponent,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const ADJUST_SUB_TOOLS: Record<string, SubTool<any>> = {
+export const ADJUST_SUB_TOOLS: Record<string, Filter<any>> = {
   [BlackWhite.name]: BlackWhite,
   [GaussianBlur.name]: GaussianBlur,
   [ColorAndTone.name]: ColorAndTone,
@@ -252,7 +279,7 @@ export const ADJUST_SUB_TOOLS: Record<string, SubTool<any>> = {
   [Sharpen.name]: Sharpen,
 };
 
-const ADJUST_INITIAL_CONFIGURATION: Record<string, SubToolConfiguration> = {};
+const ADJUST_INITIAL_CONFIGURATION: Record<string, FilterConfiguration> = {};
 
 for (const subTool of Object.values(ADJUST_SUB_TOOLS)) {
   ADJUST_INITIAL_CONFIGURATION[subTool.name] = subTool.initialConfiguration;
@@ -260,7 +287,7 @@ for (const subTool of Object.values(ADJUST_SUB_TOOLS)) {
 
 export interface AdjustToolConfiguration extends ToolConfiguration {
   filterType: string;
-  subConfigurations: Record<string, SubToolConfiguration>;
+  subConfigurations: Record<string, FilterConfiguration>;
 }
 
 // TODO : changement de tool amene a une sauvegarde de l'etat du projet (plus dans virtual)
@@ -272,11 +299,12 @@ export const AdjustToolConfigurationComponent = ({
 
   const AdjustToolConfigurationSubcomponent =
     ADJUST_SUB_TOOLS[configuration.filterType].configurationComponent;
+  const subConfig = configuration.subConfigurations[configuration.filterType];
 
   const handleApply = () => {
     editSelectedLayers((layer) => {
       layer.groupRef.current?.cache()
-      return configuration.subConfigurations[configuration.filterType].applyTool(layer);
+      return subConfig.applyTool(layer, subConfig);
     })
   }
 
@@ -301,7 +329,7 @@ export const AdjustToolConfigurationComponent = ({
           configuration={
             configuration.subConfigurations[configuration.filterType]
           }
-          setConfiguration={(config: SubToolConfiguration) => {
+          setConfiguration={(config: FilterConfiguration) => {
             setConfiguration({
               ...configuration,
               subConfigurations: {

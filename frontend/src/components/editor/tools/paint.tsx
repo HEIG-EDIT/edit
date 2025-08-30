@@ -29,7 +29,6 @@ export const PaintToolConfigurationComponent = ({
           setConfiguration({ ...configuration, radius: newRadius })
         }
       />
-      <span className="text-violet-50"> {configuration.radius}</span>
       <p className="text-violet-50">
         Color :<br></br>
       </p>
