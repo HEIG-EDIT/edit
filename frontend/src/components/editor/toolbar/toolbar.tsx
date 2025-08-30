@@ -51,19 +51,16 @@ export const Toolbar = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const saveProject = async () => {
-    // TODO : finir de gerer ca (+ supprimer console.log())
     const project = new Project(layers, canvasSize);
     const JSONProject = project.toJSON();
     const base64Thumbnail = handleThumbnail(layerRef).replace(
       "data:image/png;base64,",
       "",
     );
-    //console.log(JSON.stringify(JSONProject));
-    //console.log(base64Thumbnail);
     try {
       await api.patch("/api/projects/save", {
         projectId: Number(params.projectId),
-        jsonProject: JSON.stringify(JSONProject),
+        jsonProject: JSONProject,
         thumbnailBase64: base64Thumbnail,
       });
       setHasError(false);

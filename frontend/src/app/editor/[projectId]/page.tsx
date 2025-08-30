@@ -30,7 +30,7 @@ import {
 } from "@/components/editor/editorContext";
 import { Vector2d } from "konva/lib/types";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Project } from "@/models/editor/project";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
@@ -65,16 +65,21 @@ export default function EditorPage() {
     canRedo,
   } = useUndoRedo(Array<Layer>());
 
-  api
-    .get(`api/projects/${projectId}/json`)
-    .then((res) => {
-      Project.fromJSON(res.data as string).then((project: Project) => {
+  const router = useRouter();
+
+  useEffect(() => {
+    const loadProject = async () => {
+      try {
+        const res = await api.get(`/api/projects/${projectId}/json`);
+        const project = await Project.fromJSON(res.data.JSONProject);
         setLayers(project.layers);
-      });
-    })
-    .catch(() => {
-      console.log("No JSON project found, starting with empty canvas");
-    });
+      } catch {
+        // TODO : gerer authentification
+        router.push("/projects");
+      }
+    };
+    loadProject();
+  }, []);
 
   const [nameSelectedTool, setNameSelectedTool] = useState<string>(
     MOVE_TOOL.name,
