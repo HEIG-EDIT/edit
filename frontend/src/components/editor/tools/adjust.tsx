@@ -42,7 +42,7 @@ export interface ThresholdConfiguration extends FilterConfiguration {
 }
 
 export const BlackWhiteConfigurationSubcomponent = () => {
-  return <div>Black/white</div>;
+  return <div></div>;
 };
 
 export const BlackWhite: Filter<BlackWhiteConfiguration> = {
@@ -416,7 +416,12 @@ export const AdjustToolConfigurationComponent = ({
             });
           }}
         />
-        <button onClick={handleApply}>Apply</button>
+        <button
+          className="bg-violet-500 p-2 rounded-xl text-violet-50 border-2 border-violet-50"
+          onClick={handleApply}
+        >
+          Apply
+        </button>
       </OutsideCard>
     </div>
   );
