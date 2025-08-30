@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException} from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { SaveProjectDto } from './dto/save-project.dto';
@@ -12,23 +16,26 @@ export class ProjectService {
     private readonly s3Service: S3Service,
   ) {}
 
-  async create(createProjectDto: CreateProjectDto) {
+  /**
+   * Create a new project.
+   * @param createProjectDto
+   * @return The created project.
+   */
+  async create(userId: number, createProjectDto: CreateProjectDto) {
     // Check if user exists
     const user = await this.prisma.user.findUnique({
-      where: { id: createProjectDto.creatorId },
+      where: { id: userId },
     });
 
     if (!user) {
-      throw new NotFoundException(
-        `User with id ${createProjectDto.creatorId} does not exist`,
-      );
+      throw new NotFoundException(`User with id ${userId} does not exist`); // UPDATED
     }
 
     // Create the project
     const project = await this.prisma.project.create({
       data: {
         name: createProjectDto.name,
-        creatorId: createProjectDto.creatorId,
+        creatorId: userId,
       },
       select: {
         id: true, // return id
@@ -37,63 +44,106 @@ export class ProjectService {
 
     // Ensure role owner exists or create it
     const ownerRole = await this.prisma.role.upsert({
-      where: { name: "owner" },
+      where: { name: 'owner' },
       update: {},
-      create: { name: "owner" },
+      create: { name: 'owner' },
     });
 
     // Create the collaboration for project creator = owner
-    this.prisma.collaboration.create({
-        data: {
-        userId: createProjectDto.creatorId,
+    await this.prisma.collaboration.create({
+      data: {
+        userId: userId,
         projectId: project.id,
         roles: {
-            connect: { id: ownerRole.id },
+          connect: { id: ownerRole.id },
         },
-        },
-        include: { user: true, roles: true },
+      },
+      include: { user: true, roles: true },
     });
 
     return project;
   }
 
+  /**
+   * Rename a project.
+   * @param id
+   * @param name
+   */
   async renameProject(id: number, name: string): Promise<void> {
     // Check if project exists
     const project = await this.prisma.project.findUnique({ where: { id } });
 
     if (!project) {
-        throw new NotFoundException(`Project with id ${id} does not exist`);
+      throw new NotFoundException(`Project with id ${id} does not exist`);
     }
 
     await this.prisma.project.update({
-        where: { id },
-        data: { name },
+      where: { id },
+      data: { name },
     });
+
+    return;
   }
 
+  /**
+   * Save project data (JSON and thumbnail) to S3 and update last saved date in DB.
+   * @param dto
+   */
   async saveProject(dto: SaveProjectDto): Promise<void> {
-    const project = await this.prisma.project.findUnique({ where: { id: dto.projectId } });
-    if (!project) throw new NotFoundException(`Project ${dto.projectId} not found`);
+    const { projectId, jsonProject } = dto;
+    const project = await this.prisma.project.findUnique({
+      where: { id: dto.projectId },
+    });
+    if (!project)
+      throw new NotFoundException(`Project ${dto.projectId} not found`);
 
-    await this.s3Service.uploadJson(dto.projectId, dto.jsonProject);
-    await this.s3Service.uploadThumbnail(dto.projectId, dto.thumbnailBase64);
+    //TODO: Diana Check
+    // validate JSON string is actually JSON --> optional but good to have
+    try {
+      JSON.parse(jsonProject);
+    } catch {
+      throw new BadRequestException('jsonProject must be valid JSON');
+    }
+
+    //TODO: Diana Check
+    // run uploads in parallel so we don’t partially write on failure and it’s faster
+    await Promise.all([
+      this.s3Service.uploadJson(projectId, jsonProject),
+      this.s3Service.uploadThumbnail(dto.projectId, dto.thumbnailBase64),
+    ]);
+
+    //TODO: Diana Check
+    // This one is not used, I don't know if we will need it in the future
+    //const url = `s3://${process.env.AWS_S3_BUCKET}/${dto.projectId}/`;
 
     // Update DB with last saved date
-    const url = `s3://${process.env.AWS_S3_BUCKET}/${dto.projectId}/`;
     await this.prisma.project.update({
       where: { id: dto.projectId },
       data: { lastSavedAt: new Date() },
     });
   }
 
-  async getJSONProject(projectId: number): Promise<{ JSONProject: string }> {
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+  /**
+   * Get project JSON data from S3.
+   * @param projectId
+   * @return The project JSON data or null if not found.
+   */
+  async getJSONProject(
+    projectId: number,
+  ): Promise<{ JSONProject: string | null }> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
 
     const json = await this.s3Service.getJson(projectId);
     return { JSONProject: json };
   }
 
+  /**
+   * Delete a project and its files from S3.
+   * @param id
+   */
   async deleteProject(id: number): Promise<void> {
     const project = await this.prisma.project.findUnique({ where: { id: id } });
     if (!project) throw new NotFoundException(`Project ${id} not found`);
@@ -102,7 +152,14 @@ export class ProjectService {
     await this.prisma.project.delete({ where: { id: id } });
   }
 
-  async listAccessibleProjects(userId: number): Promise<AccessibleProjectDto[]> {
+  /**
+   * List all projects accessible by a user (as collaborator).
+   * @param userId
+   * @return List of accessible projects with roles.
+   */
+  async listAccessibleProjects(
+    userId: number,
+  ): Promise<AccessibleProjectDto[]> {
     // Get projects where user is collaborator
     const collaborations = await this.prisma.collaboration.findMany({
       where: { userId },
@@ -124,13 +181,18 @@ export class ProjectService {
         createdAt: collab.project.createdAt,
         lastSavedAt: collab.project.lastSavedAt,
         thumbnail,
-        roles: collab.roles.map(r => r.name),
+        roles: collab.roles.map((r) => r.name),
       });
     }
 
     return results;
   }
 
+  /**
+   * List all projects owned by a user (as owner).
+   * @param userId
+   * @return List of owned projects with roles.
+   */
   async listOwnedProjects(userId: number): Promise<AccessibleProjectDto[]> {
     // Get projects where user is collaborator
     const collaborations = await this.prisma.collaboration.findMany({
@@ -138,7 +200,7 @@ export class ProjectService {
         userId,
         roles: {
           some: {
-            name: "owner",
+            name: 'owner',
           },
         },
       },
@@ -160,7 +222,7 @@ export class ProjectService {
         createdAt: collab.project.createdAt,
         lastSavedAt: collab.project.lastSavedAt,
         thumbnail,
-        roles: collab.roles.map(r => r.name),
+        roles: collab.roles.map((r) => r.name),
       });
     }
 

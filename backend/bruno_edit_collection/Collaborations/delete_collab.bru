@@ -1,0 +1,23 @@
+meta {
+  name: delete_collab
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}:{{portBack}}/collaborations/:collaborationId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  collaborationId: 1
+}
+
+body:json {
+  {
+    "userEmail" : "KuroHanna@gmail.com",
+    "projectId" : 11,
+    "roles" : ["creator"]
+  }
+}

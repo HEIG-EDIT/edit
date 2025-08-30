@@ -1,0 +1,23 @@
+meta {
+  name: add_project_collab
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}:{{portBack}}/collaborations
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "userEmail" : "KuroHanna@gmail.com",
+    "projectId" : 11,
+    "roles" : ["creator"]
+  }
+}

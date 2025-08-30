@@ -246,9 +246,14 @@ export class UsersController {
       return noContent(res); // 204
     }
 
-    // 202 Accepted: process started, email sent to new address
-    res.status(202);
-    return { message: 'If the address is valid, we sent a confirmation link.' };
+    // 200 OK
+    return ok(
+      res,
+      {
+        message: 'Address changed successfully.',
+      },
+      { noStore: true },
+    );
   }
 
   /**
