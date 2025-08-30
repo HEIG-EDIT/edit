@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException} from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { SaveProjectDto } from './dto/save-project.dto';
@@ -37,21 +41,21 @@ export class ProjectService {
 
     // Ensure role owner exists or create it
     const ownerRole = await this.prisma.role.upsert({
-      where: { name: "owner" },
+      where: { name: 'owner' },
       update: {},
-      create: { name: "owner" },
+      create: { name: 'owner' },
     });
 
     // Create the collaboration for project creator = owner
     this.prisma.collaboration.create({
-        data: {
+      data: {
         userId: createProjectDto.creatorId,
         projectId: project.id,
         roles: {
-            connect: { id: ownerRole.id },
+          connect: { id: ownerRole.id },
         },
-        },
-        include: { user: true, roles: true },
+      },
+      include: { user: true, roles: true },
     });
 
     return project;
@@ -62,18 +66,21 @@ export class ProjectService {
     const project = await this.prisma.project.findUnique({ where: { id } });
 
     if (!project) {
-        throw new NotFoundException(`Project with id ${id} does not exist`);
+      throw new NotFoundException(`Project with id ${id} does not exist`);
     }
 
     await this.prisma.project.update({
-        where: { id },
-        data: { name },
+      where: { id },
+      data: { name },
     });
   }
 
   async saveProject(dto: SaveProjectDto): Promise<void> {
-    const project = await this.prisma.project.findUnique({ where: { id: dto.projectId } });
-    if (!project) throw new NotFoundException(`Project ${dto.projectId} not found`);
+    const project = await this.prisma.project.findUnique({
+      where: { id: dto.projectId },
+    });
+    if (!project)
+      throw new NotFoundException(`Project ${dto.projectId} not found`);
 
     await this.s3Service.uploadJson(dto.projectId, dto.jsonProject);
     await this.s3Service.uploadThumbnail(dto.projectId, dto.thumbnailBase64);
@@ -86,9 +93,13 @@ export class ProjectService {
     });
   }
 
-  async getJSONProject(projectId: number): Promise<{ JSONProject: string }> {
-    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
-    if (!project) throw new NotFoundException(`Project ${projectId} not found`);
+  async getJSONProject(
+    projectId: number,
+  ): Promise<{ JSONProject: string | null }> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+    if (!project) throw new NotFoundException('Project ${projectId} not found');
 
     const json = await this.s3Service.getJson(projectId);
     return { JSONProject: json };
@@ -102,7 +113,9 @@ export class ProjectService {
     await this.prisma.project.delete({ where: { id: id } });
   }
 
-  async listAccessibleProjects(userId: number): Promise<AccessibleProjectDto[]> {
+  async listAccessibleProjects(
+    userId: number,
+  ): Promise<AccessibleProjectDto[]> {
     // Get projects where user is collaborator
     const collaborations = await this.prisma.collaboration.findMany({
       where: { userId },
@@ -124,7 +137,7 @@ export class ProjectService {
         createdAt: collab.project.createdAt,
         lastSavedAt: collab.project.lastSavedAt,
         thumbnail,
-        roles: collab.roles.map(r => r.name),
+        roles: collab.roles.map((r) => r.name),
       });
     }
 
@@ -138,7 +151,7 @@ export class ProjectService {
         userId,
         roles: {
           some: {
-            name: "owner",
+            name: 'owner',
           },
         },
       },
@@ -160,7 +173,7 @@ export class ProjectService {
         createdAt: collab.project.createdAt,
         lastSavedAt: collab.project.lastSavedAt,
         thumbnail,
-        roles: collab.roles.map(r => r.name),
+        roles: collab.roles.map((r) => r.name),
       });
     }
 

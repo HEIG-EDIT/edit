@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  NoSuchKey,
+} from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
 
 @Injectable()
@@ -10,12 +16,12 @@ export class S3Service {
   constructor() {
     this.s3 = new S3Client({
       region: process.env.AWS_REGION,
-      endpoint: process.env.AWS_S3_ENDPOINT || undefined,  // only set in local env
-      forcePathStyle: !!process.env.AWS_S3_ENDPOINT,       // only for Localstack
+      endpoint: process.env.AWS_S3_ENDPOINT || undefined, // only set in local env
+      forcePathStyle: !!process.env.AWS_S3_ENDPOINT, // only for Localstack
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
-      }
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
     });
   }
 
@@ -46,26 +52,38 @@ export class S3Service {
     return key;
   }
 
-  async getJson(projectId: number): Promise<string> {
+  // use https://docs.aws.amazon.com/AmazonS3/latest/API/s3_example_s3_GetObject_section.html
+  async getJson(projectId: number): Promise<string | null> {
     const key = `${projectId}/project.json`;
-    const obj = await this.s3.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    try {
+      const obj = await this.s3.send(
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
+      const stream = obj.Body as Readable;
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(Buffer.from(chunk));
+      }
+      return Buffer.concat(chunks).toString('utf-8');
+    } catch (caught) {
+      if (caught instanceof NoSuchKey) {
+        return null;
+      }
+
+      throw caught;
+    }
+  }
+
+  async getThumbnail(projectId: number): Promise<string> {
+    const key = `${projectId}/thumbnail.png`;
+    const obj = await this.s3.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+    );
 
     const stream = obj.Body as Readable;
     const chunks: Buffer[] = [];
     for await (const chunk of stream) {
       chunks.push(Buffer.from(chunk));
-    }
-    return Buffer.concat(chunks).toString('utf-8');
-  }
-
-  async getThumbnail(projectId: number): Promise<string> {
-    const key = `${projectId}/thumbnail.png`;
-    const obj = await this.s3.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
-
-    const stream = obj.Body as Readable;
-    const chunks: Buffer[] = [];
-    for await (const chunk of stream) {
-        chunks.push(Buffer.from(chunk));
     }
 
     const buffer = Buffer.concat(chunks);
@@ -73,12 +91,15 @@ export class S3Service {
     return base64;
   }
 
-
   async deleteProjectFiles(projectId: number) {
     const jsonKey = `${projectId}/project.json`;
     const thumbKey = `${projectId}/thumbnail.png`;
 
-    await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: jsonKey }));
-    await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: thumbKey }));
+    await this.s3.send(
+      new DeleteObjectCommand({ Bucket: this.bucket, Key: jsonKey }),
+    );
+    await this.s3.send(
+      new DeleteObjectCommand({ Bucket: this.bucket, Key: thumbKey }),
+    );
   }
 }
