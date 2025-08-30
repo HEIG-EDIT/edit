@@ -1,0 +1,21 @@
+meta {
+  name: change_email
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}:{{portBack}}/user/me/email
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "KuroHanna@gmail.com"
+  }
+}

@@ -8,16 +8,12 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
-import { EmailService } from '../email/email.service';
 import { conflict } from '../common/helpers/responses/responses.helper';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    private prisma: PrismaService,
-    private emailService: EmailService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
   //-------------------Helper Methods---------------------------//
   /**
    * Generates a random username in the format "user_<random_string>".
@@ -42,7 +38,7 @@ export class UsersService {
    * @throws ConflictException if the email already exists or if no unique username could be generated.
    * @returns The newly created user object (id, email, userName, createdAt, isEmailVerified).
    */
-  async createUser(inputEmail: string, passwordHash: string) {
+  async createUser(inputEmail: string, passwordHash: string | null) {
     for (let i = 0; i < 10; i++) {
       const gen_username = this.generateRandomUsername();
 
@@ -50,13 +46,14 @@ export class UsersService {
         return await this.prisma.user.create({
           data: {
             email: inputEmail,
-            passwordHash,
+            passwordHash: passwordHash || null,
             userName: gen_username,
-            isEmailVerified: false,
+            isEmailVerified: true,
           },
           select: {
             id: true,
             email: true,
+            passwordHash: true,
             userName: true,
             createdAt: true,
             isEmailVerified: true,
@@ -117,8 +114,7 @@ export class UsersService {
    * @returns The user object if found, otherwise null.
    */
   async findUserByUsername(usernameToCheck: string) {
-    const username =
-      typeof usernameToCheck === 'string' ? usernameToCheck.trim() : '';
+    const username = usernameToCheck.trim();
 
     if (!username) {
       throw new BadRequestException('Username is required'); // 400
@@ -157,37 +153,6 @@ export class UsersService {
       },
     });
   }
-  /**
-   * Enables a user account after successful email verification.
-   *
-   * - Finds the user by email.
-   * - If the user does not exist, throws BadRequestException.
-   * - If already verified, short-circuits.
-   * - Otherwise, updates `isEmailVerified` to true.
-   *
-   * @param email - The email of the user to enable.
-   * @throws BadRequestException if no user is found.
-   */
-  async enableUserAccount(email: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      select: { id: true, isEmailVerified: true },
-    });
-
-    if (!user) {
-      throw new BadRequestException('User not found.');
-    }
-
-    // short-circuit if already verified
-    if (user.isEmailVerified) {
-      return;
-    }
-
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { isEmailVerified: true },
-    });
-  }
 
   //-------------------------Manage User Methods----------------------------//
 
@@ -201,25 +166,24 @@ export class UsersService {
    * @returns Object with userName, email, and twoFaMethod.
    */
   async getUserProfile(userId: number): Promise<{
+    id: number;
     userName: string;
     email: string;
-    twoFaMethod: string | null;
   } | null> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         userName: true,
         email: true,
-        twoFaMethod: true,
       },
     });
 
     if (!user) return null;
 
     return {
+      id: userId,
       userName: user.userName,
       email: user.email,
-      twoFaMethod: user.twoFaMethod,
     };
   }
 
@@ -373,7 +337,7 @@ export class UsersService {
    * @param currentPassword - The current plain password.
    * @param newPassword - The new plain password.
    * @param repeatPassword - Confirmation of the new password.
-   * @returns An object containing the outcome and whether 2FA is required.
+   * @returns An object containing the outcome.
    * @throws BadRequestException if the current password is invalid or passwords don’t match.
    */
   async changePassword(
@@ -381,7 +345,7 @@ export class UsersService {
     currentPassword: string,
     newPassword: string,
     repeatPassword: string,
-  ): Promise<{ success: boolean; requires2FA: boolean }> {
+  ): Promise<{ success: boolean }> {
     // Fetch user with password and 2FA settings
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -389,8 +353,6 @@ export class UsersService {
         id: true,
         email: true,
         passwordHash: true,
-        twoFaMethod: true,
-        twoFaSecret: true,
       },
     });
 
@@ -421,16 +383,6 @@ export class UsersService {
       data: { passwordHash: hashedPassword },
     });
 
-    // Trigger email notification in background
-    this.emailService
-      .sendPasswordChangeEmail(user.email)
-      .catch((err) =>
-        console.error('Failed to send password change email', err),
-      );
-
-    // If 2FA enabled → signal frontend
-    const requires2FA = !!user.twoFaMethod && !!user.twoFaSecret;
-
-    return { success: true, requires2FA };
+    return { success: true };
   }
 }

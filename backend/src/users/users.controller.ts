@@ -9,7 +9,6 @@ import {
   Res,
   ValidationPipe,
   HttpStatus,
-  HttpCode,
   UseGuards,
   UsePipes,
   ForbiddenException,
@@ -21,15 +20,11 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
 
 import { UsersService } from './users.service';
-import { TwoFaService } from '../auth/twoFA/twofa.service';
-import { TokensService } from '../auth/tokens/tokens.service';
-import { EmailService } from '../email/email.service';
 import { AuthService } from '../auth/auth.service';
 
 import { ChangeUsernameDto } from './dto/change-username.dto';
 import { ChangeEmailDto } from './dto/change-email.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { ChangeTwoFaDto } from './dto/change-2fa.dto';
 
 import {
   conflict,
@@ -39,16 +34,11 @@ import {
   unauthorized,
 } from '../common/helpers/responses/responses.helper';
 
-const FRONTEND_BASE_URL = process.env.FRONTEND_URL_LOCAL;
-
 @Controller('user')
 export class UsersController {
   constructor(
     private usersService: UsersService,
-    private twofaService: TwoFaService,
     private prisma: PrismaService,
-    private tokens: TokensService,
-    private emailService: EmailService,
     private authService: AuthService,
   ) {}
 
@@ -76,7 +66,7 @@ export class UsersController {
       user?: { userId?: number; id?: number; auth_id?: number };
     },
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ userName: string; email: string; twoFaMethod: string | null }> {
+  ): Promise<{ id: number; userName: string; email: string }> {
     setNoStore(res); /// Ensure no caching for this endpoint
 
     const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
@@ -100,7 +90,7 @@ export class UsersController {
 
   /**
    * GET /user/username/:username
-   *
+   * example: /user/username/alice
    * - 200 OK with public profile info
    * - 400 Bad Request if param is empty/invalid
    * - 404 Not Found if no user matches
@@ -266,24 +256,6 @@ export class UsersController {
       return noContent(res); // 204
     }
 
-    // if started = 'SATARTED' creat verification token and send email
-    // Clear any previous unused token to avoid unique (userId) conflict
-    await this.prisma.emailVerificationToken.deleteMany({
-      where: { userId, usedAt: null },
-    });
-
-    const { plain, hash, expiresAt } = this.tokens.pair(30 * 60 * 1000);
-
-    await this.prisma.emailVerificationToken.create({
-      data: { tokenHash: hash, userId, expiresAt },
-    });
-
-    const link = `${FRONTEND_BASE_URL}/verify-email?token=${plain}`;
-    await this.emailService.sendVerificationEmail(body.email, link);
-
-    // send email in previous email to inform user about email change in case they did not request it
-    await this.emailService.sendEmailChangeEmail(body.email);
-
     // 202 Accepted: process started, email sent to new address
     res.status(202);
     return { message: 'If the address is valid, we sent a confirmation link.' };
@@ -316,61 +288,14 @@ export class UsersController {
     if (!userId) {
       throw Object.assign(new Error('Unauthorized'), { status: 401 });
     }
-    const result = await this.usersService.changePassword(
+
+    await this.usersService.changePassword(
       userId,
       dto.currentPassword,
       dto.newPassword,
       dto.repeatPassword,
     );
 
-    if (result.requires2FA) {
-      return { message: 'Password changed, 2FA required', twoFA: true };
-    }
-
     return { message: 'Password changed successfully', twoFA: false };
-  }
-
-  //--------------------Manage Two-Factor Authentication------------------//
-  /**
-   * POST /user/me/2fa/start
-   *
-   * Starts a 2FA challenge:
-   *  - enable2fa: begin enabling a method (totp/email/sms)
-   *  - disable2fa: begin disabling current 2FA (verifies ownership)
-   *
-   * Returns: { twofaToken, method, expiresAt, otpauthUrl?, secretBase32? }
-   */
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  )
-  @Post('me/2fa/start')
-  @HttpCode(HttpStatus.OK)
-  async startTwoFa(
-    @Req()
-    req: Request & {
-      user?: { userId?: number; id?: number; auth_id?: number };
-    },
-    @Body() body: ChangeTwoFaDto,
-  ): Promise<{
-    twofaToken: string;
-    method: 'totp' | 'email' | 'sms';
-    expiresAt: Date;
-    otpauthUrl?: string;
-    secretBase32?: string;
-  }> {
-    const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
-    if (!userId)
-      throw Object.assign(new Error('Unauthorized'), { status: 401 });
-
-    return this.twofaService.startChallenge(
-      Number(userId),
-      body.action,
-      body.method,
-    );
   }
 }

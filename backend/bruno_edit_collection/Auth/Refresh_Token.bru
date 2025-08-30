@@ -1,0 +1,11 @@
+meta {
+  name: Refresh_Token
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}:{{portBack}}/auth/refresh
+  body: none
+  auth: inherit
+}

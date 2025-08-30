@@ -2,11 +2,9 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
-  ForbiddenException,
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-//add ConflictException
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
@@ -16,16 +14,17 @@ import { Prisma } from '@prisma/client';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
-import { UsersService } from 'src/users/users.service';
-import { EmailService } from '../email/email.service';
+import { UsersService } from '../users/users.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { TwoFaService } from './twoFA/twofa.service';
+import { ConfigService } from '@nestjs/config';
 import { TokensService } from './tokens/tokens.service';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
-const FRONTEND_BASE_URL = process.env.FRONTEND_URL_LOCAL;
-//const API_BASE_URL = process.env.API_URL_LOCAL;
+//import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
+const ACCESS_TTL_SEC = Number(process.env.ACCESS_TOKEN_TTL_SEC || 15 * 60); // 15 min
+const REFRESH_TTL_SEC = Number(
+  process.env.REFRESH_TOKEN_TTL_SEC || 30 * 24 * 3600,
+); // 30 days
 const DUMMY_BCRYPT_HASH =
   '$2b$12$1w8i2LQyC6z9Yl2wq3FZeu5Vb7J1.2q6oV2Qy1q3bJxJkQe5Lxk1a';
 
@@ -35,18 +34,23 @@ export class AuthService {
    *
    * @param userService
    * @param jwtService
-   * @param emailService
    * @param prisma
+   * @param configService
+   * @param tokensService
    */
   constructor(
     private readonly userService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly emailService: EmailService,
     private readonly prisma: PrismaService,
-    private readonly twoFaService: TwoFaService,
-    private readonly tokenService: TokensService,
+    private readonly configService: ConfigService,
+    private readonly tokensService: TokensService,
   ) {}
 
+  // ---------------------------------------------------------------
+  //Register & Login Services
+  // ---------------------------------------------------------------
+
+  // -------------------REGISTER---------------------------------------
   /**
    * Registers a new user and sends a verification email.
    *
@@ -62,89 +66,24 @@ export class AuthService {
 
       // Print the user object for debugging purposes
       console.log('Registered user:', user);
-
-      //TODO: This is duplicated in UsersService change email method
-      // Remove any stale, unused token to satisfy `userId @unique`
-      await this.prisma.emailVerificationToken.deleteMany({
-        where: { userId: user.id, usedAt: null },
-      });
-
-      const { plain, hash, expiresAt } = this.tokenService.pair(30 * 60 * 1000);
-
-      await this.prisma.emailVerificationToken.create({
-        data: { tokenHash: hash, userId: user.id, expiresAt },
-      });
-      // print the token for debugging purposes
-      console.log('Generated verification token:', plain);
-
-      // IMPORTANT: link goes to FRONTEND
-      const frontendVerifyUrl = `${FRONTEND_BASE_URL}/verify?token=${plain}`;
-      await this.emailService.sendVerificationEmail(
-        user.email,
-        frontendVerifyUrl,
-      );
-
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('Verification URL sent to user:', frontendVerifyUrl);
-      }
-
       return {
-        message: 'If this email is valid, a confirmation has been sent.1',
+        message: 'Account created successfully, please proceed to login',
       };
     } catch (err: any) {
       if (
         err instanceof ConflictException ||
-        (err instanceof PrismaClientKnownRequestError &&
+        (err instanceof Prisma.PrismaClientKnownRequestError &&
           err.code === 'P2002')
       ) {
-        await this.emailService.sendExistingAccountEmail(dto.email);
         return {
-          message: 'If this email is valid, a confirmation has been sent.',
+          message: 'An account with this email already exists',
         };
       }
       throw err;
     }
   }
 
-  /**
-   * Confirms the user's email address using a verification token.
-   * - Validates token existence, not-used, not-expired.
-   * - Marks the user as verified.
-   * - Marks the token as used and deletes other unused tokens for the user.
-   * @param plainToken - The verification token sent to the user's email.
-   */
-  async confirmEmail(plainToken: string) {
-    if (!plainToken || typeof plainToken !== 'string') {
-      throw new BadRequestException('Invalid token');
-    }
-
-    const tokenHash = this.tokenService.sha256Hex(plainToken);
-
-    const token = await this.prisma.emailVerificationToken.findUnique({
-      where: { tokenHash },
-      include: { user: true },
-    });
-
-    if (!token || !token.user)
-      throw new ForbiddenException('Invalid or expired token');
-    if (token.usedAt) throw new ForbiddenException('Token already used');
-    if (token.expiresAt.getTime() < Date.now())
-      throw new ForbiddenException('Token expired');
-
-    await this.userService.enableUserAccount(token.user.email);
-
-    await this.prisma.emailVerificationToken.update({
-      where: { tokenHash },
-      data: { usedAt: new Date() },
-    });
-
-    await this.prisma.emailVerificationToken.deleteMany({
-      where: { userId: token.userId },
-    });
-
-    return { email: token.user.email };
-  }
-
+  // -------------------LOCAL LOGIN---------------------------------------
   /**
    * Logs in a user.
    * This method checks the user's credentials and generates an access token if they are valid.
@@ -154,88 +93,237 @@ export class AuthService {
    * - Issues refresh token only on successful & verified login
    * @param dto - The login data transfer object containing email and password.
    */
-  async loginUser(dto: LoginDto) {
+  async loginLocal(dto: LoginDto) {
     const start = Date.now();
     const TIMING_FLOOR_MS = 500; // floor to blur DB/cache noise
     const JITTER_MS = Math.floor(Math.random() * 150); // small randomness
 
-    // 1) Fetch user who might exist (or not)
+    // 1) Look up user by email (or undefined)
     const user = await this.userService.findUserByEmail(dto.email);
 
-    // 2) Pick real vs dummy hash, then always runs exactly ONE compare
+    // 2) Exactly one compare
     const hashToCheck = user?.passwordHash ?? DUMMY_BCRYPT_HASH;
     const passwordOk = await bcrypt.compare(dto.password, hashToCheck);
 
-    // 3) Decide if sign-in is allowed (user exists, pw ok, AND email is verified)
-    const canLogin = Boolean(user && passwordOk && user.isEmailVerified);
+    // 3) Decide if sign-in is allowed (user exists, pw ok)
+    const canLogin = Boolean(user && passwordOk);
+    let access: { token: string; ttlSec: number } | null = null;
+    let refresh: { plain: string; ttlSec: number; deviceId: string } | null =
+      null;
 
-    // 4) If user exists but is NOT verified, silently re-send verify email
-    //    NO await here; keep timing consistent with failures.
-    // if (user && passwordOk && !user.isEmailVerified) {
-    //   void this.emailService.sendVerificationEmail(user.email, url).catch(() => void 0);
-    // }
-
-    let accessToken: string | null = null;
-    let refreshPlain: string | null = null;
-    let deviceId: string | null = null;
-
+    const deviceId = crypto.randomUUID();
     if (canLogin) {
-      // 5) Issue tokens (only on verified success)
-      const payload = { sub: user!.id, email: user!.email };
-      accessToken = await this.jwtService.signAsync(payload); // short-lived
-
-      // Refresh token: created on first real successful login (bind to device) --> Avoid generating useless tokens for unverified users
-      deviceId = crypto.randomUUID();
-      refreshPlain = crypto.randomBytes(32).toString('hex');
-      const refreshHash = crypto
-        .createHash('sha256')
-        .update(refreshPlain)
-        .digest('hex');
-
-      const refreshExpiresAt = new Date(
-        Date.now() + 1000 * 60 * 60 * 24 * 30, // 30d
-      );
-
-      await this.prisma.refreshToken.create({
-        data: {
-          tokenHash: refreshHash,
-          deviceId,
-          oauthProvider: 'local',
-          expiresAt: refreshExpiresAt,
-          userId: user!.id,
-        },
+      // 4) Issue tokens (only on verified success)
+      access = await this.issueAccessToken({
+        id: user!.id,
+        email: user!.email,
+      });
+      // Refresh token: created on first real successful login (bind to device)
+      // --> Avoid generating useless tokens for unverified users
+      refresh = await this.mintRefreshToken({
+        userId: user!.id,
+        provider: 'local',
+        deviceId,
       });
     }
 
-    // 6) Timing floor + jitter
+    // 5) Timing floor + jitter
     const elapsed = Date.now() - start;
     const wait = TIMING_FLOOR_MS + JITTER_MS - elapsed;
-    if (wait > 0) await this.sleep(wait);
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
 
-    // 7) Return generic failure to avoid leaking existence/verification state
     if (!canLogin) {
-      // can standardize on 200 + { success:false } if prefered.
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // 8) Success: return tokens & minimal user info
+    // 7) Success: return tokens & minimal user info
     return {
-      accessToken,
-      refreshToken: refreshPlain, // In prod: set as HttpOnly+Secure cookie, not JSON
-      deviceId,
+      accessToken: access!.token,
+      accessTtlSec: access!.ttlSec,
+      refreshToken: refresh!.plain,
+      refreshTtlSec: refresh!.ttlSec,
+      deviceId: refresh!.deviceId,
       user: { id: user!.id, email: user!.email, userName: user!.userName },
     };
   }
 
+  //--------------Providers Login---------------------------------------
   /**
-   * Helper function to normalize total wait time.
-   * @param ms
-   * @private
+   * Use this for Google/Microsoft/LinkedIn callbacks:
+   * - find or create user by email
+   * - mark email verified
+   * - issue tokens the same way
    */
-  private sleep(ms: number) {
-    return new Promise((r) => setTimeout(r, ms));
+  async providerLogin(params: {
+    userInfo: any;
+    provider: 'google' | 'microsoft' | 'linkedin';
+  }) {
+    // Ensure user exists (create minimal account if necessary)
+    const email = params.userInfo.email;
+    let user = await this.userService.findUserByEmail(email);
+    if (!user) {
+      // Create a minimal user with a random username (your UsersService likely has a method)
+      user = await this.userService.createUser(email, null);
+    }
+
+    // Treat OAuth emails as verified
+    if (!user.isEmailVerified) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { isEmailVerified: true },
+      });
+      user.isEmailVerified = true;
+    }
+
+    const access = await this.issueAccessToken({
+      id: user.id,
+      email: user.email,
+    });
+    const refresh = await this.mintRefreshToken({
+      userId: user.id,
+      provider: params.provider,
+    });
+
+    return {
+      accessToken: access.token,
+      accessTtlSec: access.ttlSec,
+      refreshToken: refresh.plain,
+      refreshTtlSec: refresh.ttlSec,
+      deviceId: refresh.deviceId,
+      user: { id: user.id, email: user.email, userName: user.userName },
+    };
   }
 
+  // ---------------------------------------------------------------
+  //Token Management Services
+  // ---------------------------------------------------------------
+
+  /**
+   * Create a short-lived JWT access token.
+   * @param user - The user object containing at least `id` and `email`.
+   * @returns An object containing the access token and its TTL in seconds.
+   */
+  async issueAccessToken(user: { id: number; email: string }) {
+    const payload = { sub: user.id, email: user.email };
+    const token = await this.jwtService.signAsync(payload);
+    return { token, ttlSec: ACCESS_TTL_SEC };
+  }
+
+  /**
+   * Create & persist a refresh token bound to a device.
+   * Returns the plain token (for cookie) and deviceId.
+   * @param params - Parameters for minting the refresh token.
+   * @returns An object containing the plain refresh token, its TTL in seconds,
+   * and the device ID.
+   */
+  async mintRefreshToken(params: {
+    userId: number;
+    provider: 'local' | 'google' | 'microsoft' | 'linkedin';
+    deviceId?: string;
+  }) {
+    const deviceId = params.deviceId ?? crypto.randomUUID();
+
+    // generate a random token, store only its hash
+    const { plain, hash, expiresAt } = this.tokensService.pair(
+      REFRESH_TTL_SEC * 1000,
+    );
+
+    await this.prisma.refreshToken.create({
+      data: {
+        tokenHash: hash,
+        deviceId,
+        oauthProvider: params.provider,
+        expiresAt,
+        userId: params.userId,
+      },
+    });
+
+    return {
+      plain, // send to client
+      ttlSec: REFRESH_TTL_SEC,
+      deviceId, // for cookie
+    };
+  }
+
+  // -------------------REFRESH LOGIC------------------------------------
+  /**
+   * Refreshes the access token using a valid refresh token.
+   * - Validates the refresh token against the stored hash and device ID.
+   * - Checks for token expiry and user existence.
+   * - Issues a new access token and rotates the refresh token.
+   * @param params - An object containing the refresh token and device ID.
+   * @returns An object containing the new access token, its TTL, the new refresh token,
+   * its TTL, and the device ID.
+   * @throws {UnauthorizedException} If the refresh token is invalid or expired,
+   * or if the user is not found.
+   */
+  async refreshTokens(params: { refreshToken: string; deviceId: string }) {
+    const { refreshToken, deviceId } = params;
+
+    // 1) Find the stored refresh token by hash + device
+    const tokenHash = this.tokensService.sha256Hex(refreshToken);
+    const record = await this.prisma.refreshToken.findFirst({
+      where: { tokenHash, deviceId },
+      select: { id: true, userId: true, oauthProvider: true, expiresAt: true },
+    });
+
+    if (!record) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    // 2) Check expiry
+    if (record.expiresAt <= new Date()) {
+      // cleanup
+      await this.prisma.refreshToken.delete({ where: { id: record.id } });
+      throw new UnauthorizedException('Refresh token expired');
+    }
+
+    // 3) Load user
+    const user = await this.prisma.user.findUnique({
+      where: { id: record.userId },
+      select: { id: true, email: true },
+    });
+    if (!user) {
+      await this.prisma.refreshToken.delete({ where: { id: record.id } });
+      throw new UnauthorizedException('User not found for token');
+    }
+
+    // 4) New access token
+    const access = await this.issueAccessToken({
+      id: user.id,
+      email: user.email,
+    });
+
+    // 5) Rotate refresh token
+    const { plain, hash, expiresAt } = this.tokensService.pair(
+      REFRESH_TTL_SEC * 1000,
+    );
+
+    await this.prisma.$transaction([
+      this.prisma.refreshToken.delete({ where: { id: record.id } }),
+      this.prisma.refreshToken.create({
+        data: {
+          tokenHash: hash,
+          deviceId,
+          oauthProvider: record.oauthProvider,
+          expiresAt,
+          userId: user.id,
+        },
+      }),
+    ]);
+
+    return {
+      accessToken: access.token,
+      accessTtlSec: access.ttlSec,
+      refreshToken: plain,
+      refreshTtlSec: REFRESH_TTL_SEC,
+      deviceId,
+    };
+  }
+
+  // ---------------------------------------------------------------
+  //Logout Services
+  // ---------------------------------------------------------------
   /**
    * logs out a user by deleting their refresh token.
    * @param userId - The ID of the user to log out.

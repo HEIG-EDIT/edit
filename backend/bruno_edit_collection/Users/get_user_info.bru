@@ -1,0 +1,11 @@
+meta {
+  name: get_user_info
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}:{{portBack}}/user/username/alice
+  body: none
+  auth: inherit
+}

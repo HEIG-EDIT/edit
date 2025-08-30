@@ -5,12 +5,9 @@ import {
   Post,
   Req,
   Res,
-  Query,
   UseGuards,
-  UsePipes,
   HttpCode,
   Headers,
-  ValidationPipe,
   HttpStatus,
   BadRequestException,
 } from '@nestjs/common';
@@ -19,43 +16,197 @@ import { AuthGuard } from '@nestjs/passport';
 
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { VerifyTwoFaDto } from './dto/verify-twofa.dto';
 import { LogoutDto } from './dto/logout.dto';
 
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
-import { TwoFaService } from './twoFA/twofa.service';
+import { ConfigService } from '@nestjs/config';
 
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import * as http from '../common/helpers/responses/responses.helper';
+import * as authHelp from '../common/helpers/auth.helpers';
 
 @Controller('auth')
 export class AuthController {
+  private frontendUrl: string;
   constructor(
-    private authService: AuthService,
-    private userService: UsersService,
-    private twofaService: TwoFaService,
-  ) {}
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
+  ) {
+    this.frontendUrl = (
+      process.env.NODE_ENV === 'prod'
+        ? process.env.FRONTEND_URL_PROD
+        : process.env.FRONTEND_URL_LOCAL
+    ) as string;
+  }
 
-  //Add HTTP responses and guards for the endpoints (+swagger)
+  // ---------------------------------------------------------------
+  // Register & Login Endpoints
+  // ---------------------------------------------------------------
+
+  //-------------------REGISTER---------------------------------------
   @Post('register')
-  register(@Body() body: RegisterDto) {
-    return this.authService.registerUser(body);
+  async register(
+    @Body() body: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.registerUser(body);
+
+    // 201 Created
+    return http.created(res, result, undefined, { noStore: true });
   }
 
-  //TODO: Add HTTP responses and guards for the endpoints (+swagger)
-  @Get('confirm-email')
-  async confirmEmail(@Query('token') token: string, @Res() res: Response) {
-    const redirectUrl = await this.authService.confirmEmail(token);
-    return res.redirect(302, redirectUrl.email);
-  }
-
-  //TODO: Add HTTP responses and guards for the endpoints (+swagger)
+  //-------------------LOCAL LOGIN---------------------------------------
   @Post('login')
-  login(@Body() body: LoginDto) {
-    return this.authService.loginUser(body);
+  @HttpCode(HttpStatus.OK)
+  async login(
+    @Body() body: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.loginLocal(body);
+
+    // Set cookies (httpOnly for tokens; device_id readable by FE)
+    authHelp.setAuthCookies(res, {
+      accessToken: result.accessToken,
+      accessTtlSec: result.accessTtlSec,
+      refreshToken: result.refreshToken,
+      refreshTtlSec: result.refreshTtlSec,
+      deviceId: result.deviceId,
+    });
+
+    // 200 OK response with no-store for auth responses & minimal user info
+    return http.ok(
+      res,
+      { user: result.user, message: 'Login successful' },
+      { noStore: true },
+    );
   }
 
-  //---------------------------API for Logout--------------------------------------
+  //-------------------GOOGLE OAUTH2 LOGIN-------------------------------
+  /**
+   * Login with Google
+   * Endpoint to initiate Google OAuth flow.
+   * Redirection to Google's authentication page.
+   * @returns {void}
+   */
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  googleLogin() {}
+
+  /**
+   * Google OAuth callback
+   * Endpoint to handle the callback from Google after user's authentication.
+   * Gets the user info from Google and processes login or registration.
+   * @param {Request} req - The request object containing user info from Google.
+   * @param {Response} res - The response object to set cookies and redirect.
+   */
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthCallback(
+    @Req() req: Request & { user: any },
+    @Res() res: Response,
+  ) {
+    const result = await this.authService.providerLogin({
+      userInfo: req.user,
+      provider: 'google',
+    });
+
+    authHelp.setAuthCookies(res, {
+      accessToken: result.accessToken,
+      accessTtlSec: result.accessTtlSec,
+      refreshToken: result.refreshToken,
+      refreshTtlSec: result.refreshTtlSec,
+      deviceId: result.deviceId,
+    });
+
+    // 303 See Other redirect to frontend
+    const target = this.frontendUrl ?? process.env.FRONTEND_URL_PROD ?? '/';
+    return http.seeOther(res, target);
+  }
+
+  //-------------------LinkedIn OAUTH2 LOGIN-------------------------------
+  //TODO
+  // Placeholder for LinkedIn login
+  @Get('linkedin')
+  @UseGuards(AuthGuard('linkedin'))
+  linkedinLogin() {}
+
+  //TODO
+  // Placeholder for LinkedIn login callback
+  @Get('linkedin/callback')
+  @UseGuards(AuthGuard('linkedin'))
+  async linkedinAuthCallback() {}
+
+  //-------------------Microsoft OAUTH2 LOGIN-------------------------------
+  //TODO
+  // Placeholder for Microsoft login
+  @Get('microsoft')
+  @UseGuards(AuthGuard('microsoft'))
+  microsoftLogin() {}
+
+  //TODO
+  // Placeholder for Microsoft login callback
+  @Get('microsoft/callback')
+  @UseGuards(AuthGuard('microsoft'))
+  async microsoftAuthCallback() {}
+
+  // ---------------------------------------------------------------
+  //Token Management Endpoints
+  // ---------------------------------------------------------------
+
+  /**
+   * POST /auth/refresh
+   *
+   * Refreshes the access token using a valid refresh token.
+   * - Reads refresh token from HttpOnly cookie or Authorization header.
+   * - Reads deviceId from `X-Device-Id` header or from cookie as a fallback.
+   * - Issues new access and refresh tokens, sets them in cookies.
+   */
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken =
+      (req.cookies && (req.cookies['refresh_token'] as string)) ||
+      (req as any).signedCookies?.['refresh_token'];
+
+    const deviceId =
+      (req.cookies && (req.cookies['device_id'] as string)) ||
+      (req.headers['x-device-id'] as string | undefined);
+
+    if (!refreshToken || !deviceId) {
+      // Response 401 with WWW-Authenticate
+      return http.unauthorized(res, 'Missing refresh token or device id', {
+        scheme: 'Bearer',
+        error: 'invalid_token',
+      });
+    }
+
+    const result = await this.authService.refreshTokens({
+      refreshToken,
+      deviceId,
+    });
+
+    // set new cookies (rotated refresh + new access)
+    authHelp.setAuthCookies(res, {
+      accessToken: result.accessToken,
+      accessTtlSec: result.accessTtlSec,
+      refreshToken: result.refreshToken,
+      refreshTtlSec: result.refreshTtlSec,
+      deviceId: result.deviceId,
+    });
+
+    // Response standardized 200 OK with no-store
+    return http.ok(res, { message: 'Token refreshed' }, { noStore: true });
+  }
+
+  // ---------------------------------------------------------------
+  //Logout Endpoints
+  // ---------------------------------------------------------------
+
   /**
    * POST /auth/logout
    *
@@ -78,23 +229,30 @@ export class AuthController {
   ): Promise<{ message: string }> {
     const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
     if (!userId) {
-      throw new BadRequestException('Unauthorized');
+      // Response 401 Unauthorized with WWW-Authenticate
+      return http.unauthorized(res, 'Unauthorized', { scheme: 'Bearer' });
     }
 
-    const deviceId = deviceIdHeader ?? body.deviceId;
+    const deviceId =
+      deviceIdHeader ??
+      body.deviceId ??
+      (req.cookies && (req.cookies['device_id'] as string)) ??
+      (req as any).signedCookies?.['device_id'];
+
     if (!deviceId) {
-      throw new BadRequestException('Missing deviceId');
+      // Response 400 Bad Request
+      return http.badRequest('Bad request : missing deviceId');
     }
 
     // When using cookie-based refresh tokens, also clear cookie here:
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      path: '/',
-    });
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/' });
+    res.clearCookie('device_id', { path: '/' });
 
-    return this.authService.logoutUser(Number(userId), deviceId);
+    const out = await this.authService.logoutUser(Number(userId), deviceId);
+
+    // Response 200 OK with no-store
+    return http.ok(res, out, { noStore: true });
   }
 
   /**
@@ -116,110 +274,17 @@ export class AuthController {
   ): Promise<{ revoked: number }> {
     const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
     if (!userId) {
-      throw new BadRequestException('Unauthorized');
+      // Response 401 Unauthorized with WWW-Authenticate
+      return http.unauthorized(res, 'Unauthorized', { scheme: 'Bearer' });
     }
 
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      path: '/',
-    });
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/' });
+    res.clearCookie('device_id', { path: '/' });
 
-    return this.authService.logoutAllDevices(Number(userId));
-  }
+    const out = await this.authService.logoutAllDevices(Number(userId));
 
-  //---------------------------API for Token Handling--------------------------------------
-
-  //TODO
-  // Placeholder for access token refresh
-  //@Post('refresh')
-  //refresh(@Body() body: { refreshToken: string }) {}
-
-  //--------------------------API for Provider LogIn--------------------------------------
-
-  //TODO
-  // Placeholder for Google login
-  @Get('google')
-  @UseGuards(AuthGuard('google'))
-  googleLogin() {}
-
-  //TODO
-  // Placeholder for Google login callback
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleAuthCallback() {}
-
-  //TODO
-  // Placeholder for LinkedIn login
-  @Get('linkedin')
-  @UseGuards(AuthGuard('linkedin'))
-  linkedinLogin() {}
-
-  //TODO
-  // Placeholder for LinkedIn login callback
-  @Get('linkedin/callback')
-  @UseGuards(AuthGuard('linkedin'))
-  async linkedinAuthCallback() {}
-
-  //TODO
-  // Placeholder for Microsoft login
-  @Get('microsoft')
-  @UseGuards(AuthGuard('microsoft'))
-  microsoftLogin() {}
-
-  //TODO
-  // Placeholder for Microsoft login callback
-  @Get('microsoft/callback')
-  @UseGuards(AuthGuard('microsoft'))
-  async microsoftAuthCallback() {}
-
-  // TODO : X and Facebook login and callback
-
-  // ----------------- 2FA: VERIFY -----------------
-  /**
-   * POST /auth/2fa/verify
-   *
-   * Verifies a 2FA challenge with a code.
-   * - Commits enable/disable effects when applicable.
-   *
-   * Body: { twofaToken, code }
-   * Returns: { success: true, action, method }
-   */
-  @UseGuards(JwtAuthGuard)
-  @UsePipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  )
-  @Post('2fa/verify')
-  @HttpCode(HttpStatus.OK)
-  async verifyTwoFa(
-    @Req()
-    req: Request & {
-      user?: { userId?: number; id?: number; auth_id?: number };
-    },
-    @Body() body: VerifyTwoFaDto,
-  ): Promise<{
-    success: true;
-    action:
-      | 'enable2fa'
-      | 'disable2fa'
-      | 'login'
-      | 'changePassword'
-      | 'passwordRecovery';
-    method: 'totp' | 'email' | 'sms';
-  }> {
-    const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
-    if (!userId)
-      throw Object.assign(new Error('Unauthorized'), { status: 401 });
-
-    return await this.twofaService.verifyChallenge(
-      Number(userId),
-      body.twofaToken,
-      body.code,
-    );
+    // Response 200 OK with no-store
+    return http.ok(res, out, { noStore: true });
   }
 }

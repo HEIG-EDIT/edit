@@ -6,17 +6,14 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 
-//import { GoogleStrategy } from './strategies/google.strategy';
-//import { MicrosoftStrategy } from './strategies/microsoft.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
-import { EmailModule } from '../email/email.module';
 import { UsersModule } from '../users/users.module';
 import { UsersService } from '../users/users.service';
-import { TwoFaService } from './twoFA/twofa.service';
-import { TokensService } from './tokens/tokens.service';
 
-import { JwtService } from '@nestjs/jwt';
+import { TokensModule } from './tokens/tokens.module';
+import { TokensService } from './tokens/tokens.service';
 
 import config from '../config/auth.config';
 
@@ -24,17 +21,23 @@ import config from '../config/auth.config';
   imports: [
     PrismaModule,
     PassportModule,
-    forwardRef(() => UsersModule), // UPDATED: handles circular deps if any
-    EmailModule, // UPDATED: so EmailService can be injected
+    TokensModule,
+    forwardRef(() => UsersModule),
     JwtModule.registerAsync({
-      useFactory: () => ({
-        privateKey: config().auth.privateKey,
-        publicKey: config().auth.publicKey,
-        signOptions: {
-          algorithm: config().auth.algorithm,
-          expiresIn: config().auth.accessTokenExpiry,
-        },
-      }),
+      useFactory: () => {
+        const cfg = config().auth;
+        return {
+          privateKey: cfg.privateKey, // UPDATED
+          publicKey: cfg.publicKey, // UPDATED
+          signOptions: {
+            algorithm: cfg.algorithm, // RS256
+            expiresIn: cfg.accessTokenExpiry,
+          },
+          verifyOptions: {
+            algorithms: [cfg.algorithm], // ensure verifier uses RS256
+          },
+        };
+      },
     }),
   ],
   controllers: [AuthController],
@@ -42,10 +45,9 @@ import config from '../config/auth.config';
     AuthService,
     JwtStrategy,
     UsersService,
-    TwoFaService,
+    GoogleStrategy,
     TokensService,
-    JwtService,
   ],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

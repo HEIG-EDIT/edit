@@ -7,5 +7,5 @@ export class LogoutDto {
   @Transform(({ value }) =>
     typeof value === 'string' ? value.trim() : String(value ?? ''),
   )
-  deviceId?: string;
+  deviceId: string;
 }
