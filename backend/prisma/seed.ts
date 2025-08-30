@@ -157,6 +157,16 @@ async function main() {
   // -------------------
   await prisma.collaboration.create({
     data: {
+      userId: alice.id,
+      projectId: project1.id,
+      roles: {
+        connect: [{ id: roleRecords.find((r) => r.name === 'owner')!.id }],
+      },
+    },
+  });
+
+  await prisma.collaboration.create({
+    data: {
       userId: bob.id,
       projectId: project1.id,
       roles: {
@@ -188,6 +198,42 @@ async function main() {
   await prisma.collaboration.create({
     data: {
       userId: bob.id,
+      projectId: project2.id,
+      roles: {
+        connect: [{ id: roleRecords.find((r) => r.name === 'owner')!.id }],
+      },
+    },
+  });
+  
+  await prisma.collaboration.create({
+    data: {
+      userId: charlie.id,
+      projectId: project3.id,
+      roles: {
+        connect: [{ id: roleRecords.find((r) => r.name === 'owner')!.id }],
+      },
+    },
+  });
+
+  await prisma.collaboration.create({
+    data: {
+      userId: longNameUser.id,
+      projectId: longNameProject.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'owner')!.id }] },
+    },
+  });
+
+  await prisma.collaboration.create({
+    data: {
+      userId: alice.id,
+      projectId: extraProject1.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'owner')!.id }] },
+    },
+  });
+  
+  await prisma.collaboration.create({
+    data: {
+      userId: bob.id,
       projectId: extraProject1.id,
       roles: { connect: [{ id: roleRecords.find(r => r.name === 'editor')!.id }] },
     },
@@ -203,9 +249,25 @@ async function main() {
 
   await prisma.collaboration.create({
     data: {
+      userId: bob.id,
+      projectId: extraProject2.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'owner')!.id }] },
+    },
+  });
+
+  await prisma.collaboration.create({
+    data: {
       userId: alice.id,
       projectId: extraProject2.id,
       roles: { connect: [{ id: roleRecords.find(r => r.name === 'viewer')!.id }] },
+    },
+  });
+
+  await prisma.collaboration.create({
+    data: {
+      userId: charlie.id,
+      projectId: extraProject3.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'owner')!.id }] },
     },
   });
 
@@ -219,6 +281,14 @@ async function main() {
 
   await prisma.collaboration.create({
     data: {
+      userId: longNameUser.id,
+      projectId: extraProject4.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'owner')!.id }] },
+    },
+  });
+
+  await prisma.collaboration.create({
+    data: {
       userId: alice.id,
       projectId: extraProject4.id,
       roles: { connect: [{ id: roleRecords.find(r => r.name === 'viewer')!.id }] },
@@ -233,6 +303,14 @@ async function main() {
     },
   });
 
+  await prisma.collaboration.create({
+    data: {
+      userId: alice.id,
+      projectId: extraProject5.id,
+      roles: { connect: [{ id: roleRecords.find(r => r.name === 'owner')!.id }] },
+    },
+  });
+  
   await prisma.collaboration.create({
     data: {
       userId: charlie.id,
