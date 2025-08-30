@@ -56,7 +56,7 @@ export const ProjectComponent = ({
         className="w-[160px] h-[90px] overflow-hidden cursor-pointer"
       >
         <img
-          src={project.thumbnail}
+          src={`data:image/png;base64,${project.thumbnail}`}
           width={160}
           height={90}
           className="object-cover w-full h-full"
