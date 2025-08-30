@@ -245,6 +245,82 @@ export class AuthService {
     };
   }
 
+  // -------------------REFRESH LOGIC------------------------------------
+  /**
+   * Refreshes the access token using a valid refresh token.
+   * - Validates the refresh token against the stored hash and device ID.
+   * - Checks for token expiry and user existence.
+   * - Issues a new access token and rotates the refresh token.
+   * @param params - An object containing the refresh token and device ID.
+   * @returns An object containing the new access token, its TTL, the new refresh token,
+   * its TTL, and the device ID.
+   * @throws {UnauthorizedException} If the refresh token is invalid or expired,
+   * or if the user is not found.
+   */
+  async refreshTokens(params: { refreshToken: string; deviceId: string }) {
+    const { refreshToken, deviceId } = params;
+
+    // 1) Find the stored refresh token by hash + device
+    const tokenHash = this.tokensService.sha256Hex(refreshToken);
+    const record = await this.prisma.refreshToken.findFirst({
+      where: { tokenHash, deviceId },
+      select: { id: true, userId: true, oauthProvider: true, expiresAt: true },
+    });
+
+    if (!record) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    // 2) Check expiry
+    if (record.expiresAt <= new Date()) {
+      // cleanup
+      await this.prisma.refreshToken.delete({ where: { id: record.id } });
+      throw new UnauthorizedException('Refresh token expired');
+    }
+
+    // 3) Load user
+    const user = await this.prisma.user.findUnique({
+      where: { id: record.userId },
+      select: { id: true, email: true },
+    });
+    if (!user) {
+      await this.prisma.refreshToken.delete({ where: { id: record.id } });
+      throw new UnauthorizedException('User not found for token');
+    }
+
+    // 4) New access token
+    const access = await this.issueAccessToken({
+      id: user.id,
+      email: user.email,
+    });
+
+    // 5) Rotate refresh token
+    const { plain, hash, expiresAt } = this.tokensService.pair(
+      REFRESH_TTL_SEC * 1000,
+    );
+
+    await this.prisma.$transaction([
+      this.prisma.refreshToken.delete({ where: { id: record.id } }),
+      this.prisma.refreshToken.create({
+        data: {
+          tokenHash: hash,
+          deviceId,
+          oauthProvider: record.oauthProvider,
+          expiresAt,
+          userId: user.id,
+        },
+      }),
+    ]);
+
+    return {
+      accessToken: access.token,
+      accessTtlSec: access.ttlSec,
+      refreshToken: plain,
+      refreshTtlSec: REFRESH_TTL_SEC,
+      deviceId,
+    };
+  }
+
   // ---------------------------------------------------------------
   //Logout Services
   // ---------------------------------------------------------------

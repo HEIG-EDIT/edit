@@ -23,6 +23,7 @@ import { UsersService } from '../users/users.service';
 import { ConfigService } from '@nestjs/config';
 
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import * as http from '../common/helpers/responses/responses.helper';
 import * as authHelp from '../common/helpers/auth.helpers';
 
 @Controller('auth')
@@ -46,8 +47,14 @@ export class AuthController {
 
   //-------------------REGISTER---------------------------------------
   @Post('register')
-  async register(@Body() body: RegisterDto) {
-    return this.authService.registerUser(body);
+  async register(
+    @Body() body: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.registerUser(body);
+
+    // 201 Created
+    return http.created(res, result, undefined, { noStore: true });
   }
 
   //-------------------LOCAL LOGIN---------------------------------------
@@ -68,11 +75,12 @@ export class AuthController {
       deviceId: result.deviceId,
     });
 
-    // Return minimal public profile
-    return {
-      user: result.user,
-      message: 'Login successful',
-    };
+    // 200 OK response with no-store for auth responses & minimal user info
+    return http.ok(
+      res,
+      { user: result.user, message: 'Login successful' },
+      { noStore: true },
+    );
   }
 
   //-------------------GOOGLE OAUTH2 LOGIN-------------------------------
@@ -112,8 +120,9 @@ export class AuthController {
       deviceId: result.deviceId,
     });
 
-    // Redirect home (or projects) on your FE
-    return res.redirect(this.frontendUrl ?? process.env.PROD_FRONTEND_URL);
+    // 303 See Other redirect to frontend
+    const target = this.frontendUrl ?? process.env.FRONTEND_URL_PROD ?? '/';
+    return http.seeOther(res, target);
   }
 
   //-------------------LinkedIn OAUTH2 LOGIN-------------------------------
@@ -146,6 +155,54 @@ export class AuthController {
   //Token Management Endpoints
   // ---------------------------------------------------------------
 
+  /**
+   * POST /auth/refresh
+   *
+   * Refreshes the access token using a valid refresh token.
+   * - Reads refresh token from HttpOnly cookie or Authorization header.
+   * - Reads deviceId from `X-Device-Id` header or from cookie as a fallback.
+   * - Issues new access and refresh tokens, sets them in cookies.
+   */
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken =
+      (req.cookies && (req.cookies['refresh_token'] as string)) ||
+      (req as any).signedCookies?.['refresh_token'];
+
+    const deviceId =
+      (req.cookies && (req.cookies['device_id'] as string)) ||
+      (req.headers['x-device-id'] as string | undefined);
+
+    if (!refreshToken || !deviceId) {
+      // Response 401 with WWW-Authenticate
+      return http.unauthorized(res, 'Missing refresh token or device id', {
+        scheme: 'Bearer',
+        error: 'invalid_token',
+      });
+    }
+
+    const result = await this.authService.refreshTokens({
+      refreshToken,
+      deviceId,
+    });
+
+    // set new cookies (rotated refresh + new access)
+    authHelp.setAuthCookies(res, {
+      accessToken: result.accessToken,
+      accessTtlSec: result.accessTtlSec,
+      refreshToken: result.refreshToken,
+      refreshTtlSec: result.refreshTtlSec,
+      deviceId: result.deviceId,
+    });
+
+    // Response standardized 200 OK with no-store
+    return http.ok(res, { message: 'Token refreshed' }, { noStore: true });
+  }
+
   // ---------------------------------------------------------------
   //Logout Endpoints
   // ---------------------------------------------------------------
@@ -172,12 +229,19 @@ export class AuthController {
   ): Promise<{ message: string }> {
     const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
     if (!userId) {
-      throw new BadRequestException('Unauthorized');
+      // Response 401 Unauthorized with WWW-Authenticate
+      return http.unauthorized(res, 'Unauthorized', { scheme: 'Bearer' });
     }
 
-    const deviceId = deviceIdHeader ?? body.deviceId;
+    const deviceId =
+      deviceIdHeader ??
+      body.deviceId ??
+      (req.cookies && (req.cookies['device_id'] as string)) ??
+      (req as any).signedCookies?.['device_id'];
+
     if (!deviceId) {
-      throw new BadRequestException('Missing deviceId');
+      // Response 400 Bad Request
+      return http.badRequest('Bad request : missing deviceId');
     }
 
     // When using cookie-based refresh tokens, also clear cookie here:
@@ -185,7 +249,10 @@ export class AuthController {
     res.clearCookie('refresh_token', { path: '/' });
     res.clearCookie('device_id', { path: '/' });
 
-    return this.authService.logoutUser(Number(userId), deviceId);
+    const out = await this.authService.logoutUser(Number(userId), deviceId);
+
+    // Response 200 OK with no-store
+    return http.ok(res, out, { noStore: true });
   }
 
   /**
@@ -207,13 +274,17 @@ export class AuthController {
   ): Promise<{ revoked: number }> {
     const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
     if (!userId) {
-      throw new BadRequestException('Unauthorized');
+      // Response 401 Unauthorized with WWW-Authenticate
+      return http.unauthorized(res, 'Unauthorized', { scheme: 'Bearer' });
     }
 
     res.clearCookie('access_token', { path: '/' });
     res.clearCookie('refresh_token', { path: '/' });
     res.clearCookie('device_id', { path: '/' });
 
-    return this.authService.logoutAllDevices(Number(userId));
+    const out = await this.authService.logoutAllDevices(Number(userId));
+
+    // Response 200 OK with no-store
+    return http.ok(res, out, { noStore: true });
   }
 }

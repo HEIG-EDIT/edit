@@ -1,0 +1,11 @@
+meta {
+  name: Logout_all
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}:{{portBack}}/auth/logout-all
+  body: none
+  auth: inherit
+}

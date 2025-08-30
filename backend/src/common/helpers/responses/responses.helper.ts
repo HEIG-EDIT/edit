@@ -1,5 +1,6 @@
 // src/common/http/responses.helper.ts
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   InternalServerErrorException,
@@ -86,6 +87,10 @@ export function unauthorized(
  */
 export function opaqueNotFound(message = 'Not found'): never {
   throw new NotFoundException(message);
+}
+
+export function badRequest(message = 'Bad request : missing deviceId'): never {
+  throw new BadRequestException(message);
 }
 
 export function forbidden(message = 'Not allowed'): never {
