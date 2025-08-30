@@ -1,5 +1,7 @@
 "use client";
 
+import api from "@/lib/api";
+
 import Konva from "konva";
 import dynamic from "next/dynamic";
 import React, { useState, useEffect, useCallback, useRef } from "react";
@@ -28,6 +30,9 @@ import {
 } from "@/components/editor/editorContext";
 import { Vector2d } from "konva/lib/types";
 
+import { useParams } from "next/navigation";
+import { Project } from "@/models/editor/project";
+
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
 });
@@ -47,6 +52,8 @@ for (const tool of Object.values(TOOLS)) {
 }
 
 export default function EditorPage() {
+  const { projectId } = useParams();
+
   const {
     state: layers,
     setState: setLayers,
@@ -57,6 +64,17 @@ export default function EditorPage() {
     canUndo,
     canRedo,
   } = useUndoRedo(Array<Layer>());
+
+  api
+    .get(`api/projects/${projectId}/json`)
+    .then((res) => {
+      Project.fromJSON(res.data as string).then((project: Project) => {
+        setLayers(project.layers);
+      });
+    })
+    .catch(() => {
+      console.log("No JSON project found, starting with empty canvas");
+    });
 
   const [nameSelectedTool, setNameSelectedTool] = useState<string>(
     MOVE_TOOL.name,
