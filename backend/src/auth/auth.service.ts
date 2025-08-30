@@ -19,7 +19,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { TokensService } from './tokens/tokens.service';
 
-//import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 const ACCESS_TTL_SEC = Number(process.env.ACCESS_TOKEN_TTL_SEC || 15 * 60); // 15 min
 const REFRESH_TTL_SEC = Number(
@@ -72,7 +72,7 @@ export class AuthService {
     } catch (err: any) {
       if (
         err instanceof ConflictException ||
-        (err instanceof Prisma.PrismaClientKnownRequestError &&
+        (err instanceof PrismaClientKnownRequestError &&
           err.code === 'P2002')
       ) {
         return {
