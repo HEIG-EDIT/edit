@@ -1,17 +1,5 @@
-import { Layer } from "@/models/editor/layers/layer";
+import { Layer, SerializedLayer } from "@/models/editor/layers/layer";
 import { Vector2d } from "konva/lib/types";
-
-interface SerializedLayer {
-  id: string;
-  name: string;
-  isVisible: boolean;
-  isSelected: boolean;
-  imageURL: string;
-  position: Vector2d;
-  scale: Vector2d;
-  rotation: number;
-  size: Vector2d;
-}
 
 export class Project {
   layers: Layer[];
@@ -51,23 +39,8 @@ export class Project {
 
     const loadPromises = input.layers.map(
       (serializedLayer: SerializedLayer) => {
-        return new Promise<Partial<Layer>>((resolve) => {
-          const image = new Image();
-          image.src = serializedLayer.imageURL;
-          image.onload = () => {
-            const layer: Partial<Layer> = {
-              id: serializedLayer.id,
-              name: serializedLayer.name,
-              isVisible: serializedLayer.isVisible,
-              isSelected: serializedLayer.isSelected,
-              position: serializedLayer.position,
-              scale: serializedLayer.scale,
-              rotation: serializedLayer.rotation,
-              size: serializedLayer.size,
-              image: image,
-            };
-            resolve(layer);
-          };
+        return new Promise<Layer>((resolve) => {
+          resolve(Layer.fromSerialized(serializedLayer));
         });
       },
     );
