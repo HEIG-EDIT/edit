@@ -105,7 +105,7 @@ export const ProjectCollaboration = () => {
           </div>
           <div>
             <img
-              src={selectedProject?.thumbnail}
+              src={`data:image/png;base64,${selectedProject?.thumbnail}`}
               width={160}
               height={90}
               className="object-cover mr-6"
