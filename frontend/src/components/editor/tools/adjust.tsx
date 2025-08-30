@@ -29,17 +29,17 @@ export interface ColorAndToneConfiguration extends FilterConfiguration {
 export type InvertConfiguration = FilterConfiguration;
 
 export interface PixelateConfiguration extends FilterConfiguration {
-  amount: number;
+  pixelSize: number;
 }
 
 export interface FlipConfiguration extends FilterConfiguration {
-  horizontal_flip: boolean;
-  vertical_flip: boolean;
+  horizontalFlip: boolean;
+  verticalFlip: boolean;
 }
 
-export type ThresholdConfiguration = FilterConfiguration;
-
-export type SharpenConfiguration = FilterConfiguration;
+export interface ThresholdConfiguration extends FilterConfiguration {
+  threshold: number;
+}
 
 export const BlackWhiteConfigurationSubcomponent = () => {
   return <div>Black/white</div>;
@@ -49,12 +49,12 @@ export const BlackWhite: Filter<BlackWhiteConfiguration> = {
   name: "Black/white",
   initialConfiguration: {
     applyTool: (layer: Layer) => {
-      console.log('Applying grayscale')
+      console.log("Applying grayscale");
       return {
         ...layer,
-        filters: [...layer.filters, Konva.Filters.Grayscale]
-      }
-    }
+        filters: [...layer.filters, Konva.Filters.Grayscale],
+      };
+    },
   },
   configurationComponent: BlackWhiteConfigurationSubcomponent,
 };
@@ -89,8 +89,8 @@ export const GaussianBlur: Filter<GaussianBlurConfiguration> = {
       return {
         ...layer,
         filters: [...layer.filters, Konva.Filters.Blur],
-      }
-    }
+      };
+    },
   },
   configurationComponent: GaussianBlurConfigurationSubcomponent,
 };
@@ -99,71 +99,108 @@ export const ColorAndToneConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
 }: FilterConfigurationProps<ColorAndToneConfiguration>) => {
-  console.log(configuration);
-  console.log(setConfiguration);
-
   return (
     <div>
       <RangeInput
         property="Saturation"
-        value={1}
+        value={configuration.saturation}
         step={0.01}
+        range={[-5, 5]}
         onChange={(value) => {
           setConfiguration({ ...configuration, saturation: value });
         }}
       />
       <RangeInput
         property="Brightness"
-        value={1}
+        value={configuration.brightness}
         step={0.01}
+        range={[-1, 1]}
         onChange={(value) => {
-          setConfiguration({ ...configuration, brightness: value })
+          setConfiguration({ ...configuration, brightness: value });
         }}
       />
       <RangeInput
         property="Contrast"
-        value={1}
+        value={configuration.contrast}
+        step={1}
+        range={[-100, 100]}
         onChange={(value) => {
-          setConfiguration({ ...configuration, contrast: value })
+          setConfiguration({ ...configuration, contrast: value });
+        }}
+      />
+      <RangeInput
+        property="Hue"
+        value={configuration.hue}
+        step={1}
+        range={[0, 359]}
+        onChange={(value) => {
+          setConfiguration({ ...configuration, hue: value });
+        }}
+      />
+      <RangeInput
+        property="Opacity"
+        value={configuration.opacity}
+        step={0.001}
+        range={[0, 1]}
+        onChange={(value) => {
+          setConfiguration({ ...configuration, opacity: value });
         }}
       />
     </div>
-  )
+  );
 };
 
 export const ColorAndTone: Filter<ColorAndToneConfiguration> = {
   name: "Color & tone",
   initialConfiguration: {
-    saturation: 1,
-    brightness: 2,
-    contrast: 3,
-    hue: 4,
-    opacity: 5,
+    saturation: 0,
+    brightness: 0,
+    contrast: 0,
+    hue: 0,
+    opacity: 1,
     applyTool(layer, config) {
-      const colorToneConfig = config as ColorAndToneConfiguration;
-      return {
-        ...layer,
-        filters: []
+      const FILTERS = [
+        Konva.Filters.RGBA,
+        Konva.Filters.Brighten,
+        Konva.Filters.Contrast,
+        Konva.Filters.HSL,
+      ];
+      const { saturation, brightness, contrast, hue, opacity } =
+        config as ColorAndToneConfiguration;
+
+      layer.groupRef.current?.brightness(brightness);
+      layer.groupRef.current?.contrast(contrast);
+      layer.groupRef.current?.saturation(saturation);
+      layer.groupRef.current?.hue(hue);
+      layer.groupRef.current?.opacity(opacity);
+
+      // These filters should only be added once
+      for (const filter_ of FILTERS) {
+        if (!layer.filters.includes(filter_)) {
+          console.log("Adding filter");
+          layer.filters = [...layer.filters, filter_];
+        }
       }
-    }
+      return layer;
+    },
   },
   configurationComponent: ColorAndToneConfigurationSubcomponent,
 };
 
-export const InvertConfigurationSubcomponent = ({
-  configuration,
-  setConfiguration,
-}: FilterConfigurationProps<InvertConfiguration>) => {
-  // TODO : to remove, just for eslink check
-  console.log(configuration);
-  console.log(setConfiguration);
-
-  return <div>Invert</div>;
+export const InvertConfigurationSubcomponent = () => {
+  return <div></div>;
 };
 
 export const Invert: Filter<InvertConfiguration> = {
   name: "Invert",
-  initialConfiguration: {},
+  initialConfiguration: {
+    applyTool: (layer) => {
+      return {
+        ...layer,
+        filters: [...layer.filters, Konva.Filters.Invert],
+      };
+    },
+  },
   configurationComponent: InvertConfigurationSubcomponent,
 };
 
@@ -171,19 +208,31 @@ export const PixelateConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
 }: FilterConfigurationProps<PixelateConfiguration>) => {
-  return <div>Pixelate</div>;
+  return (
+    <div>
+      <RangeInput
+        property="Pixel size"
+        value={configuration.pixelSize}
+        onChange={(value) => {
+          setConfiguration({ ...configuration, pixelSize: value });
+        }}
+      />
+    </div>
+  );
 };
 
 export const Pixelate: Filter<PixelateConfiguration> = {
   name: "Pixelate",
   initialConfiguration: {
-    amount: 5,
+    pixelSize: 5,
     applyTool: (layer, config) => {
       const pixConfig = config as PixelateConfiguration;
+      layer.groupRef.current?.pixelSize(pixConfig.pixelSize);
       return {
-
-      }
-    }
+        ...layer,
+        filters: [...layer.filters, Konva.Filters.Pixelate],
+      };
+    },
   },
   configurationComponent: PixelateConfigurationSubcomponent,
 };
@@ -198,11 +247,11 @@ export const FlipConfigurationSubcomponent = ({
         Horizontal:{" "}
         <input
           type="checkbox"
-          checked={configuration.horizontal_flip}
+          checked={configuration.horizontalFlip}
           onChange={(e) => {
             setConfiguration({
               ...configuration,
-              horizontal_flip: e.target.checked,
+              horizontalFlip: e.target.checked,
             });
           }}
         />
@@ -211,11 +260,11 @@ export const FlipConfigurationSubcomponent = ({
         Vertical:{" "}
         <input
           type="checkbox"
-          checked={configuration.vertical_flip}
+          checked={configuration.verticalFlip}
           onChange={(e) => {
             setConfiguration({
               ...configuration,
-              vertical_flip: e.target.checked,
+              verticalFlip: e.target.checked,
             });
           }}
         />
@@ -227,8 +276,33 @@ export const FlipConfigurationSubcomponent = ({
 export const Flip: Filter<FlipConfiguration> = {
   name: "Flip (mirror)",
   initialConfiguration: {
-    horizontal_flip: false,
-    vertical_flip: false,
+    horizontalFlip: false,
+    verticalFlip: false,
+    applyTool: (layer, config) => {
+      const { horizontalFlip: horizontal_flip, verticalFlip: vertical_flip } =
+        config as FlipConfiguration;
+      const xScale = horizontal_flip ? -1 : 1;
+      const yScale = vertical_flip ? -1 : 1;
+      layer = {
+        ...layer,
+        scale: {
+          x: layer.scale.x * xScale,
+          y: layer.scale.y * yScale,
+        },
+      };
+      return {
+        ...layer,
+        // The layer is flipped around the origin, we need to adjust the postion
+        position: {
+          x:
+            layer.position.x +
+            (horizontal_flip ? layer.size.x * -layer.scale.x : 0),
+          y:
+            layer.position.y +
+            (vertical_flip ? layer.size.y * -layer.scale.y : 0),
+        },
+      };
+    },
   },
   configurationComponent: FlipConfigurationSubcomponent,
 };
@@ -237,34 +311,38 @@ export const ThresholdConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
 }: FilterConfigurationProps<ThresholdConfiguration>) => {
-  // TODO : to remove, just for eslink check
-  console.log(configuration);
-  console.log(setConfiguration);
-
-  return <div>Threshold</div>;
+  return (
+    <div>
+      <RangeInput
+        property="Threshold"
+        value={configuration.threshold}
+        onChange={(value) => {
+          setConfiguration({
+            ...configuration,
+            threshold: value,
+          });
+        }}
+        range={[0, 1]}
+        step={0.01}
+      />
+    </div>
+  );
 };
 
 export const Threshold: Filter<ThresholdConfiguration> = {
   name: "Threshold",
-  initialConfiguration: {},
+  initialConfiguration: {
+    threshold: 0.5,
+    applyTool: (layer, config) => {
+      const { threshold } = config as ThresholdConfiguration;
+      layer.groupRef.current?.threshold(threshold);
+      return {
+        ...layer,
+        filters: [...layer.filters, Konva.Filters.Threshold],
+      };
+    },
+  },
   configurationComponent: ThresholdConfigurationSubcomponent,
-};
-
-export const SharpenConfigurationSubcomponent = ({
-  configuration,
-  setConfiguration,
-}: FilterConfigurationProps<SharpenConfiguration>) => {
-  // TODO : to remove, just for eslink check
-  console.log(configuration);
-  console.log(setConfiguration);
-
-  return <div>Sharpen</div>;
-};
-
-export const Sharpen: Filter<SharpenConfiguration> = {
-  name: "Sharpen",
-  initialConfiguration: {},
-  configurationComponent: SharpenConfigurationSubcomponent,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -276,7 +354,6 @@ export const ADJUST_SUB_TOOLS: Record<string, Filter<any>> = {
   [Pixelate.name]: Pixelate,
   [Flip.name]: Flip,
   [Threshold.name]: Threshold,
-  [Sharpen.name]: Sharpen,
 };
 
 const ADJUST_INITIAL_CONFIGURATION: Record<string, FilterConfiguration> = {};
@@ -303,10 +380,10 @@ export const AdjustToolConfigurationComponent = ({
 
   const handleApply = () => {
     editSelectedLayers((layer) => {
-      layer.groupRef.current?.cache()
+      layer.groupRef.current?.cache();
       return subConfig.applyTool(layer, subConfig);
-    })
-  }
+    });
+  };
 
   return (
     <div>
@@ -339,9 +416,7 @@ export const AdjustToolConfigurationComponent = ({
             });
           }}
         />
-        <button onClick={handleApply}>
-          Apply
-        </button>
+        <button onClick={handleApply}>Apply</button>
       </OutsideCard>
     </div>
   );
