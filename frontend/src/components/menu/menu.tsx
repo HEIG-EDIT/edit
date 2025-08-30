@@ -1,9 +1,11 @@
+"use client";
+
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
 import { EntryButton } from "@/components/menu/entryButton";
 import TuneRoundedIcon from "@mui/icons-material/TuneRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import React, {
   Dispatch,
@@ -16,7 +18,9 @@ import { MenuEntry } from "@/models/editor/menu/menuEntry";
 import { UserSettings } from "./userSettings";
 import { ProjectCollaboration } from "./projectCollaboration";
 import useOnClickOutside from "@/hooks/useOnClickOutside";
-import { usePathname } from "next/navigation";
+
+// 🟣 uses the updated helpers
+import { logoutCurrentDevice, logoutAllDevices } from "@/lib/auth.tools";
 
 export const Menu = ({
   setMenuDisplay,
@@ -58,9 +62,32 @@ export const Menu = ({
   const [nameSelectedMenuEntry, setNameSelectedMenuEntry] = useState<string>(
     MENU_ENTRIES["user"].name,
   );
-
   const MenuEntryConfigurationComponent =
     MENU_ENTRIES[nameSelectedMenuEntry].associatedComponent;
+
+  const handleLogout = async () => {
+    try {
+      await logoutCurrentDevice();
+    } catch (e) {
+      console.error("Logout failed:", e);
+    } finally {
+      setMenuDisplay(false);
+      router.replace("/"); // better UX than push here
+      router.refresh();
+    }
+  };
+
+  const handleLogoutAll = async () => {
+    try {
+      await logoutAllDevices();
+    } catch (e) {
+      console.error("Logout-all failed:", e);
+    } finally {
+      setMenuDisplay(false);
+      router.replace("/");
+      router.refresh();
+    }
+  };
 
   return (
     <div>
@@ -100,11 +127,16 @@ export const Menu = ({
                     style={"bg-violet-50 border-2 border-violet-500"}
                   />
                 )}
-                {/* TODO : @Elbu -> gerer la deconnexion du user */}
                 <EntryButton
                   icon={<LogoutRoundedIcon />}
                   text="Log out"
-                  onClick={() => router.push("./")}
+                  onClick={handleLogout}
+                  style={"bg-violet-50 border-2 border-violet-500"}
+                />
+                <EntryButton
+                  icon={<LogoutRoundedIcon />}
+                  text="Log out (all devices)"
+                  onClick={handleLogoutAll}
                   style={"bg-violet-50 border-2 border-violet-500"}
                 />
               </div>

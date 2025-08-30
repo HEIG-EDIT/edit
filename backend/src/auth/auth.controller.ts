@@ -9,7 +9,6 @@ import {
   HttpCode,
   Headers,
   HttpStatus,
-  BadRequestException,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
