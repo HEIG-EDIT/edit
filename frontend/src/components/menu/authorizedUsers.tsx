@@ -6,12 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ErrorComponent } from "../api/errorComponent";
 import { LoadingComponent } from "../api/loadingComponent";
 
-// TODO : checker que user connecte ne peut pas s'enlever lui-meme le droit owner
-export const AuthorizedUsers = ({
-  projectId,
-}: {
-  projectId: number | undefined;
-}) => {
+export const AuthorizedUsers = ({ projectId }: { projectId: number }) => {
   const ROLES = ["owner", "editor", "viewer"];
 
   const [collaborators, setCollaborators] = useState<Collaborator[] | null>(
@@ -20,32 +15,21 @@ export const AuthorizedUsers = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (!projectId) return;
-
-    const fetchData = async () => {
-      try {
-        const res = await api.get(`/api/collaborations/${projectId}`);
-        setCollaborators(res.data);
-      } catch {
-        setHasError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, [projectId]);
-
-  const removeCollaboration = async (collaborationId: number) => {
+  const getCollaborations = async () => {
     try {
-      await api.delete(`/api/collaborations/${collaborationId}`);
-      setCollaborators((prev) =>
-        prev ? prev.filter((c) => c.collaborationId !== collaborationId) : prev,
-      );
+      const res = await api.get(`/api/collaborations/${projectId}`);
+      setCollaborators(res.data);
     } catch {
-      // TODO : comment gerer au niveau affichage si erreur (pour le moment si erreur alors rien ne change) ?
+      setHasError(true);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!projectId) return;
+    getCollaborations();
+  }, [projectId]);
 
   const USERS_BY_ROLE = useMemo(() => {
     if (!collaborators) return {};
@@ -82,13 +66,80 @@ export const AuthorizedUsers = ({
     userEmail: string;
     collaborationId: number;
   }) => {
+    const [hasError, setHasError] = useState<boolean>(false);
+
+    const removeCollaboration = async () => {
+      try {
+        await api.delete(`/api/collaborations/${collaborationId}`);
+        setCollaborators((prev) =>
+          prev
+            ? prev.filter((c) => c.collaborationId !== collaborationId)
+            : prev,
+        );
+        setHasError(false);
+      } catch {
+        setHasError(true);
+        setTimeout(() => setHasError(false), 3000);
+      }
+    };
+
     return (
-      <div className="bg-violet-50 rounded-xl p-1 flex items-center justify-between">
+      <div
+        className={`bg-violet-50 rounded-xl p-1 flex items-center justify-between ${hasError ? "border border-red-600" : ""}`}
+      >
         <p className="truncate whitespace-nowrap" title={userEmail}>
           {userEmail}
         </p>
-        <button onClick={() => removeCollaboration(collaborationId)}>
+        <button onClick={() => removeCollaboration()}>
           <CloseRoundedIcon className="shrink-0 cursor-pointer" />
+        </button>
+      </div>
+    );
+  };
+
+  const DisplayNewUser = ({
+    projectId,
+    role,
+  }: {
+    projectId: number;
+    role: string;
+  }) => {
+    const [email, setEmail] = useState<string>("");
+    const [hasError, setHasError] = useState<boolean>(false);
+
+    const addCollaboration = async () => {
+      try {
+        await api.post("/api/collaborations", {
+          userEmail: email,
+          projectId: projectId,
+          roles: [role], // array required to comply with the database schema
+        });
+        setHasError(false);
+        getCollaborations();
+      } catch {
+        setHasError(true);
+        setTimeout(() => setHasError(false), 3000);
+        setEmail("");
+      }
+    };
+
+    return (
+      <div
+        className={`bg-violet-50 rounded-xl p-1 flex items-center justify-between ${hasError ? "border border-red-600" : ""}`}
+      >
+        <input
+          className="truncate whitespace-nowrap min-w-0"
+          type="text"
+          placeholder="New collab. email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <button
+          onClick={() => {
+            addCollaboration();
+          }}
+        >
+          <AddRoundedIcon className="shrink-0 cursor-pointer" />
         </button>
       </div>
     );
@@ -103,42 +154,34 @@ export const AuthorizedUsers = ({
             className="flex flex-col gap-4 items-center"
           >
             <p className="text-violet-50">{USERS_BY_ROLE[key].title}</p>
-            {USERS_BY_ROLE[key].collaborators.size > 0 && (
-              <div
-                className="bg-gray-900 rounded-xl p-2 flex flex-col max-h-44 w-full overflow-y-auto
+
+            <div
+              className="bg-gray-900 rounded-xl p-2 flex flex-col max-h-44 w-full overflow-y-auto
                          [&::-webkit-scrollbar]:w-2
                        [&::-webkit-scrollbar-track]:bg-gray-400
                          [&::-webkit-scrollbar-track]:rounded-xl
                        [&::-webkit-scrollbar-thumb]:bg-violet-400
                          [&::-webkit-scrollbar-thumb]:rounded-xl"
-              >
-                <div>
-                  {Array.from(USERS_BY_ROLE[key].collaborators).map(
-                    (c: Collaborator) => {
-                      return (
-                        <div key={c.collaborationId} className="mb-2 last:mb-0">
-                          <DisplayUser
-                            collaborationId={c.collaborationId}
-                            userEmail={c.userEmail}
-                          />
-                        </div>
-                      );
-                    },
-                  )}
-                  {/* TODO : ajouter logique et ui pour nouveau user */}
-                  <div className="bg-violet-50 rounded-xl p-1 flex items-center justify-between">
-                    <input
-                      type="text"
-                      placeholder="New collab. email"
-                      className="truncate whitespace-nowrap min-w-0"
-                    ></input>
-                    <button onClick={() => {}}>
-                      <AddRoundedIcon className="shrink-0 cursor-pointer" />
-                    </button>
-                  </div>
-                </div>
+            >
+              <div>
+                {Array.from(USERS_BY_ROLE[key].collaborators).map(
+                  (c: Collaborator) => {
+                    return (
+                      <div key={c.collaborationId} className="mb-2 last:mb-0">
+                        <DisplayUser
+                          collaborationId={c.collaborationId}
+                          userEmail={c.userEmail}
+                        />
+                      </div>
+                    );
+                  },
+                )}
+                <DisplayNewUser
+                  projectId={projectId}
+                  role={USERS_BY_ROLE[key].type}
+                />
               </div>
-            )}
+            </div>
           </div>
         );
       })}
