@@ -159,7 +159,7 @@ export default function ProjectSelection() {
   const handleProjectCreation = async () => {
     try {
       // TODO : utiliser id du user
-      const res = await api.post("api/projects", {
+      const res = await api.post("/api/projects", {
         name: projectName,
         creatorId: 1,
       });
