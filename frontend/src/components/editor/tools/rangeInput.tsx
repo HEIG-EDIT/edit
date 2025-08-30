@@ -9,7 +9,13 @@ export interface RangeInputProps {
   step?: number;
 }
 
-export const RangeInput = ({ property, value, onChange, range, step }: RangeInputProps) => {
+export const RangeInput = ({
+  property,
+  value,
+  onChange,
+  range,
+  step,
+}: RangeInputProps) => {
   range = range || [1, 100];
   step = step || 1;
   return (
@@ -18,7 +24,7 @@ export const RangeInput = ({ property, value, onChange, range, step }: RangeInpu
         {property}:<br></br>
       </p>
       <input
-        className="accent-violet-500"
+        className="accent-violet-500 mr-5"
         type="range"
         min={range[0]}
         max={range[1]}
@@ -26,7 +32,11 @@ export const RangeInput = ({ property, value, onChange, range, step }: RangeInpu
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
       />
-      <span className="text-violet-50"> {value}</span>
+      <input
+        className="text-violet-50 w-12"
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
     </Fragment>
   );
 };
