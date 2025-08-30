@@ -71,8 +71,10 @@ export default function EditorPage() {
     const loadProject = async () => {
       try {
         const res = await api.get(`/api/projects/${projectId}/json`);
-        const project = await Project.fromJSON(res.data.JSONProject);
-        setLayers(project.layers);
+        if (res.data.JSONProject !== null) {
+          const project = await Project.fromJSON(res.data.JSONProject);
+          setLayers(project.layers);
+        }
       } catch {
         // TODO : gerer authentification
         router.push("/projects");
