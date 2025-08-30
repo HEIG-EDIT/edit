@@ -33,7 +33,10 @@ import {
   setNoStore,
   unauthorized,
 } from '../common/helpers/responses/responses.helper';
+import { Public } from '../common/decorators/public.decorator';
+import * as authHelp from '../common/helpers/auth.helpers';
 
+@UseGuards(JwtAuthGuard)
 @Controller('user')
 export class UsersController {
   constructor(
@@ -49,7 +52,7 @@ export class UsersController {
    *
    * Returns the authenticated user's profile information.
    * - Requires JWT authentication.
-   * - Provides username, email, and 2FA method.
+   * - Provides username, email.
    *
    * @param req - Express request containing authenticated user payload.
    * @param res - Express response to handle errors.
@@ -58,18 +61,14 @@ export class UsersController {
    * @throws 404 if user profile is not found.
    * @throws 200 with user profile information if successful.
    */
-  @UseGuards(JwtAuthGuard)
   @Get('me')
   async getProfile(
-    @Req()
-    req: Request & {
-      user?: { userId?: number; id?: number; auth_id?: number };
-    },
+    @Req() req: Request & { user?: authHelp.AuthUserShape },
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ id: number; userName: string; email: string }> {
     setNoStore(res); /// Ensure no caching for this endpoint
 
-    const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
+    const userId = authHelp.resolveUserId(req.user);
 
     if (!userId) {
       // Standard 401 with auth header
@@ -95,6 +94,7 @@ export class UsersController {
    * - 400 Bad Request if param is empty/invalid
    * - 404 Not Found if no user matches
    */
+  @Public()
   @Get('username/:username')
   async getProfileByUsername(
     @Param('username') username: string,
@@ -130,7 +130,6 @@ export class UsersController {
    * @throws 204 if the username is unchanged (idempotent no-op).
    * @throws 200 with updated username if successful.
    */
-  @UseGuards(JwtAuthGuard)
   @UsePipes(
     new ValidationPipe({
       whitelist: true,
@@ -141,10 +140,7 @@ export class UsersController {
   )
   @Patch('me/username')
   async updateUsername(
-    @Req()
-    req: Request & {
-      user?: { userId?: number; id?: number; auth_id?: number; email?: string };
-    },
+    @Req() req: Request & { user?: authHelp.AuthUserShape },
     @Res({ passthrough: true }) res: Response,
     @Body() body: ChangeUsernameDto,
   ): Promise<{ userName: string } | void> {
@@ -152,8 +148,7 @@ export class UsersController {
     setNoStore(res);
 
     // UPDATED: trust DTO, rely on guard for auth, resolve user id from strategy payload
-    const userId =
-      req.user?.userId ?? req.user?.id ?? req.user?.auth_id ?? undefined;
+    const userId = authHelp.resolveUserId(req.user);
 
     if (!userId) {
       // Shouldn't happen with JwtAuthGuard, but just in case
@@ -200,7 +195,6 @@ export class UsersController {
    * @throws 202 if the email change process has started and a verification email is sent
    * @thros 204 if the email is unchanged (idempotent no-op).
    */
-  @UseGuards(JwtAuthGuard)
   @UsePipes(
     new ValidationPipe({
       whitelist: true,
@@ -211,17 +205,13 @@ export class UsersController {
   )
   @Patch('me/email')
   async updateEmail(
-    @Req()
-    req: Request & {
-      user?: { userId?: number; id?: number; auth_id?: number; email?: string };
-    },
+    @Req() req: Request & { user?: authHelp.AuthUserShape },
     @Res({ passthrough: true }) res: Response,
     @Body() body: ChangeEmailDto,
   ): Promise<void | { message: string }> {
     setNoStore(res); // No caching sensitive response
 
-    const userId =
-      req.user?.userId ?? req.user?.id ?? req.user?.auth_id ?? undefined;
+    const userId = authHelp.resolveUserId(req.user);
 
     if (!userId) return unauthorized(res);
 
@@ -267,23 +257,26 @@ export class UsersController {
    * Allows the authenticated user to change their password.
    * - Requires JWT authentication.
    * - Validates request body using ChangePasswordDto.
-   * - Returns a message indicating success or if 2FA is required.
+   * - Returns a message indicating success.
    *
    * @param req - Express request containing the authenticated user.
    * @param dto - DTO containing currentPassword, newPassword, and repeatPassword.
-   * @returns Success message or 2FA requirement status.
+   * @returns Success message.
    */
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+    }),
+  )
   @Post('me/change-password')
-  @UseGuards(JwtAuthGuard)
   async changePassword(
-    @Req()
-    req: Request & {
-      user?: { userId?: number; id?: number; auth_id?: number; email?: string };
-    },
+    @Req() req: Request & { user?: authHelp.AuthUserShape },
     @Body() dto: ChangePasswordDto,
   ) {
-    const userId =
-      req.user?.userId ?? req.user?.id ?? req.user?.auth_id ?? undefined;
+    const userId = authHelp.resolveUserId(req.user);
 
     if (!userId) {
       throw Object.assign(new Error('Unauthorized'), { status: 401 });
