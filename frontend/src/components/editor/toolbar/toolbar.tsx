@@ -17,6 +17,8 @@ import { handleExport, handleThumbnail } from "../saveProject";
 import api from "@/lib/api";
 import { useParams } from "next/navigation";
 import useOnClickOutside from "@/hooks/useOnClickOutside";
+import { Project } from "@/models/editor/project";
+import { Vector2d } from "konva/lib/types";
 
 export interface ToolBarProps {
   nameSelectedTool: string;
@@ -26,6 +28,7 @@ export interface ToolBarProps {
   canUndo: boolean;
   redo: () => void;
   canRedo: boolean;
+  canvasSize: Vector2d;
 }
 
 export const Toolbar = ({
@@ -36,8 +39,9 @@ export const Toolbar = ({
   canUndo,
   redo,
   canRedo,
+  canvasSize,
 }: ToolBarProps) => {
-  const { layerRef } = useEditorContext();
+  const { layerRef, layers } = useEditorContext();
 
   const params = useParams();
 
@@ -47,10 +51,12 @@ export const Toolbar = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const saveProject = async () => {
+    const project = new Project(layers, canvasSize);
+    const JSONProject = project.toJSON();
     try {
       await api.patch("/api/projects/save", {
         projectId: Number(params.projectId),
-        jsonProject: "TODO",
+        jsonProject: JSONProject,
         thumbnailBase64: handleThumbnail(layerRef),
       });
       setHasError(false);

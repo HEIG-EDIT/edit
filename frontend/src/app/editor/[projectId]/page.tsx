@@ -232,6 +232,7 @@ export default function EditorPage() {
                   nameSelectedTool={nameSelectedTool}
                   setNameSelectedTool={setNameSelectedTool}
                   setMenuDisplay={setMenuDisplay}
+                  canvasSize={canvasSize}
                 />
               </div>
             </div>
