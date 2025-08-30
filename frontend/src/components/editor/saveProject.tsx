@@ -59,3 +59,7 @@ export const handleExport = (layerRef: React.RefObject<Layer | null>) => {
   const uri = exportToURI(layerRef, false);
   downloadURI(uri, "project.png");
 };
+
+export const handleThumbnail = (layerRef: React.RefObject<Layer | null>) => {
+  return exportToURI(layerRef, true);
+};
