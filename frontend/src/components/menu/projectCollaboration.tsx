@@ -19,8 +19,9 @@ export const ProjectCollaboration = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // TODO : utiliser authentification
-        const res = await api.get("/api/projects/owned/1");
+        // UPDATE fetch to get only owned projects
+        // It uses authentication token to get the user id
+        const res = await api.get("/projects/owned");
         if (res.data.length > 0) {
           setOwnerProjects(
             res.data.sort((p1: Project, p2: Project) =>

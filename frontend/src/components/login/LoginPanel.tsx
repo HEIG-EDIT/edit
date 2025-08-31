@@ -163,7 +163,7 @@ export const LoginPanel = () => {
     try {
       setSubmitting(true);
       await api.post("/auth/register", { email, password });
-      // Optional: auto-login after register by calling /auth/login
+      // auto-login after register by calling /auth/login
       await api.post("/auth/login", { email, password });
       router.push("/projects");
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
