@@ -47,7 +47,7 @@ export class ProjectService {
     });
 
     // Create the collaboration for project creator = owner
-    this.prisma.collaboration.create({
+    await this.prisma.collaboration.create({
       data: {
         userId: createProjectDto.creatorId,
         projectId: project.id,
@@ -93,16 +93,17 @@ export class ProjectService {
     });
   }
 
-  async getJSONProject(
-    projectId: number,
-  ): Promise<{ JSONProject: string | null }> {
+  async getJSONProject(projectId: number,): Promise<{ JSONProject: string }> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
     });
     if (!project) throw new NotFoundException('Project ${projectId} not found');
 
     const json = await this.s3Service.getJson(projectId);
-    return { JSONProject: json };
+    if(!json){
+      throw new NotFoundException('Json fro project ${projectId} not found');
+    }
+    return { JSONProject: json! };
   }
 
   async deleteProject(id: number): Promise<void> {
