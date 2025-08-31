@@ -4,6 +4,10 @@ import { Strategy } from 'passport-google-oauth20';
 
 import * as process from 'node:process';
 
+/*
+  Google OAuth2 Strategy
+  Documentation: https://www.npmjs.com/package/passport-google-oauth20
+*/
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor() {
@@ -15,9 +19,17 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
+  /**
+   * Validate function to extract user information from Google profile
+   * @param _accessToken
+   * @param _refreshToken
+   * @param profile : Profile object returned by Google
+   * @param done : Callback function
+   * @returns Object containing email, oauthId, and provider
+   */
   validate(
-    accessToken: string,
-    refreshToken: string,
+    _accessToken: string,
+    _refreshToken: string,
     profile: any,
     done: Function,
   ) {
