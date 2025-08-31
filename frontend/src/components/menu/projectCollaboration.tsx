@@ -8,6 +8,7 @@ import api from "@/lib/api";
 import { ErrorComponent } from "../api/errorComponent";
 import { LoadingComponent } from "../api/loadingComponent";
 import type { AxiosError } from "axios";
+import Image from "next/image";
 
 // ELBU UPDATED : made quite a few changes to the original component
 // Three mode of project lists:
@@ -224,7 +225,7 @@ export const ProjectCollaboration = ({ mode }: Props) => {
           </div>
           <div>
             {selectedProject.thumbnail && (
-              <img
+              <Image
                 src={`data:image/png;base64,${selectedProject.thumbnail}`}
                 width={160}
                 height={90}

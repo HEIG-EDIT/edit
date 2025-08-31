@@ -38,7 +38,7 @@ function clearAttempts(): void {
 function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
-// Policy: 10–64 chars, at least one uppercase, one lowercase, and one special char
+// 10–64 chars, ≥1 upper, ≥1 lower, ≥1 special
 function validatePassword(pw: string): boolean {
   return /^(?=.*[A-Z])(?=.*[a-z])(?=.*[\W_]).{10,64}$/.test(pw);
 }
@@ -51,7 +51,7 @@ export const LoginPanel = (): JSX.Element => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Register fields can reuse email/password
+  // Register fields reuse email/password
   const [regErrors, setRegErrors] = useState<{
     email?: string;
     password?: string;
@@ -79,7 +79,7 @@ export const LoginPanel = (): JSX.Element => {
     }
   }, []);
 
-  // 1s ticker for countdown UI (use globalThis to satisfy UMD-global rule)
+  // 1s ticker for countdown UI
   useEffect(() => {
     if (!lockedUntil) return;
     intervalRef.current = globalThis.setInterval(
@@ -100,7 +100,6 @@ export const LoginPanel = (): JSX.Element => {
   const lockMinutes = Math.floor(lockedRemainingMs / 60000);
   const lockSeconds = Math.floor((lockedRemainingMs % 60000) / 1000);
 
-  // Attempt bookkeeping
   function recordLoginFailure(): void {
     const a = getAttempts();
     const nowTs = Date.now();
@@ -131,7 +130,6 @@ export const LoginPanel = (): JSX.Element => {
   ): Promise<void> {
     e.preventDefault();
     setLoginError(null);
-
     if (isLocked) return;
 
     try {
@@ -184,26 +182,41 @@ export const LoginPanel = (): JSX.Element => {
     globalThis.location.href = `http://localhost:4000/auth/${provider}`;
   }
 
+  // ------- styling helpers (classes) to match UI -------
+  const labelCls = "text-sm text-violet-50";
+  const inputCls =
+    "mt-1 w-full rounded-xl border-2 border-violet-500 px-3 py-2 outline-none " +
+    "bg-violet-100 text-gray-900 focus:ring-2 focus:ring-violet-400";
+  const primaryBtnCls =
+    "rounded-2xl bg-violet-400 text-gray-900 px-4 py-2 font-semibold " +
+    "border-2 border-violet-500 hover:bg-violet-100 disabled:opacity-50";
+  const secondaryBtnCls =
+    "rounded-2xl bg-gray-300 text-gray-900 px-4 py-2 font-semibold " +
+    "border-2 border-violet-500 hover:bg-gray-200 disabled:opacity-50";
+  const ghostBtnCls =
+    "w-full rounded-2xl bg-gray-300 border-2 border-violet-500 px-4 py-3 text-left " +
+    "hover:bg-gray-200";
+
   return (
-    <div className="bg-white shadow rounded-2xl p-6">
-      <h1 className="text-2xl font-bold mb-4 text-gray-900">Welcome back</h1>
+    <div className="flex flex-col gap-4">
+      <h1 className="text-2xl font-bold mb-2 text-violet-50">Welcome back</h1>
 
       {view === "chooser" && (
         <div className="space-y-4">
           <button
             type="button"
             onClick={() => setView("login")}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-left hover:bg-gray-50"
+            className={ghostBtnCls}
           >
             Continue with email and password
           </button>
 
           <div className="relative my-2">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-violet-300" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">or</span>
+              <span className="bg-gray-600 px-2 text-violet-200">or</span>
             </div>
           </div>
 
@@ -211,32 +224,34 @@ export const LoginPanel = (): JSX.Element => {
             <button
               type="button"
               onClick={() => startProvider("google")}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 hover:bg-gray-50"
+              className={ghostBtnCls}
             >
               Continue with Google
             </button>
             <button
               type="button"
               onClick={() => startProvider("microsoft")}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 hover:bg-gray-50"
+              className={ghostBtnCls}
             >
               Continue with Microsoft
             </button>
+
+            {/* Uncomment if LinkedIn OAuth is set up in backend
             <button
               type="button"
               onClick={() => startProvider("linkedin")}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 hover:bg-gray-50"
+              className={ghostBtnCls}
             >
               Continue with LinkedIn
-            </button>
+            </button>*/}
           </div>
 
-          <p className="text-sm text-gray-600 pt-4">
+          <p className="text-sm text-violet-100 pt-4">
             No account yet?{" "}
             <button
               type="button"
               onClick={() => setView("register")}
-              className="text-violet-600 hover:underline"
+              className="text-violet-300 hover:underline"
             >
               Create one
             </button>
@@ -247,11 +262,11 @@ export const LoginPanel = (): JSX.Element => {
       {view === "login" && (
         <form onSubmit={handleLogin} className="space-y-4">
           <label className="block">
-            <span className="text-sm text-gray-700">Email</span>
+            <span className={labelCls}>Email</span>
             <input
               type="email"
               autoComplete="email"
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-violet-400"
+              className={inputCls}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={submitting}
@@ -260,11 +275,11 @@ export const LoginPanel = (): JSX.Element => {
           </label>
 
           <label className="block">
-            <span className="text-sm text-gray-700">Password</span>
+            <span className={labelCls}>Password</span>
             <input
               type="password"
               autoComplete="current-password"
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-violet-400"
+              className={inputCls}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={submitting}
@@ -272,10 +287,10 @@ export const LoginPanel = (): JSX.Element => {
             />
           </label>
 
-          {loginError && <p className="text-sm text-red-600">{loginError}</p>}
+          {loginError && <p className="text-sm text-red-300">{loginError}</p>}
 
           {isLocked ? (
-            <div className="rounded-md bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-800">
+            <div className="rounded-md bg-gray-700 border border-yellow-400 p-3 text-sm text-yellow-300">
               Too many attempts. Try again in {lockMinutes}:
               {String(lockSeconds).padStart(2, "0")}.
             </div>
@@ -285,26 +300,26 @@ export const LoginPanel = (): JSX.Element => {
             <button
               type="submit"
               disabled={submitting || isLocked}
-              className="flex-1 rounded-md bg-violet-600 text-white px-4 py-2 font-semibold hover:bg-violet-500 disabled:opacity-50"
+              className={`${primaryBtnCls} flex-1`}
             >
               {submitting ? "Signing in…" : "Sign in"}
             </button>
             <button
               type="button"
               onClick={() => setView("chooser")}
-              className="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-50"
+              className={secondaryBtnCls}
               disabled={submitting}
             >
               Back
             </button>
           </div>
 
-          <p className="text-sm text-gray-600 pt-2">
+          <p className="text-sm text-violet-100 pt-2">
             No account yet?{" "}
             <button
               type="button"
               onClick={() => setView("register")}
-              className="text-violet-600 hover:underline"
+              className="text-violet-300 hover:underline"
             >
               Create one
             </button>
@@ -315,11 +330,11 @@ export const LoginPanel = (): JSX.Element => {
       {view === "register" && (
         <form onSubmit={handleRegister} className="space-y-4">
           <label className="block">
-            <span className="text-sm text-gray-700">Email</span>
+            <span className={labelCls}>Email</span>
             <input
               type="email"
               autoComplete="email"
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-violet-400"
+              className={inputCls}
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -330,16 +345,16 @@ export const LoginPanel = (): JSX.Element => {
               required
             />
             {regErrors.email && (
-              <p className="text-xs text-red-600 mt-1">{regErrors.email}</p>
+              <p className="text-xs text-red-300 mt-1">{regErrors.email}</p>
             )}
           </label>
 
           <label className="block">
-            <span className="text-sm text-gray-700">Password</span>
+            <span className={labelCls}>Password</span>
             <input
               type="password"
               autoComplete="new-password"
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-violet-400"
+              className={inputCls}
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
@@ -349,12 +364,12 @@ export const LoginPanel = (): JSX.Element => {
               disabled={submitting}
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-violet-200 mt-1">
               Minimum 10 characters, with uppercase, lowercase, and a special
               character.
             </p>
             {regErrors.password && (
-              <p className="text-xs text-red-600 mt-1">{regErrors.password}</p>
+              <p className="text-xs text-red-300 mt-1">{regErrors.password}</p>
             )}
           </label>
 
@@ -362,26 +377,26 @@ export const LoginPanel = (): JSX.Element => {
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 rounded-md bg-violet-600 text-white px-4 py-2 font-semibold hover:bg-violet-500 disabled:opacity-50"
+              className={`${primaryBtnCls} flex-1`}
             >
               {submitting ? "Creating…" : "Create account"}
             </button>
             <button
               type="button"
               onClick={() => setView("chooser")}
-              className="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-50"
+              className={secondaryBtnCls}
               disabled={submitting}
             >
               Back
             </button>
           </div>
 
-          <p className="text-sm text-gray-600 pt-2">
+          <p className="text-sm text-violet-100 pt-2">
             Already have an account?{" "}
             <button
               type="button"
               onClick={() => setView("login")}
-              className="text-violet-600 hover:underline"
+              className="text-violet-300 hover:underline"
             >
               Sign in
             </button>
