@@ -128,16 +128,17 @@ export class ProjectService {
    * @param projectId
    * @return The project JSON data or null if not found.
    */
-  async getJSONProject(
-    projectId: number,
-  ): Promise<{ JSONProject: string | null }> {
+
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
     });
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
 
     const json = await this.s3Service.getJson(projectId);
-    return { JSONProject: json };
+    if(!json){
+      throw new NotFoundException('Json fro project ${projectId} not found');
+    }
+    return { JSONProject: json! };
   }
 
   /**
