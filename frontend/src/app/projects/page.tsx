@@ -16,9 +16,11 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { useRouter } from "next/navigation";
 import type { Vector2d } from "konva/lib/types";
 import { isAxiosError, statusMessage } from "@/lib/auth.tools"; // ELBU ADDED
+import { useRequireAuthState } from "@/hooks/auth"; // ELBU ADDED
 
 export default function ProjectSelection() {
   const router = useRouter();
+  const { checking, allowed } = useRequireAuthState();
 
   const [menuDisplay, setMenuDisplay] = useState<boolean>(false);
 
@@ -82,6 +84,7 @@ export default function ProjectSelection() {
   const [selectedSortType, setSelectedSortType] = useState<string>("nameAsc");
 
   useEffect(() => {
+    if (!allowed) return;
     const fetchData = async () => {
       setIsLoading(true);
       setHasError(false);
@@ -104,7 +107,7 @@ export default function ProjectSelection() {
       }
     };
     void fetchData();
-  }, []);
+  }, [allowed]);
 
   const sortedProjects = useMemo(() => {
     if (!projects) return null;
@@ -185,6 +188,29 @@ export default function ProjectSelection() {
       router.push(`/editor/${projectId}`);
     }
   }, [projectId, router]);
+
+  // ---------- BLOCKING LOADER while checking or redirecting ----------
+  if (checking || !allowed) {
+    return (
+      <main className="bg-gray-900 min-h-screen p-6">
+        <div className="bg-gray-700 rounded-xl relative">
+          {/* overlay modal */}
+          <div className="fixed inset-0 bg-black opacity-80 z-50" />
+          <div className="fixed inset-0 flex justify-center items-center z-50">
+            <div className="bg-gray-600 rounded-2xl border border-violet-300 p-6 shadow">
+              <div className="w-[320px] flex items-center justify-center">
+                <LoadingComponent />
+              </div>
+              <p className="text-violet-50 text-center mt-4">
+                Checking your session…
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+  // -------------------------------------------------------------------
 
   const projectCreationPopup = (
     <div className="flex flex-row border-2 border-violet-300 p-2 bg-gray-500 rounded-xl gap-4">

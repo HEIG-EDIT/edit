@@ -4,7 +4,13 @@ import api from "@/lib/api";
 
 import Konva from "konva";
 import dynamic from "next/dynamic";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 
 import { MOVE_TOOL } from "@/components/editor/tools/move";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
@@ -28,10 +34,14 @@ import {
   CanvasState,
   EventHandlers,
 } from "@/components/editor/editorContext";
-import { Vector2d } from "konva/lib/types";
+import type { Vector2d } from "konva/lib/types";
 
 import { useParams, useRouter } from "next/navigation";
 import { Project } from "@/models/editor/project";
+import { LoadingComponent } from "@/components/api/loadingComponent";
+import { ErrorComponent } from "@/components/api/errorComponent";
+import { isAxiosError, statusMessage } from "@/lib/auth.tools";
+import { useRequireAuthState } from "@/hooks/auth";
 
 const Canvas = dynamic(() => import("@/components/editor/canvas"), {
   ssr: false,
@@ -52,7 +62,11 @@ for (const tool of Object.values(TOOLS)) {
 }
 
 export default function EditorPage() {
-  const { projectId } = useParams();
+  const router = useRouter();
+  const authReady = useRequireAuthState(); // prevents flash while auth is being checked
+
+  const params = useParams();
+  const projectId = useMemo(() => String(params.projectId), [params.projectId]);
 
   const {
     state: layers,
@@ -65,23 +79,52 @@ export default function EditorPage() {
     canRedo,
   } = useUndoRedo(Array<Layer>());
 
-  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [statusNote, setStatusNote] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!authReady || !projectId) return;
+
     const loadProject = async () => {
+      setIsLoading(true);
+      setHasError(false);
+      setStatusNote(null);
       try {
-        const res = await api.get(`/api/projects/${projectId}/json`);
-        if (res.data.JSONProject !== null) {
-          const project = await Project.fromJSON(res.data.JSONProject);
-          setLayers(project.layers);
+        const res = await api.get<{ JSONProject: string | null }>(
+          `/projects/${projectId}/json`,
+          { headers: { "Cache-Control": "no-store" } },
+        );
+        if (res.status === 200) {
+          if (res.data.JSONProject) {
+            const project = await Project.fromJSON(res.data.JSONProject);
+            setLayers(project.layers);
+          } else {
+            // Empty project is valid; just leave layers empty.
+          }
+        } else {
+          setHasError(true);
+          setStatusNote(statusMessage(res.status));
         }
-      } catch {
-        // TODO : gerer authentification
-        router.push("/projects");
+      } catch (e) {
+        setHasError(true);
+        if (isAxiosError(e)) {
+          const st = e.response?.status;
+          setStatusNote(statusMessage(st));
+          // Friendly redirects for common cases
+          if (st === 401) router.replace(`/login?next=/editor/${projectId}`);
+          if (st === 403 || st === 404) {
+            // No access / not found → go back to projects after a short delay
+            setTimeout(() => router.replace("/projects"), 400);
+          }
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
-    loadProject();
-  }, []);
+
+    void loadProject();
+  }, [authReady, projectId, router, setLayers]);
 
   const [nameSelectedTool, setNameSelectedTool] = useState<string>(
     MOVE_TOOL.name,
@@ -110,7 +153,6 @@ export default function EditorPage() {
     });
 
     resizeObserver.observe(container);
-
     return () => resizeObserver.disconnect();
   }, []);
 
@@ -121,10 +163,7 @@ export default function EditorPage() {
 
   const stageRef = useRef<Konva.Stage>(null);
   const [canvasState, setCanvasState] = useState<CanvasState>({
-    position: {
-      x: 0,
-      y: 0,
-    },
+    position: { x: 0, y: 0 },
     scale: 1,
   });
 
@@ -134,13 +173,10 @@ export default function EditorPage() {
 
   const getCanvasPointerPosition = () => {
     const stagePosition = stageRef?.current?.getPointerPosition();
-    if (!stagePosition) {
-      // Should not happen
+    if (!stagePosition)
       throw new Error("Could not get the stage pointer position");
-    }
 
     const canvas = canvasState;
-
     return {
       x: (stagePosition.x - canvas.position.x) / canvas.scale,
       y: (stagePosition.y - canvas.position.y) / canvas.scale,
@@ -151,27 +187,18 @@ export default function EditorPage() {
   const findLayer = useCallback(
     (layerId: string): [number, Layer] => {
       for (const [i, layer] of layers.entries()) {
-        if (layer.id === layerId) {
-          return [i, layer];
-        }
+        if (layer.id === layerId) return [i, layer];
       }
-
       throw Error(`Could not find layer with id ${layerId}`);
     },
     [layers],
   );
 
   const updateLayer = useCallback(
-    (
-      layerId: LayerId,
-      callback: LayerUpdateCallback,
-      virtual: boolean = false,
-    ) => {
+    (layerId: LayerId, callback: LayerUpdateCallback, virtual = false) => {
       const [i, layer] = findLayer(layerId);
       const newLayer = callback(layer);
-
       const fun = virtual ? setVirtualLayers : setLayers;
-
       fun((prev: Layer[]) => [
         ...prev.slice(0, i),
         newLayer,
@@ -183,18 +210,34 @@ export default function EditorPage() {
 
   const editSelectedLayers = (
     callback: LayerUpdateCallback,
-    virtual: boolean = false,
+    virtual = false,
   ) => {
     const fun = virtual ? setVirtualLayers : setLayers;
-    fun((prev) => {
-      return prev.map((layer) => {
-        if (!layer.isSelected) {
-          return layer;
-        }
-        return callback(layer);
-      });
-    });
+    fun((prev) =>
+      prev.map((layer) => (layer.isSelected ? callback(layer) : layer)),
+    );
   };
+
+  // ELBU UPDATED : Gated render: show loader / error until project is fetched
+  if (isLoading || !authReady) {
+    return (
+      <main className="bg-gray-900 min-h-screen flex items-center justify-center">
+        <LoadingComponent />
+      </main>
+    );
+  }
+  if (hasError) {
+    return (
+      <main className="bg-gray-900 min-h-screen flex items-center justify-center p-6">
+        <div className="bg-gray-700 rounded-xl p-4 w-full max-w-xl">
+          <ErrorComponent subject="project" />
+          {statusNote && (
+            <p className="mt-3 text-sm text-yellow-300">{statusNote}</p>
+          )}
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="bg-gray-900 min-h-screen">
@@ -202,20 +245,16 @@ export default function EditorPage() {
         value={{
           isHoldingPrimary,
           isTransforming,
-
           layers,
           setVirtualLayers,
           updateLayer,
           editSelectedLayers,
           commitVirtualLayers,
-
           getCanvasPointerPosition,
-
           canvasState,
           setCanvasState,
           stageRef,
           layerRef,
-
           toolEventHandlers,
           setToolEventHandlers,
         }}
