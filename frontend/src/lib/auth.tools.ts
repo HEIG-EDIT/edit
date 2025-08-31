@@ -2,9 +2,12 @@
 import api from "@/lib/api";
 import type { AxiosError } from "axios";
 
+// Type guard for AxiosError
 export function isAxiosError(err: unknown): err is AxiosError {
   return (
-    typeof err === "object" && err !== null && "isAxiosError" in (err as any)
+    typeof err === "object" &&
+    err !== null &&
+    "isAxiosError" in (err as Record<string, unknown>)
   );
 }
 
@@ -15,6 +18,32 @@ export function getCookie(name: string): string | null {
   const parts = value.split(`; ${name}=`);
   if (parts.length < 2) return null;
   return decodeURIComponent(parts.pop()!.split(";").shift()!);
+}
+
+/** Map common backend statuses to short UI-friendly messages. // UPDATED */
+export function statusMessage(status?: number): string {
+  switch (status) {
+    case 200:
+    case 201:
+    case 204:
+      return "Success.";
+    case 400:
+      return "Bad request.";
+    case 401:
+      return "Authentication required.";
+    case 403:
+      return "You don’t have permission to do this.";
+    case 404:
+      return "Not found.";
+    case 409:
+      return "Conflict. Try a different value.";
+    case 422:
+      return "Validation failed.";
+    case 500:
+      return "Server error. Please try again later.";
+    default:
+      return "Unexpected error.";
+  }
 }
 
 /**
@@ -38,13 +67,9 @@ export async function logoutCurrentDevice(): Promise<{
   } catch (err) {
     if (isAxiosError(err)) {
       const status = err.response?.status;
-      // Optional: quick visibility while debugging
-      // console.log("logout error", status, err.response?.data);
-
       if (status === 404) return { ok: true, message: "Already logged out" };
       if (status === 401) return { ok: true, message: "No active session" };
       if (status === 400) {
-        // Final attempt if cookie wasn't present initially
         const deviceId = getCookie("device_id");
         if (deviceId) {
           try {

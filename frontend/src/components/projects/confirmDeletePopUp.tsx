@@ -1,6 +1,7 @@
 import api from "@/lib/api";
 import React, { Dispatch, Fragment, SetStateAction, useState } from "react";
 import { createPortal } from "react-dom";
+import { isAxiosError, statusMessage } from "@/lib/auth.tools"; // UPDATED
 
 export const ConfirmDeletePopUp = ({
   setConfirmDeleteDisplay,
@@ -11,15 +12,26 @@ export const ConfirmDeletePopUp = ({
   projectId: number;
   deleteProject: (id: number) => void;
 }) => {
-  const [hasError, setHasError] = useState<boolean>(false);
+  const [errorText, setErrorText] = useState<string | null>(null);
 
-  const callDeleteProject = async (projectId: number) => {
+  const callDeleteProject = async (pid: number) => {
     try {
-      await api.delete(`/api/projects/${projectId}`);
-      deleteProject(projectId);
-      setConfirmDeleteDisplay(false);
-    } catch {
-      setHasError(true);
+      setErrorText(null);
+      const res = await api.delete<void>(`/projects/${pid}`, {
+        headers: { "Cache-Control": "no-store" },
+      });
+      if (res.status === 204) {
+        deleteProject(pid);
+        setConfirmDeleteDisplay(false);
+      } else {
+        setErrorText("Unexpected response from server.");
+      }
+    } catch (e) {
+      if (isAxiosError(e)) {
+        setErrorText(statusMessage(e.response?.status));
+      } else {
+        setErrorText("An error occurred while deleting the project.");
+      }
     }
   };
 
@@ -29,8 +41,8 @@ export const ConfirmDeletePopUp = ({
       <div className="fixed inset-0 flex justify-center items-center z-100">
         <div className="relative bg-gray-600 rounded-2xl border border-violet-300 p-4">
           <p className="text-violet-50 font-bold mb-4">
-            {hasError
-              ? "Error while deleting project, try later..."
+            {errorText
+              ? errorText
               : "Are you sure you want to delete this project? This action cannot be undone."}
           </p>
           <div className="flex flex-row gap-4 justify-end">
@@ -42,7 +54,7 @@ export const ConfirmDeletePopUp = ({
             </button>
             <button
               className="bg-violet-50 border-2 border-violet-500 rounded-2xl p-2 w-auto cursor-pointer"
-              onClick={() => callDeleteProject(projectId)}
+              onClick={() => void callDeleteProject(projectId)}
             >
               Delete
             </button>

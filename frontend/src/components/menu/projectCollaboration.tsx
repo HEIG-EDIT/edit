@@ -1,59 +1,168 @@
+"use client";
+
 import { useParams, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AuthorizedUsers } from "./authorizedUsers";
-import { Project } from "@/models/api/project/project";
+import type { Project } from "@/models/api/project/project";
 import api from "@/lib/api";
 import { ErrorComponent } from "../api/errorComponent";
 import { LoadingComponent } from "../api/loadingComponent";
+import type { AxiosError } from "axios";
 
-export const ProjectCollaboration = () => {
-  const currentPage = usePathname().split("/")[1];
+// ELBU UPDATED : made quite a few changes to the original component
+// Three mode of project lists:
+// - "all" = all accessible projects (owned + collaborator) from /projects/accessible
+// - "owned" = only owned projects from /projects/owned
+// - "collab" = only collaborator projects (accessible - owned) from both endpoints
+// Added HTTP status respect
 
+type Mode = "all" | "owned" | "collab";
+
+type Props = {
+  mode: Mode; // "all" → /projects/accessible, "owned" → /projects/owned, "collab" → accessible - owned
+};
+
+function isAxiosError(err: unknown): err is AxiosError {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "isAxiosError" in (err as Record<string, unknown>)
+  );
+}
+
+export const ProjectCollaboration = ({ mode }: Props) => {
+  const currentPage = usePathname().split("/")[1] ?? "";
   const params = useParams();
 
-  const [ownerProjects, setOwnerProjects] = useState<Project[] | null>(null);
+  // master lists
+  const [accessibleProjects, setAccessibleProjects] = useState<
+    Project[] | null
+  >(null);
+  const [ownedProjects, setOwnedProjects] = useState<Project[] | null>(null);
+
+  // UI state
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
 
+  // fetch data according to mode
   useEffect(() => {
-    const fetchData = async () => {
+    let alive = true;
+
+    const fetchAll = async () => {
+      setIsLoading(true);
+      setHasError(false);
       try {
-        // UPDATE fetch to get only owned projects
-        // It uses authentication token to get the user id
-        const res = await api.get("/projects/owned");
-        if (res.data.length > 0) {
-          setOwnerProjects(
-            res.data.sort((p1: Project, p2: Project) =>
-              p1.projectName.localeCompare(p2.projectName, "en", {
+        if (mode === "all") {
+          const res = await api.get<Project[]>("/projects/accessible", {
+            headers: { "Cache-Control": "no-store" },
+          });
+          if (!alive) return;
+          if (res.status === 200) {
+            const sorted = [...res.data].sort((a, b) =>
+              a.projectName.localeCompare(b.projectName, "en", {
                 sensitivity: "base",
               }),
-            ),
-          );
+            );
+            setAccessibleProjects(sorted);
+            setOwnedProjects(null);
+          } else {
+            setHasError(true);
+          }
+        } else if (mode === "owned") {
+          const res = await api.get<Project[]>("/projects/owned", {
+            headers: { "Cache-Control": "no-store" },
+          });
+          if (!alive) return;
+          if (res.status === 200) {
+            const sorted = [...res.data].sort((a, b) =>
+              a.projectName.localeCompare(b.projectName, "en", {
+                sensitivity: "base",
+              }),
+            );
+            setOwnedProjects(sorted);
+            setAccessibleProjects(null);
+          } else {
+            setHasError(true);
+          }
+        } else {
+          // collab = accessible - owned
+          const [accRes, ownRes] = await Promise.all([
+            api.get<Project[]>("/projects/accessible", {
+              headers: { "Cache-Control": "no-store" },
+            }),
+            api.get<Project[]>("/projects/owned", {
+              headers: { "Cache-Control": "no-store" },
+            }),
+          ]);
+          if (!alive) return;
+          if (accRes.status === 200 && ownRes.status === 200) {
+            const accSorted = [...accRes.data].sort((a, b) =>
+              a.projectName.localeCompare(b.projectName, "en", {
+                sensitivity: "base",
+              }),
+            );
+            const ownSorted = [...ownRes.data].sort((a, b) =>
+              a.projectName.localeCompare(b.projectName, "en", {
+                sensitivity: "base",
+              }),
+            );
+            setAccessibleProjects(accSorted);
+            setOwnedProjects(ownSorted);
+          } else {
+            setHasError(true);
+          }
         }
-      } catch {
-        setHasError(true);
+      } catch (err) {
+        if (isAxiosError(err)) {
+          // Respect backend statuses: 401/403/404 → show your generic error component as before
+          // You can branch per status if you want more specific copy.
+          // const status = err.response?.status;
+        }
+        if (alive) setHasError(true);
       } finally {
-        setIsLoading(false);
+        if (alive) setIsLoading(false);
       }
     };
-    fetchData();
-  }, []);
 
+    void fetchAll();
+    return () => {
+      alive = false;
+    };
+  }, [mode]);
+
+  // choose the working list for the current mode
+  const listForMode: Project[] = useMemo(() => {
+    if (mode === "all") return accessibleProjects ?? [];
+    if (mode === "owned") return ownedProjects ?? [];
+    // collab
+    const acc = accessibleProjects ?? [];
+    const own = ownedProjects ?? [];
+    const ownedIds = new Set<number>(own.map((p) => p.projectId));
+    return acc.filter((p) => !ownedIds.has(p.projectId));
+  }, [mode, accessibleProjects, ownedProjects]);
+
+  // select a project by URL or default (first) when list changes
   useEffect(() => {
-    if (ownerProjects && ownerProjects.length > 0) {
-      if (currentPage == "projects") {
-        setSelectedProject(ownerProjects[0]);
-      } else {
-        const urlProject = ownerProjects.find(
-          (p) => String(p.projectId) === params.projectId,
-        );
-        if (urlProject !== undefined) {
-          setSelectedProject(urlProject);
-        }
-      }
+    if (listForMode.length === 0) {
+      setSelectedProject(null);
+      return;
     }
-  }, [ownerProjects, params.projectId]);
+    if (currentPage === "projects") {
+      setSelectedProject(listForMode[0]);
+      return;
+    }
+    // e.g. /project/[projectId]
+    const routePid = String(
+      (params as Record<string, string | string[]>).projectId ?? "",
+    );
+    if (routePid) {
+      const found = listForMode.find((p) => String(p.projectId) === routePid);
+      setSelectedProject(found ?? null);
+    } else {
+      setSelectedProject(listForMode[0]);
+    }
+  }, [listForMode, currentPage, params]);
 
   if (hasError) {
     return <ErrorComponent subject="projects" />;
@@ -63,59 +172,72 @@ export const ProjectCollaboration = () => {
     return <LoadingComponent />;
   }
 
-  if (currentPage == "projects" && !ownerProjects) {
-    return (
-      <p className="text-violet-50 font-bold text-xl">
-        No owned project found.
-      </p>
-    );
+  // empty states per mode
+  if (listForMode.length === 0) {
+    const label =
+      mode === "all"
+        ? "No accessible project found."
+        : mode === "owned"
+          ? "No owned project found."
+          : "No collaborator project found.";
+    return <p className="text-violet-50 font-bold text-xl">{label}</p>;
   }
 
   if (!selectedProject) {
-    return (
-      <p className="text-violet-50 font-bold text-xl">
-        Not owner of this project.
-      </p>
-    );
+    const label =
+      currentPage === "projects"
+        ? "Select a project to manage collaborators."
+        : "You do not have access to this project in this view.";
+    return <p className="text-violet-50 font-bold text-xl">{label}</p>;
   }
 
   return (
     <div className="flex flex-col justify-between gap-4">
       <div className="flex">
         <p className="text-violet-50 font-bold text-xl mb-2">
-          Project collaboration
+          Project collaboration{" "}
+          {mode === "all"
+            ? "(All)"
+            : mode === "owned"
+              ? "(Owned)"
+              : "(Collaborator)"}
         </p>
       </div>
-      {currentPage == "projects" && (
+
+      {currentPage === "projects" && (
         <div className="flex flex-row justify-between">
           <div>
             <select
               className="bg-violet-500 text-violet-50 rounded p-2 cursor-pointer w-80"
-              value={selectedProject?.projectName}
+              value={selectedProject.projectName}
               onChange={(e) => {
-                setSelectedProject(
-                  ownerProjects?.find((p) => p.projectName == e.target.value) ||
-                    null,
-                );
+                const next =
+                  listForMode.find((p) => p.projectName === e.target.value) ??
+                  null;
+                setSelectedProject(next);
               }}
             >
-              {ownerProjects?.map((p: Project) => {
-                return <option key={p.projectId}>{p.projectName}</option>;
-              })}
+              {listForMode.map((p) => (
+                <option key={p.projectId}>{p.projectName}</option>
+              ))}
             </select>
           </div>
           <div>
-            <img
-              src={`data:image/png;base64,${selectedProject?.thumbnail}`}
-              width={160}
-              height={90}
-              className="object-cover mr-6"
-            />
+            {selectedProject.thumbnail && (
+              <img
+                src={`data:image/png;base64,${selectedProject.thumbnail}`}
+                width={160}
+                height={90}
+                className="object-cover mr-6"
+                alt="Project thumbnail"
+              />
+            )}
           </div>
         </div>
       )}
+
       <div className="bg-gray-700 rounded-xl p-2 mb-4">
-        <AuthorizedUsers projectId={selectedProject?.projectId} />
+        <AuthorizedUsers projectId={selectedProject.projectId} />
       </div>
     </div>
   );

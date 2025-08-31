@@ -36,6 +36,11 @@ export const Menu = ({
 
   useOnClickOutside(containerRef, handleClickOutside);
 
+  // Small wrappers to bind the prop cleanly (keeps MenuEntry shape unchanged)
+  const ProjectAll = () => <ProjectCollaboration mode="all" />;
+  const ProjectOwned = () => <ProjectCollaboration mode="owned" />;
+  const ProjectCollab = () => <ProjectCollaboration mode="collab" />;
+
   const MENU_ENTRIES: Record<string, MenuEntry> = {
     user: {
       name: "user",
@@ -46,15 +51,35 @@ export const Menu = ({
       },
       associatedComponent: UserSettings,
     },
-    projectCollaboration: {
-      name: "projectCollaboration",
+    projectAll: {
+      name: "projectAll",
       button: {
         icon: <TuneRoundedIcon />,
-        text: "Project collab.",
+        text: "All projects",
         onClick: () =>
-          setNameSelectedMenuEntry(MENU_ENTRIES["projectCollaboration"].name),
+          setNameSelectedMenuEntry(MENU_ENTRIES["projectAll"].name),
       },
-      associatedComponent: ProjectCollaboration,
+      associatedComponent: ProjectAll,
+    },
+    projectOwned: {
+      name: "projectOwned",
+      button: {
+        icon: <TuneRoundedIcon />,
+        text: "Owned projects",
+        onClick: () =>
+          setNameSelectedMenuEntry(MENU_ENTRIES["projectOwned"].name),
+      },
+      associatedComponent: ProjectOwned,
+    },
+    projectCollab: {
+      name: "projectCollab",
+      button: {
+        icon: <TuneRoundedIcon />,
+        text: "Collaborations",
+        onClick: () =>
+          setNameSelectedMenuEntry(MENU_ENTRIES["projectCollab"].name),
+      },
+      associatedComponent: ProjectCollab,
     },
   };
 
@@ -118,7 +143,7 @@ export const Menu = ({
                 })}
               </div>
               <div className="flex flex-col gap-4">
-                {currentPage != "projects" && (
+                {currentPage !== "projects" && (
                   <EntryButton
                     icon={<HomeRoundedIcon />}
                     text="View projects"

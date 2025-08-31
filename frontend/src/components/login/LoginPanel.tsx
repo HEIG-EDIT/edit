@@ -1,46 +1,49 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { JSX, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 
 type View = "chooser" | "login" | "register";
 
 const MAX_ATTEMPTS = 8;
-const WINDOW_MS = 10 * 60 * 1000; //10 minutes
+const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
 type Attempts = { count: number; firstAt: number };
 
-function getAttempts(): Attempts | null {
-  try {
-    const raw = localStorage.getItem("loginAttempts");
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Attempts;
-    if (
-      typeof parsed.count === "number" &&
-      typeof parsed.firstAt === "number"
-    ) {
-      return parsed;
-    }
-  } catch {}
-  return null;
-}
-function setAttempts(a: Attempts) {
-  localStorage.setItem("loginAttempts", JSON.stringify(a));
-}
-function clearAttempts() {
-  localStorage.removeItem("loginAttempts");
+/* Type guard to validate unknown JSON safely (fixes redundant typeof checks) */
+function isAttempts(x: unknown): x is Attempts {
+  if (!x || typeof x !== "object") return false;
+  const obj = x as Record<string, unknown>;
+  return Number.isFinite(obj.count) && Number.isFinite(obj.firstAt);
 }
 
-function validateEmail(email: string) {
+function getAttempts(): Attempts | null {
+  try {
+    const raw = globalThis.localStorage?.getItem("loginAttempts");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    return isAttempts(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+function setAttempts(a: Attempts): void {
+  globalThis.localStorage?.setItem("loginAttempts", JSON.stringify(a));
+}
+function clearAttempts(): void {
+  globalThis.localStorage?.removeItem("loginAttempts");
+}
+
+function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
-function validatePassword(pw: string) {
-  // min 8 chars, at least one letter and one special char, max 64 chars
+// Policy: 10–64 chars, at least one uppercase, one lowercase, and one special char
+function validatePassword(pw: string): boolean {
   return /^(?=.*[A-Z])(?=.*[a-z])(?=.*[\W_]).{10,64}$/.test(pw);
 }
 
-export const LoginPanel = () => {
+export const LoginPanel = (): JSX.Element => {
   const router = useRouter();
   const [view, setView] = useState<View>("chooser");
 
@@ -76,12 +79,15 @@ export const LoginPanel = () => {
     }
   }, []);
 
-  // Simple 1s ticker for countdown UI
+  // 1s ticker for countdown UI (use globalThis to satisfy UMD-global rule)
   useEffect(() => {
     if (!lockedUntil) return;
-    intervalRef.current = window.setInterval(() => setNow(Date.now()), 1000);
+    intervalRef.current = globalThis.setInterval(
+      () => setNow(Date.now()),
+      1000,
+    ) as unknown as number;
     return () => {
-      if (intervalRef.current) window.clearInterval(intervalRef.current);
+      if (intervalRef.current) globalThis.clearInterval(intervalRef.current);
     };
   }, [lockedUntil]);
 
@@ -95,12 +101,11 @@ export const LoginPanel = () => {
   const lockSeconds = Math.floor((lockedRemainingMs % 60000) / 1000);
 
   // Attempt bookkeeping
-  function recordLoginFailure() {
+  function recordLoginFailure(): void {
     const a = getAttempts();
     const nowTs = Date.now();
     if (!a) {
-      const next: Attempts = { count: 1, firstAt: nowTs };
-      setAttempts(next);
+      setAttempts({ count: 1, firstAt: nowTs });
       return;
     }
     const windowEnd = a.firstAt + WINDOW_MS;
@@ -111,18 +116,19 @@ export const LoginPanel = () => {
       return;
     }
     const nextCount = a.count + 1;
-    const next: Attempts = { count: nextCount, firstAt: a.firstAt };
-    setAttempts(next);
+    setAttempts({ count: nextCount, firstAt: a.firstAt });
     if (nextCount >= MAX_ATTEMPTS) {
       setLockedUntil(windowEnd);
     }
   }
-  function recordLoginSuccess() {
+  function recordLoginSuccess(): void {
     clearAttempts();
     setLockedUntil(null);
   }
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleLogin(
+    e: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     e.preventDefault();
     setLoginError(null);
 
@@ -130,11 +136,10 @@ export const LoginPanel = () => {
 
     try {
       setSubmitting(true);
-      await api.post("auth/login", { email, password }); // httpOnly cookies set by server
+      await api.post("/auth/login", { email, password }); // httpOnly cookies set by server
       recordLoginSuccess();
       router.push("/projects");
     } catch {
-      // Keep it generic
       setLoginError("Something is wrong. Please check your credentials.");
       recordLoginFailure();
     } finally {
@@ -142,20 +147,22 @@ export const LoginPanel = () => {
     }
   }
 
-  function validateRegisterFields() {
+  function validateRegisterFields(): boolean {
     const errs: { email?: string; password?: string } = {};
     if (!validateEmail(email)) {
       errs.email = "Please enter a valid email address.";
     }
     if (!validatePassword(password)) {
       errs.password =
-        "Minimum 8 characters with at least one letter and one number.";
+        "Minimum 10 characters, with uppercase, lowercase, and a special character.";
     }
     setRegErrors(errs);
     return Object.keys(errs).length === 0;
   }
 
-  async function handleRegister(e: React.FormEvent) {
+  async function handleRegister(
+    e: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     e.preventDefault();
     setRegErrors({});
     if (!validateRegisterFields()) return;
@@ -163,21 +170,18 @@ export const LoginPanel = () => {
     try {
       setSubmitting(true);
       await api.post("/auth/register", { email, password });
-      // auto-login after register by calling /auth/login
-      await api.post("/auth/login", { email, password });
+      await api.post("/auth/login", { email, password }); // auto-login
       router.push("/projects");
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {
-      // Keep the message generic on purpose
+    } catch {
       setRegErrors({ email: "Registration failed. Please try again later." });
     } finally {
       setSubmitting(false);
     }
   }
 
-  function startProvider(provider: "google" | "microsoft" | "linkedin") {
+  function startProvider(provider: "google" | "microsoft" | "linkedin"): void {
     // Redirect to backend OAuth start (cookies will be set on callback)
-    window.location.href = `http://localhost:4000/auth/${provider}`;
+    globalThis.location.href = `http://localhost:4000/auth/${provider}`;
   }
 
   return (
@@ -187,10 +191,11 @@ export const LoginPanel = () => {
       {view === "chooser" && (
         <div className="space-y-4">
           <button
+            type="button"
             onClick={() => setView("login")}
             className="w-full rounded-lg border border-gray-300 px-4 py-3 text-left hover:bg-gray-50"
           >
-            Continue with email & password
+            Continue with email and password
           </button>
 
           <div className="relative my-2">
@@ -204,18 +209,21 @@ export const LoginPanel = () => {
 
           <div className="grid gap-2">
             <button
+              type="button"
               onClick={() => startProvider("google")}
               className="w-full rounded-lg border border-gray-300 px-4 py-3 hover:bg-gray-50"
             >
               Continue with Google
             </button>
             <button
+              type="button"
               onClick={() => startProvider("microsoft")}
               className="w-full rounded-lg border border-gray-300 px-4 py-3 hover:bg-gray-50"
             >
               Continue with Microsoft
             </button>
             <button
+              type="button"
               onClick={() => startProvider("linkedin")}
               className="w-full rounded-lg border border-gray-300 px-4 py-3 hover:bg-gray-50"
             >
@@ -226,6 +234,7 @@ export const LoginPanel = () => {
           <p className="text-sm text-gray-600 pt-4">
             No account yet?{" "}
             <button
+              type="button"
               onClick={() => setView("register")}
               className="text-violet-600 hover:underline"
             >
@@ -293,8 +302,8 @@ export const LoginPanel = () => {
           <p className="text-sm text-gray-600 pt-2">
             No account yet?{" "}
             <button
-              onClick={() => setView("register")}
               type="button"
+              onClick={() => setView("register")}
               className="text-violet-600 hover:underline"
             >
               Create one
@@ -341,7 +350,8 @@ export const LoginPanel = () => {
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              Minimum 8 characters with at least one letter and one number.
+              Minimum 10 characters, with uppercase, lowercase, and a special
+              character.
             </p>
             {regErrors.password && (
               <p className="text-xs text-red-600 mt-1">{regErrors.password}</p>
@@ -369,8 +379,8 @@ export const LoginPanel = () => {
           <p className="text-sm text-gray-600 pt-2">
             Already have an account?{" "}
             <button
-              onClick={() => setView("login")}
               type="button"
+              onClick={() => setView("login")}
               className="text-violet-600 hover:underline"
             >
               Sign in
