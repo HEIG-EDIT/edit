@@ -3,26 +3,40 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-microsoft';
 
+import * as process from 'node:process';
+
+/*
+  Microsoft OAuth2 Strategy
+  Documentation: https://www.npmjs.com/package/passport-microsoft
+*/
 @Injectable()
 export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
   constructor() {
     super({
       clientID: process.env.MICROSOFT_CLIENT_ID as string,
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET as string,
-      // UPDATED: allow either MICROSOFT_CALLBACK_URL or MICROSOFT_CALLBACK_URL_LOCAL
       callbackURL:
         (process.env.MICROSOFT_CALLBACK_URL as string) ??
         (process.env.MICROSOFT_CALLBACK_URL_LOCAL as string),
       tenant: process.env.MICROSOFT_TENANT_ID ?? 'common',
-      // UPDATED: include User.Read so the library can fetch email reliably
       scope: ['openid', 'profile', 'email', 'offline_access', 'User.Read'],
-      // prompt: 'select_account', // optional
     });
   }
 
-  // Keep this as simple as your Google strategy, but with basic fallbacks
-  // to actually get an email from Microsoft tenants.
-  validate(accessToken: string, refreshToken: string, profile: any) {
+  /**
+   * Validate function to extract user information from Microsoft profile
+   * @param _accessToken
+   * @param _refreshToken
+   * @param profile : Profile object returned by Microsoft
+   * @param done : Callback function
+   * @returns Object containing email, oauthId, and provider
+   */
+  validate(
+    _accessToken: string,
+    _refreshToken: string,
+    profile: any,
+    done: Function,
+  ) {
     // Common places where email shows up depending on tenant:
     // - profile.emails[0].value
     // - profile._json.mail
