@@ -1,11 +1,11 @@
 meta {
-  name: change_usermame
+  name: rename_project
   type: http
-  seq: 3
+  seq: 2
 }
 
 patch {
-  url: {{baseUrl}}:{{portBack}}/user/me/username
+  url: {{baseUrl}}:{{portBack}}/projects/rename
   body: json
   auth: inherit
 }
@@ -16,6 +16,7 @@ headers {
 
 body:json {
   {
-    "userName": "JeongHanna"
+    "id" : 11,
+    "name" : "my Project2"
   }
 }

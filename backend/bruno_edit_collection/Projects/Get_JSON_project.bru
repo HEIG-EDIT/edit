@@ -1,0 +1,26 @@
+meta {
+  name: Get_JSON_project
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}:{{portBack}}/projects/:id/json
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 11
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "id" : 11,
+    "name" : "my Project2"
+  }
+}

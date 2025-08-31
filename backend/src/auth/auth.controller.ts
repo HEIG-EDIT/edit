@@ -9,6 +9,8 @@ import {
   HttpCode,
   Headers,
   HttpStatus,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
@@ -22,9 +24,11 @@ import { UsersService } from '../users/users.service';
 import { ConfigService } from '@nestjs/config';
 
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { Public } from '../common/decorators/public.decorator';
 import * as http from '../common/helpers/responses/responses.helper';
 import * as authHelp from '../common/helpers/auth.helpers';
 
+@UseGuards(JwtAuthGuard)
 @Controller('auth')
 export class AuthController {
   private frontendUrl: string;
@@ -45,7 +49,10 @@ export class AuthController {
   // ---------------------------------------------------------------
 
   //-------------------REGISTER---------------------------------------
+  @Public()
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   @Post('register')
+  @HttpCode(HttpStatus.OK)
   async register(
     @Body() body: RegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -57,6 +64,8 @@ export class AuthController {
   }
 
   //-------------------LOCAL LOGIN---------------------------------------
+  @Public()
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
@@ -89,6 +98,7 @@ export class AuthController {
    * Redirection to Google's authentication page.
    * @returns {void}
    */
+  @Public()
   @Get('google')
   @UseGuards(AuthGuard('google'))
   googleLogin() {}
@@ -100,6 +110,7 @@ export class AuthController {
    * @param {Request} req - The request object containing user info from Google.
    * @param {Response} res - The response object to set cookies and redirect.
    */
+  @Public()
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthCallback(
@@ -127,12 +138,14 @@ export class AuthController {
   //-------------------LinkedIn OAUTH2 LOGIN-------------------------------
   //TODO
   // Placeholder for LinkedIn login
+  @Public()
   @Get('linkedin')
   @UseGuards(AuthGuard('linkedin'))
   linkedinLogin() {}
 
   //TODO
   // Placeholder for LinkedIn login callback
+  @Public()
   @Get('linkedin/callback')
   @UseGuards(AuthGuard('linkedin'))
   async linkedinAuthCallback() {}
@@ -140,12 +153,14 @@ export class AuthController {
   //-------------------Microsoft OAUTH2 LOGIN-------------------------------
   //TODO
   // Placeholder for Microsoft login
+  @Public()
   @Get('microsoft')
   @UseGuards(AuthGuard('microsoft'))
   microsoftLogin() {}
 
   //TODO
   // Placeholder for Microsoft login callback
+  @Public()
   @Get('microsoft/callback')
   @UseGuards(AuthGuard('microsoft'))
   async microsoftAuthCallback() {}
@@ -162,6 +177,7 @@ export class AuthController {
    * - Reads deviceId from `X-Device-Id` header or from cookie as a fallback.
    * - Issues new access and refresh tokens, sets them in cookies.
    */
+  @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(
@@ -214,19 +230,15 @@ export class AuthController {
    * - Reads deviceId from `X-Device-Id` header or from body as a fallback.
    * - If you store refresh token in a cookie, clear it here (see comment).
    */
-  @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(
-    @Req()
-    req: Request & {
-      user?: { userId?: number; id?: number; auth_id?: number };
-    },
+    @Req() req: Request & { user?: authHelp.AuthUserShape },
     @Headers('x-device-id') deviceIdHeader: string | undefined,
     @Body() body: LogoutDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
-    const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
+    const userId = authHelp.resolveUserId(req.user);
     if (!userId) {
       // Response 401 Unauthorized with WWW-Authenticate
       return http.unauthorized(res, 'Unauthorized', { scheme: 'Bearer' });
@@ -271,7 +283,7 @@ export class AuthController {
     },
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ revoked: number }> {
-    const userId = req.user?.userId ?? req.user?.id ?? req.user?.auth_id;
+    const userId = authHelp.resolveUserId(req.user);
     if (!userId) {
       // Response 401 Unauthorized with WWW-Authenticate
       return http.unauthorized(res, 'Unauthorized', { scheme: 'Bearer' });

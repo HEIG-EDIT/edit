@@ -1,11 +1,11 @@
 meta {
-  name: change_usermame
+  name: edit_collab_role
   type: http
   seq: 3
 }
 
 patch {
-  url: {{baseUrl}}:{{portBack}}/user/me/username
+  url: {{baseUrl}}:{{portBack}}/collaborations
   body: json
   auth: inherit
 }
@@ -16,6 +16,7 @@ headers {
 
 body:json {
   {
-    "userName": "JeongHanna"
+    "collaborationId" : 11,
+    "roles" : ["creator"]
   }
 }

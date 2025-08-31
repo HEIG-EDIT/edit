@@ -154,7 +154,7 @@ export class UsersService {
     });
   }
 
-  //-------------------------Manage User Methods----------------------------//
+  //-------------------------Manage User Methods-----------------------------//
 
   /**
    * Gets the profile info of the given user.

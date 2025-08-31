@@ -1,0 +1,26 @@
+meta {
+  name: delete_project
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}:{{portBack}}/projects/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 11
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "id" : 11,
+    "name" : "my Project2"
+  }
+}

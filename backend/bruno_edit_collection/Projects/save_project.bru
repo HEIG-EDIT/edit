@@ -1,0 +1,23 @@
+meta {
+  name: save_project
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}:{{portBack}}/projects/save
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "projectId" : 11,
+    "jsonProject" : "{json}",
+    "thumbnailBase64" : "base64"
+  }
+}

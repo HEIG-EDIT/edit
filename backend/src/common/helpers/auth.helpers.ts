@@ -34,3 +34,9 @@ export function setAuthCookies(
     maxAge: params.refreshTtlSec * 1000,
   });
 }
+
+export type AuthUserShape = { userId?: number; id?: number; auth_id?: number };
+
+export function resolveUserId(user?: AuthUserShape) {
+  return user?.userId ?? user?.id ?? user?.auth_id;
+}
