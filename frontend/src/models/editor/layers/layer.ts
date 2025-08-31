@@ -5,6 +5,18 @@ import Konva from "konva";
 
 export type LayerId = string;
 
+export interface SerializedLayer {
+  id: LayerId;
+  name: string;
+  isVisible: boolean;
+  isSelected: boolean;
+  imageURL: string;
+  position: Vector2d;
+  scale: Vector2d;
+  rotation: number;
+  size: Vector2d;
+}
+
 export class Layer {
   name: string;
   id: LayerId; // UUID
@@ -49,6 +61,40 @@ export class Layer {
     result.lines = [...other.lines];
 
     return result;
+  }
+
+  static async fromSerialized(serialized: SerializedLayer): Promise<Layer> {
+    const {
+      id,
+      name,
+      isVisible,
+      isSelected,
+      imageURL,
+      position,
+      scale,
+      rotation,
+      size,
+    } = serialized;
+
+    return new Promise<Layer>((resolve) => {
+      const image = new Image();
+      image.src = imageURL;
+
+      image.onload = () => {
+        let layer = new Layer(name, image);
+        layer = {
+          ...layer,
+          id,
+          isVisible,
+          isSelected,
+          position,
+          scale,
+          rotation,
+          size,
+        };
+        resolve(layer);
+      };
+    });
   }
 
   constructor(

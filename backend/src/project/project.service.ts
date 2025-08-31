@@ -97,24 +97,18 @@ export class ProjectService {
     if (!project)
       throw new NotFoundException(`Project ${dto.projectId} not found`);
 
-    //TODO: Diana Check
-    // validate JSON string is actually JSON --> optional but good to have
+    // validate JSON string is actually JSON 
     try {
       JSON.parse(jsonProject);
     } catch {
       throw new BadRequestException('jsonProject must be valid JSON');
     }
 
-    //TODO: Diana Check
     // run uploads in parallel so we don’t partially write on failure and it’s faster
     await Promise.all([
       this.s3Service.uploadJson(projectId, jsonProject),
       this.s3Service.uploadThumbnail(dto.projectId, dto.thumbnailBase64),
     ]);
-
-    //TODO: Diana Check
-    // This one is not used, I don't know if we will need it in the future
-    //const url = `s3://${process.env.AWS_S3_BUCKET}/${dto.projectId}/`;
 
     // Update DB with last saved date
     await this.prisma.project.update({
@@ -128,16 +122,18 @@ export class ProjectService {
    * @param projectId
    * @return The project JSON data or null if not found.
    */
-  async getJSONProject(
-    projectId: number,
-  ): Promise<{ JSONProject: string | null }> {
+
+  async getJSONProject(projectId: number): Promise<{ JSONProject: string }> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-    });
+      });
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
 
     const json = await this.s3Service.getJson(projectId);
-    return { JSONProject: json };
+    if(!json){
+      throw new NotFoundException('Json fro project ${projectId} not found');
+    }
+    return { JSONProject: json! };
   }
 
   /**
