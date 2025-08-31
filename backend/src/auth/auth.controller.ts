@@ -151,19 +151,47 @@ export class AuthController {
   async linkedinAuthCallback() {}
 
   //-------------------Microsoft OAUTH2 LOGIN-------------------------------
-  //TODO
-  // Placeholder for Microsoft login
+  /**
+   * Login with Microsoft
+   * Endpoint to initiate Microsoft OAuth flow.
+   * Redirection to Microsoft's authentication page.
+   * @returns {void}
+   */
   @Public()
   @Get('microsoft')
   @UseGuards(AuthGuard('microsoft'))
   microsoftLogin() {}
 
-  //TODO
-  // Placeholder for Microsoft login callback
+  /**
+   * Microsoft OAuth callback
+   * Endpoint to handle the callback from Microsoft after user's authentication.
+   * Gets the user info from Microsoft and processes login or registration.
+   * @param {Request} req - The request object containing user info from Microsoft.
+   * @param {Response} res - The response object to set cookies and redirect.
+   */
   @Public()
   @Get('microsoft/callback')
   @UseGuards(AuthGuard('microsoft'))
-  async microsoftAuthCallback() {}
+  async microsoftAuthCallback(
+    @Req() req: Request & { user: any },
+    @Res() res: Response,
+  ) {
+    const result = await this.authService.providerLogin({
+      userInfo: req.user,
+      provider: 'microsoft',
+    });
+    authHelp.setAuthCookies(res, {
+      accessToken: result.accessToken,
+      accessTtlSec: result.accessTtlSec,
+      refreshToken: result.refreshToken,
+      refreshTtlSec: result.refreshTtlSec,
+      deviceId: result.deviceId,
+    });
+
+    // 303 See Other redirect to frontend
+    const target = this.frontendUrl ?? process.env.FRONTEND_URL_PROD ?? '/';
+    return http.seeOther(res, target);
+  }
 
   // ---------------------------------------------------------------
   //Token Management Endpoints

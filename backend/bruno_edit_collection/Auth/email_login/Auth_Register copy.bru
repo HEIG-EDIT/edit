@@ -1,0 +1,22 @@
+meta {
+  name: Auth_Register copy
+  type: http
+  seq: 3
+}
+
+post {
+  url: https://edit-heig-pdg.work.gd/api/auth/register
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "Diana.test@example.com",
+    "password": "S3cure!Passw0rd"
+  }
+}

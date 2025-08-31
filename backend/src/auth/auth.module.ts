@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 
 import { GoogleStrategy } from './strategies/google.strategy';
+import { MicrosoftStrategy } from './strategies/microsoft.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 import { UsersModule } from '../users/users.module';
@@ -46,6 +47,7 @@ import config from '../config/auth.config';
     JwtStrategy,
     UsersService,
     GoogleStrategy,
+    MicrosoftStrategy,
     TokensService,
   ],
   exports: [AuthService, JwtModule],
