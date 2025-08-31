@@ -19,7 +19,6 @@ import { UserSettings } from "./userSettings";
 import { ProjectCollaboration } from "./projectCollaboration";
 import useOnClickOutside from "@/hooks/useOnClickOutside";
 
-// 🟣 uses the updated helpers
 import { logoutCurrentDevice, logoutAllDevices } from "@/lib/auth.tools";
 
 export const Menu = ({
@@ -135,7 +134,7 @@ export const Menu = ({
                 />
                 <EntryButton
                   icon={<LogoutRoundedIcon />}
-                  text="Log out (all devices)"
+                  text="Log out all devices"
                   onClick={handleLogoutAll}
                   style={"bg-violet-50 border-2 border-violet-500"}
                 />

@@ -208,7 +208,7 @@ export class ProjectController {
 
   /**
    * List projects owned by a specific user.
-   * GET /projects/owned/:userId
+   * GET /projects/owned
    * @param {Request} req - The request object containing user information.
    * @param {Response} res - The response object to set headers and status.
    * @returns A list of projects owned by the specified user.

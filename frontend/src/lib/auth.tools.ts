@@ -27,7 +27,7 @@ export async function logoutCurrentDevice(): Promise<{
   message: string;
 }> {
   try {
-    // 🟣 UPDATED: always include device id proactively
+    // Always include device id proactively
     const deviceId = getCookie("device_id") || "";
     await api.post(
       "/auth/logout",

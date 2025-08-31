@@ -122,6 +122,7 @@ export class ProjectService {
    * @param projectId
    * @return The project JSON data or null if not found.
    */
+
   async getJSONProject(projectId: number): Promise<{ JSONProject: string }> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
