@@ -54,7 +54,7 @@ npm run build --if-present
 npm test
 ```
 
-Alternatively, to run ome single test:
+Alternatively, to run one single test:
 
 ```bash
 $ npx jest ./path/to/test/test.name.spec.ts --detectOpenHandles
