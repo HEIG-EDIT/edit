@@ -9,6 +9,13 @@ import { ErrorComponent } from "../api/errorComponent";
 import { LoadingComponent } from "../api/loadingComponent";
 import type { AxiosError } from "axios";
 
+// ELBU UPDATED : made quite a few changes to the original component
+// Three mode of project lists:
+// - "all" = all accessible projects (owned + collaborator) from /projects/accessible
+// - "owned" = only owned projects from /projects/owned
+// - "collab" = only collaborator projects (accessible - owned) from both endpoints
+// Added HTTP status respect
+
 type Mode = "all" | "owned" | "collab";
 
 type Props = {

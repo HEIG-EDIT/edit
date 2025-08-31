@@ -6,7 +6,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import { Menu } from "@/components/menu/menu";
 import { useEffect, useMemo, useState } from "react";
-import { Project } from "@/models/api/project/project";
+import type { Project } from "@/models/api/project/project";
 import api from "@/lib/api";
 import { ListProjects } from "@/components/projects/listProjects";
 import { LoadingComponent } from "@/components/api/loadingComponent";
@@ -14,7 +14,8 @@ import { ErrorComponent } from "@/components/api/errorComponent";
 import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { useRouter } from "next/navigation";
-import { Vector2d } from "konva/lib/types";
+import type { Vector2d } from "konva/lib/types";
+import { isAxiosError, statusMessage } from "@/lib/auth.tools"; // ELBU ADDED
 
 export default function ProjectSelection() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function ProjectSelection() {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
+  const [statusNote, setStatusNote] = useState<string | null>(null); // ELBU ADDED
 
   const [isNewProjectDisplayed, setIsNewProjectDisplayed] = useState(false);
   const [projectSize, setProjectSize] = useState<Vector2d>({ x: 800, y: 800 });
@@ -38,7 +40,6 @@ export default function ProjectSelection() {
     }
   >;
 
-  // TODO : tester la logique des tris
   const SORTING_TYPES: sortType = {
     nameAsc: {
       description: "Project name (A-Z)",
@@ -57,31 +58,23 @@ export default function ProjectSelection() {
     lastSavedAtAsc: {
       description: "Last saved date (oldest first)",
       sortFunction: (p1, p2) => {
-        if (p1.lastSavedAt == null) {
-          return -1;
-        } else if (p2.lastSavedAt == null) {
-          return 1;
-        } else {
-          return (
-            new Date(p1.lastSavedAt).getTime() -
-            new Date(p2.lastSavedAt).getTime()
-          );
-        }
+        if (p1.lastSavedAt == null) return -1;
+        if (p2.lastSavedAt == null) return 1;
+        return (
+          new Date(p1.lastSavedAt).getTime() -
+          new Date(p2.lastSavedAt).getTime()
+        );
       },
     },
     lastSavedAtDesc: {
       description: "Last saved date (newest first)",
       sortFunction: (p1, p2) => {
-        if (p1.lastSavedAt == null) {
-          return 1;
-        } else if (p2.lastSavedAt == null) {
-          return -1;
-        } else {
-          return (
-            new Date(p2.lastSavedAt).getTime() -
-            new Date(p1.lastSavedAt).getTime()
-          );
-        }
+        if (p1.lastSavedAt == null) return 1;
+        if (p2.lastSavedAt == null) return -1;
+        return (
+          new Date(p2.lastSavedAt).getTime() -
+          new Date(p1.lastSavedAt).getTime()
+        );
       },
     },
   };
@@ -90,17 +83,27 @@ export default function ProjectSelection() {
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
+      setHasError(false);
+      setStatusNote(null);
       try {
-        // TODO : @Elbu -> utiliser authentification
-        const res = await api.get("/api/projects/accessible/1");
-        setProjects(res.data);
-      } catch {
+        // UPDATED: correct endpoint + no-store
+        const res = await api.get<Project[]>("/projects/accessible", {
+          headers: { "Cache-Control": "no-store" },
+        });
+        if (res.status === 200) {
+          setProjects(res.data);
+        } else {
+          setHasError(true);
+        }
+      } catch (e) {
         setHasError(true);
+        if (isAxiosError(e)) setStatusNote(statusMessage(e.response?.status));
       } finally {
         setIsLoading(false);
       }
     };
-    fetchData();
+    void fetchData();
   }, []);
 
   const sortedProjects = useMemo(() => {
@@ -108,21 +111,19 @@ export default function ProjectSelection() {
     return [...projects].sort(SORTING_TYPES[selectedSortType].sortFunction);
   }, [projects, selectedSortType]);
 
-  const updateProjectName = (projectId: number, newProjectName: string) => {
+  const updateProjectName = (pid: number, newProjectName: string) => {
     setProjects((prev) =>
       prev
         ? prev.map((p) =>
-            p.projectId === projectId
-              ? { ...p, projectName: newProjectName }
-              : p,
+            p.projectId === pid ? { ...p, projectName: newProjectName } : p,
           )
         : prev,
     );
   };
 
-  const deleteProject = (projectId: number) => {
+  const deleteProject = (pid: number) => {
     setProjects((prev) =>
-      prev ? prev.filter((p) => p.projectId !== projectId) : prev,
+      prev ? prev.filter((p) => p.projectId !== pid) : prev,
     );
   };
 
@@ -132,16 +133,19 @@ export default function ProjectSelection() {
         {isLoading ? (
           <LoadingComponent />
         ) : hasError ? (
-          <ErrorComponent subject="projects" />
+          <>
+            <ErrorComponent subject="projects" />
+            {statusNote && (
+              <p className="text-sm text-yellow-300 mt-2">{statusNote}</p>
+            )}
+          </>
         ) : sortedProjects ? (
           <ListProjects
             projects={sortedProjects}
             updateProjectName={updateProjectName}
             deleteProject={deleteProject}
           />
-        ) : (
-          <></>
-        )}
+        ) : null}
       </div>
     );
   };
@@ -153,19 +157,24 @@ export default function ProjectSelection() {
     />
   );
 
-  // TODO : limiter taille du projet en fonction de la taille de l'ecran de l'utilisateur
-  // TODO : passer dimensions du projet
-  // TODO : adapter page editor
+  // ELBU UPDATED: Create via /projects;
+  // backend reads user from JWT;
+  // 201 Created returns the project { id, ... }
   const handleProjectCreation = async () => {
     try {
-      // TODO : utiliser id du user
-      const res = await api.post("/api/projects", {
-        name: projectName,
-        creatorId: 1,
+      setStatusNote(null);
+      const res = await api.post<{ id: number }>("/projects", {
+        name: projectName.trim(),
+        // TODO ELBU ADDED:
+        // if you later add size to CreateProjectDto, include it here
       });
-      setProjectId(res.data.id);
-    } catch {
-      // TODO : gerer si erreur cote backend
+      if (res.status === 201 && typeof res.data?.id === "number") {
+        setProjectId(res.data.id);
+      } else {
+        setStatusNote("Unexpected response from server.");
+      }
+    } catch (e) {
+      if (isAxiosError(e)) setStatusNote(statusMessage(e.response?.status));
     } finally {
       setIsNewProjectDisplayed(false);
     }
@@ -175,7 +184,7 @@ export default function ProjectSelection() {
     if (projectId) {
       router.push(`/editor/${projectId}`);
     }
-  }, [projectId]);
+  }, [projectId, router]);
 
   const projectCreationPopup = (
     <div className="flex flex-row border-2 border-violet-300 p-2 bg-gray-500 rounded-xl gap-4">
@@ -187,8 +196,8 @@ export default function ProjectSelection() {
             name="width"
             id="width"
             type="number"
-            min="1"
-            defaultValue="800"
+            min={1}
+            defaultValue={800}
             onChange={(e) => {
               setProjectSize({ ...projectSize, x: Number(e.target.value) });
             }}
@@ -201,8 +210,8 @@ export default function ProjectSelection() {
             name="height"
             id="height"
             type="number"
-            min="1"
-            defaultValue="800"
+            min={1}
+            defaultValue={800}
             onChange={(e) => {
               setProjectSize({ ...projectSize, y: Number(e.target.value) });
             }}
@@ -211,7 +220,7 @@ export default function ProjectSelection() {
         <div className="flex flex-row gap-2 items-center">
           <p className="text-violet-50">Project name:</p>
           <input
-            className="w-24 rounded-xl text-gray-900 bg-violet-300 p-1"
+            className="w-40 rounded-xl text-gray-900 bg-violet-300 p-1"
             type="text"
             value={projectName}
             onChange={(e) => {
@@ -270,6 +279,11 @@ export default function ProjectSelection() {
           </div>
         </div>
         <ProjectsView />
+        {statusNote && !hasError && (
+          <div className="px-4 pb-4">
+            <p className="text-sm text-yellow-300">{statusNote}</p>
+          </div>
+        )}
       </div>
       {menuDisplay && <Menu setMenuDisplay={setMenuDisplay} />}
     </main>
