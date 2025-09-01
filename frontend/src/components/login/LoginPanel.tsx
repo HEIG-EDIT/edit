@@ -5,9 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
-import { AxiosError } from "axios"; // UPDATED: to parse backend statuses
+
+import type { AxiosError } from "axios";
+import { isAxiosError } from "axios";
 
 type View = "chooser" | "login" | "register";
+
+type ApiErrorBody = { message?: string | string[] } | string | null | undefined;
 
 const MAX_ATTEMPTS = 8;
 const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
@@ -48,28 +52,37 @@ function validateRegisterPassword(pw: string): boolean {
   return /^(?=.*[A-Z])(?=.*[a-z])(?=.*[\W_]).{10,64}$/.test(pw);
 }
 
-// UPDATED: Login password check matches your LoginDto (MinLength 14)
+// Login password check matches your LoginDto (MinLength 14)
 function validateLoginPassword(pw: string): boolean {
   return typeof pw === "string" && pw.length >= 14;
 }
 
-// UPDATED: normalize axios error payloads into {status, message}
+// Normalize axios error payloads into {status, message}
 function parseAxiosError(err: unknown): { status?: number; message: string } {
-  const ax = err as AxiosError<any>;
-  const status = ax?.response?.status;
-  const data = ax?.response?.data;
+  if (isAxiosError(err)) {
+    const ax = err as AxiosError<ApiErrorBody>;
+    const status = ax.response?.status;
+    const data = ax.response?.data;
 
-  let message = "Something went wrong.";
-  if (data?.message) {
-    if (Array.isArray(data.message)) message = data.message.join(", ");
-    else if (typeof data.message === "string") message = data.message;
-  } else if (typeof data === "string") {
-    message = data;
-  } else if (ax?.message) {
-    message = ax.message;
+    // Prefer server-provided messages
+    if (typeof data === "string") {
+      return { status, message: data };
+    }
+    if (data && typeof data === "object" && "message" in data) {
+      const msg = (data as { message?: unknown }).message;
+      if (typeof msg === "string") return { status, message: msg };
+      if (Array.isArray(msg)) return { status, message: msg.join(", ") };
+    }
+
+    // Fallback to Axios' own error message
+    return { status, message: ax.message || "Request failed" };
   }
 
-  return { status, message };
+  // Non-Axios error fallbacks
+  if (err instanceof Error) {
+    return { message: err.message };
+  }
+  return { message: "Unknown error" };
 }
 
 export const LoginPanel = (): JSX.Element => {
@@ -92,7 +105,7 @@ export const LoginPanel = (): JSX.Element => {
   const [showLoginPw, setShowLoginPw] = useState(false);
   const [showRegisterPw, setShowRegisterPw] = useState(false);
 
-  // UPDATED: dedicated error states for each form
+  // Dedicated error states for each form
   const [loginErrors, setLoginErrors] = useState<{
     email?: string;
     password?: string;
@@ -115,7 +128,7 @@ export const LoginPanel = (): JSX.Element => {
   // flash banner
   const [flash, setFlash] = useState<Flash>(null);
 
-  // UPDATED: force-remount nonces to ensure blank inputs after register success (discourage autofill from our state)
+  // Force-remount nonces to ensure blank inputs after register success (discourage autofill from our state)
   const [formNonce, setFormNonce] = useState(0);
 
   // init attempts
@@ -140,7 +153,7 @@ export const LoginPanel = (): JSX.Element => {
     };
   }, [lockedUntil]);
 
-  // UPDATED: react only to ?msg=register_ok (success) — failures stay on the register form with field/global errors
+  // React only to ?msg=register_ok (success)
   useEffect(() => {
     const msg = searchParams.get("msg");
     if (msg === "register_ok") {
@@ -192,7 +205,7 @@ export const LoginPanel = (): JSX.Element => {
   }
 
   // ---------- LOGIN ----------
-  // UPDATED: FE validation for login (email + min length 14)
+  // FE validation for login (email + min length 14)
   function validateLoginFields(): boolean {
     const errs: { email?: string; password?: string } = {};
     if (!validateEmail(email))
@@ -211,7 +224,7 @@ export const LoginPanel = (): JSX.Element => {
     setFlash(null);
     if (isLocked) return;
 
-    // UPDATED: FE guard
+    // FE guard
     if (!validateLoginFields()) return;
 
     try {
@@ -228,7 +241,7 @@ export const LoginPanel = (): JSX.Element => {
     } catch (err) {
       const { status, message } = parseAxiosError(err);
 
-      // UPDATED: map common statuses
+      // Map common statuses
       if (status === 401) {
         setLoginError("Invalid email or password.");
         recordLoginFailure(); // only count auth failures
@@ -266,7 +279,7 @@ export const LoginPanel = (): JSX.Element => {
     e: React.FormEvent<HTMLFormElement>,
   ): Promise<void> {
     e.preventDefault();
-    setFlash(null); // UPDATED: clear any banner
+    setFlash(null); // Clear any banner
     setRegErrors({});
 
     if (!validateRegisterFields()) return;
@@ -276,14 +289,14 @@ export const LoginPanel = (): JSX.Element => {
       const resp = await api.post("/auth/register", { email, password });
       // if backend returns 201 Created (or 200 OK from your helper), redirect to login with success flash
       if (resp?.status === 201 || resp?.status === 200) {
-        // UPDATED: redirect with success flag
+        // Redirect with success flag
         setView("login");
         router.replace("/login?msg=register_ok");
       } else {
         setFlash({ type: "error", text: "Unexpected response from server." });
       }
     } catch (err) {
-      // UPDATED: stay on register view, show backend validation/conflict/etc.
+      // Stay on register view, show backend validation/conflict/etc.
       const { status, message } = parseAxiosError(err);
       if (status === 409) {
         setFlash({
@@ -410,7 +423,7 @@ export const LoginPanel = (): JSX.Element => {
             <span className={labelCls}>Email</span>
             <input
               type="email"
-              autoComplete="username" // UPDATED
+              autoComplete="username"
               className={inputBase}
               value={email}
               onChange={(e) => {
@@ -421,7 +434,6 @@ export const LoginPanel = (): JSX.Element => {
               disabled={submitting}
               required
             />
-            {/* UPDATED: field error */}
             {loginErrors.email && (
               <p className="text-xs text-red-300 mt-1">{loginErrors.email}</p>
             )}
@@ -433,7 +445,7 @@ export const LoginPanel = (): JSX.Element => {
               <input
                 id="login-password"
                 type={showLoginPw ? "text" : "password"}
-                autoComplete="current-password" // UPDATED
+                autoComplete="current-password"
                 className={inputWithIcon}
                 value={password}
                 onChange={(e) => {
@@ -460,7 +472,6 @@ export const LoginPanel = (): JSX.Element => {
                 )}
               </button>
             </div>
-            {/* UPDATED: field error */}
             {loginErrors.password && (
               <p className="text-xs text-red-300 mt-1">
                 {loginErrors.password}
@@ -490,7 +501,7 @@ export const LoginPanel = (): JSX.Element => {
               type="button"
               onClick={() => {
                 setView("chooser");
-                setLoginErrors({}); // UPDATED: clean errors on back
+                setLoginErrors({});
                 setLoginError(null);
               }}
               className={secondaryBtnCls}
@@ -593,7 +604,7 @@ export const LoginPanel = (): JSX.Element => {
               type="button"
               onClick={() => {
                 setView("chooser");
-                setRegErrors({}); // UPDATED: clean errors on back
+                setRegErrors({});
               }}
               className={secondaryBtnCls}
               disabled={submitting}
