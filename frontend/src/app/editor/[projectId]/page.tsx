@@ -134,20 +134,17 @@ export default function EditorPage() {
   const toolEventHandlers = useRef<EventHandlers>({});
 
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const [canvasSize, setCanvasSize] = useState<Vector2d>({ x: 1000, y: 1000 });
+  const [canvasSize, setCanvasSize] = useState<Vector2d>({ x: 0, y: 0 });
 
   useEffect(() => {
-    const container = canvasContainerRef.current;
-    if (!container) return;
-
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        setCanvasSize({ x: width, y: height });
+        setCanvasSize({ x: (width / 3) * 2, y: (height / 6) * 4 });
       }
     });
 
-    resizeObserver.observe(container);
+    resizeObserver.observe(document.body);
     return () => resizeObserver.disconnect();
   }, []);
 
