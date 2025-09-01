@@ -66,23 +66,21 @@ jobs:
           docker run -d --restart=always \
             -p 4000:4000 \
             --name ${{ env.CONTAINER_NAME }} \
-            -e AWS_REGION=${{ secrets.AWS_REGION }} \
-            -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-            -e AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }} \
-            -e JWT_PRIVATE_KEY=${{ secrets.JWT_PRIVATE_KEY }} \
-            -e JWT_PUBLIC_KEY=${{ secrets.JWT_PUBLIC_KEY }} \
-            -e GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} \
-            -e GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
-            -e GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }} \
-            -e LINKEDIN_CLIENT_ID=${{ secrets.LINKEDIN_CLIENT_ID }} \
-            -e LINKEDIN_CLIENT_SECRET=${{ secrets.LINKEDIN_CLIENT_SECRET }} \
-            -e LINKEDIN_CALLBACK_URL_LOCAL=${{ secrets.LINKEDIN_CALLBACK_URL_LOCAL }} \
-            -e MICROSOFT_CALLBACK_URL=${{ secrets.MICROSOFT_CALLBACK_URL }} \
-            -e MICROSOFT_CLIENT_ID=${{ secrets.MICROSOFT_CLIENT_ID }} \
-            -e MICROSOFT_CLIENT_SECRET=${{ secrets.MICROSOFT_CLIENT_SECRET }} \
-            -e MICROSOFT_TENANT=${{ secrets.MICROSOFT_TENANT }} \
-            -e DATABASE_URL=${{ secrets.DATABASE_URL_PROD }} \
+            --network app-network \
+            -e AWS_REGION="${{ secrets.AWS_REGION }}" \
+            -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+            -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+            -e AWS_S3_BUCKET="${{ secrets.AWS_S3_BUCKET }}" \
+            -e JWT_PRIVATE_KEY="${{ secrets.JWT_PRIVATE_KEY }}" \
+            -e JWT_PUBLIC_KEY="${{ secrets.JWT_PUBLIC_KEY }}" \
+            -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+            -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            -e GOOGLE_CALLBACK_URL="${{ secrets.GOOGLE_CALLBACK_URL }}" \
+            -e MICROSOFT_CALLBACK_URL="${{ secrets.MICROSOFT_CALLBACK_URL }}" \
+            -e MICROSOFT_CLIENT_ID="${{ secrets.MICROSOFT_CLIENT_ID }}" \
+            -e MICROSOFT_CLIENT_SECRET="${{ secrets.MICROSOFT_CLIENT_SECRET }}" \
+            -e MICROSOFT_TENANT="${{ secrets.MICROSOFT_TENANT }}" \
+            -e DATABASE_URL="${{ secrets.DATABASE_URL_PROD }}" \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{needs.build-and-push-image.outputs.image-tag}}
 
       - name: Remove old images
