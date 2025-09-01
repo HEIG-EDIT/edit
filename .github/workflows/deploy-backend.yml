@@ -73,6 +73,7 @@ jobs:
             -e AWS_S3_BUCKET="${{ secrets.AWS_S3_BUCKET }}" \
             -e JWT_PRIVATE_KEY="${{ secrets.JWT_PRIVATE_KEY }}" \
             -e JWT_PUBLIC_KEY="${{ secrets.JWT_PUBLIC_KEY }}" \
+            -e FRONTEND_URL_PROD="${{ secrets.FRONTEND_URL_PROD }}" \
             -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
             -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
             -e GOOGLE_CALLBACK_URL="${{ secrets.GOOGLE_CALLBACK_URL }}" \
