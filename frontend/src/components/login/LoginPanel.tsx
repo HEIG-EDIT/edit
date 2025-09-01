@@ -10,14 +10,12 @@ import type { AxiosError } from "axios";
 import { isAxiosError } from "axios";
 
 type View = "chooser" | "login" | "register";
-
 type ApiErrorBody = { message?: string | string[] } | string | null | undefined;
+type Attempts = { count: number; firstAt: number };
+type Flash = { type: "success" | "error"; text: string } | null;
 
 const MAX_ATTEMPTS = 8;
 const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
-
-type Attempts = { count: number; firstAt: number };
-type Flash = { type: "success" | "error"; text: string } | null;
 
 // ---------- helpers: attempts ----------
 function isAttempts(x: unknown): x is Attempts {
@@ -85,6 +83,20 @@ function parseAxiosError(err: unknown): { status?: number; message: string } {
   return { message: "Unknown error" };
 }
 
+/**
+ * LoginPanel component with login, register, and OAuth options.
+ *
+ * Features:
+ * - View switching between chooser, login, and register
+ * - Client-side validation for email and password fields
+ * - Password visibility toggles
+ * - Backend error handling and display
+ * - Login attempt limiting with countdown timer
+ * - Flash messages for success/error feedback
+ *
+ * @returns {JSX.Element} The rendered login panel component.
+ * @constructor
+ */
 export const LoginPanel = (): JSX.Element => {
   const router = useRouter();
   const searchParams = useSearchParams();
