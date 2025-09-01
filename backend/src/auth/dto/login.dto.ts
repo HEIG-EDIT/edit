@@ -5,6 +5,8 @@ export class LoginDto {
   email: string;
 
   @IsString()
-  @MinLength(14, { message: 'Password too short: must be at least 14 characters' })
+  @MinLength(10, {
+    message: 'Password too short: must be at least 10 characters',
+  })
   password: string;
 }

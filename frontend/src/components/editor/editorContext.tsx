@@ -4,7 +4,7 @@ import Konva from "konva";
 import { Vector2d } from "konva/lib/types";
 import React, { createContext, useContext } from "react";
 import { Layer } from "@/models/editor/layers/layer";
-import { VirtualStateSetter } from "./undoRedo";
+import { LayersReorderingLogic } from "@/hooks/useLayersReordering";
 
 export type CanvasState = {
   scale: number;
@@ -27,12 +27,18 @@ interface EditorContextType {
     callback: LayerUpdateCallback,
     virtual?: boolean,
   ) => void;
+  addLayer: (layer: Layer) => void;
+
   editSelectedLayers: (
     callback: LayerUpdateCallback,
     virtual?: boolean,
   ) => void;
+  deleteSelectedLayers: () => void;
+  duplicateSelectedLayers: () => void;
+
+  layersReorderingLogic: LayersReorderingLogic;
+
   commitVirtualLayers: () => void;
-  setVirtualLayers: VirtualStateSetter<Layer[]>;
 
   getCanvasPointerPosition: () => Vector2d;
 

@@ -9,6 +9,8 @@
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.9",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/passport-microsoft": "^2.1.0",
     "eslint": "^9.31.0",
     "husky": "^9.1.7",
     "i": "^0.3.7",
@@ -17,5 +19,9 @@
   },
   "scripts": {
     "prepare": "husky"
+  },
+  "dependencies": {
+    "passport-linkedin-oauth2": "^2.0.0",
+    "passport-microsoft": "^2.1.0"
   }
 }

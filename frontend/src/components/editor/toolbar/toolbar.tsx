@@ -58,7 +58,7 @@ export const Toolbar = ({
       "",
     );
     try {
-      await api.patch("/api/projects/save", {
+      await api.patch("/projects/save", {
         projectId: Number(params.projectId),
         jsonProject: JSONProject,
         thumbnailBase64: base64Thumbnail,

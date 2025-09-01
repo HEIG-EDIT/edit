@@ -94,6 +94,7 @@ export class AuthController {
   //-------------------GOOGLE OAUTH2 LOGIN-------------------------------
   /**
    * Login with Google
+   * GET http://localhost:4000/auth/google
    * Endpoint to initiate Google OAuth flow.
    * Redirection to Google's authentication page.
    * @returns {void}
@@ -136,34 +137,97 @@ export class AuthController {
   }
 
   //-------------------LinkedIn OAUTH2 LOGIN-------------------------------
-  //TODO
-  // Placeholder for LinkedIn login
+  /**
+   * Login with LinkedIn
+   * GET http://localhost:4000/auth/linkedin
+   * Endpoint to initiate LinkedIn OAuth flow.
+   * Redirection to LinkedIn's authentication page.
+   * @returns {void}
+   */
   @Public()
   @Get('linkedin')
   @UseGuards(AuthGuard('linkedin'))
   linkedinLogin() {}
 
-  //TODO
-  // Placeholder for LinkedIn login callback
+  /**
+   * LinkedIn OAuth callback
+   * Endpoint to handle the callback from LinkedIn after user's authentication.
+   * Gets the user info from LinkedIn and processes login or registration.
+   * @param {Request} req - The request object containing user info from LinkedIn.
+   * @param {Response} res - The response object to set cookies and redirect.
+   */
   @Public()
   @Get('linkedin/callback')
   @UseGuards(AuthGuard('linkedin'))
-  async linkedinAuthCallback() {}
+  async linkedinAuthCallback(
+    @Req()
+    req: Request & {
+      user: { email: string; oauthId: string; provider: 'linkedin' };
+    },
+    @Res() res: Response,
+  ) {
+    const result = await this.authService.providerLogin({
+      userInfo: req.user,
+      provider: 'linkedin',
+    });
+
+    // set cookies like Google/MS
+    authHelp.setAuthCookies(res, {
+      accessToken: result.accessToken,
+      accessTtlSec: result.accessTtlSec,
+      refreshToken: result.refreshToken,
+      refreshTtlSec: result.refreshTtlSec,
+      deviceId: result.deviceId,
+    });
+
+    // redirect to FE (same logic you use everywhere)
+    const target = this.frontendUrl ?? process.env.FRONTEND_URL_PROD ?? '/';
+    return http.seeOther(res, target);
+  }
 
   //-------------------Microsoft OAUTH2 LOGIN-------------------------------
-  //TODO
-  // Placeholder for Microsoft login
+  /**
+   * Login with Microsoft
+   * GET http://localhost:4000/auth/microsoft
+   * Endpoint to initiate Microsoft OAuth flow.
+   * Redirection to Microsoft's authentication page.
+   * @returns {void}
+   */
   @Public()
   @Get('microsoft')
   @UseGuards(AuthGuard('microsoft'))
   microsoftLogin() {}
 
-  //TODO
-  // Placeholder for Microsoft login callback
+  /**
+   * Microsoft OAuth callback
+   * Endpoint to handle the callback from Microsoft after user's authentication.
+   * Gets the user info from Microsoft and processes login or registration.
+   * @param {Request} req - The request object containing user info from Microsoft.
+   * @param {Response} res - The response object to set cookies and redirect.
+   */
   @Public()
   @Get('microsoft/callback')
   @UseGuards(AuthGuard('microsoft'))
-  async microsoftAuthCallback() {}
+  async microsoftAuthCallback(
+    @Req() req: Request & { user: any },
+    @Res() res: Response,
+  ) {
+    const result = await this.authService.providerLogin({
+      userInfo: req.user,
+      provider: 'microsoft',
+    });
+    authHelp.setAuthCookies(res, {
+      accessToken: result.accessToken,
+      accessTtlSec: result.accessTtlSec,
+      refreshToken: result.refreshToken,
+      refreshTtlSec: result.refreshTtlSec,
+      deviceId: result.deviceId,
+    });
+
+    // 303 See Other redirect to frontend
+    const target = this.frontendUrl ?? process.env.FRONTEND_URL_PROD ?? '/';
+    return http.seeOther(res, target);
+  }
 
   // ---------------------------------------------------------------
   //Token Management Endpoints

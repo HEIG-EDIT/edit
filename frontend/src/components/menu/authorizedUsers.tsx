@@ -7,8 +7,6 @@ import { ErrorComponent } from "../api/errorComponent";
 import { LoadingComponent } from "../api/loadingComponent";
 
 export const AuthorizedUsers = ({ projectId }: { projectId: number }) => {
-  const ROLES = ["owner", "editor", "viewer"];
-
   const [collaborators, setCollaborators] = useState<Collaborator[] | null>(
     null,
   );
@@ -17,7 +15,7 @@ export const AuthorizedUsers = ({ projectId }: { projectId: number }) => {
 
   const getCollaborations = async () => {
     try {
-      const res = await api.get(`/api/collaborations/${projectId}`);
+      const res = await api.get(`/collaborations/${projectId}`);
       setCollaborators(res.data);
     } catch {
       setHasError(true);
@@ -32,6 +30,8 @@ export const AuthorizedUsers = ({ projectId }: { projectId: number }) => {
   }, [projectId]);
 
   const USERS_BY_ROLE = useMemo(() => {
+    const ROLES = ["owner", "editor", "viewer"];
+
     if (!collaborators) return {};
     return ROLES.reduce(
       (acc, role) => {
@@ -70,7 +70,7 @@ export const AuthorizedUsers = ({ projectId }: { projectId: number }) => {
 
     const removeCollaboration = async () => {
       try {
-        await api.delete(`/api/collaborations/${collaborationId}`);
+        await api.delete(`/collaborations/${collaborationId}`);
         setCollaborators((prev) =>
           prev
             ? prev.filter((c) => c.collaborationId !== collaborationId)
@@ -109,7 +109,7 @@ export const AuthorizedUsers = ({ projectId }: { projectId: number }) => {
 
     const addCollaboration = async () => {
       try {
-        await api.post("/api/collaborations", {
+        await api.post("/collaborations", {
           userEmail: email,
           projectId: projectId,
           roles: [role], // array required to comply with the database schema

@@ -90,9 +90,13 @@ export class ProjectController {
     @Res({ passthrough: true }) res: Response,
     @Body() dto: RenameProjectDto,
   ) {
-    const userId = authHelp.resolveUserId(req.user);
-    await projectHelper.assertOwner(Number(userId), dto.projectId);
-    await this.projectService.renameProject(dto.projectId, dto.name);
+    if (req.user) {
+      await this.projectService.renameProject(
+        dto.projectId,
+        dto.name,
+        req.user.userId!,
+      );
+    }
     return http.noContent(res);
   }
 
@@ -124,8 +128,7 @@ export class ProjectController {
     @Res({ passthrough: true }) res: Response,
     @Body() dto: SaveProjectDto,
   ) {
-    const userId = authHelp.resolveUserId(req.user);
-    await projectHelper.assertCollaborator(Number(userId), dto.projectId);
+    // TODO : ajouter check si owner sinon meme viewer peut modifier projet
     await this.projectService.saveProject(dto);
     return http.noContent(res);
   }
@@ -149,10 +152,7 @@ export class ProjectController {
     @Res({ passthrough: true }) res: Response,
     @Param('id') id: string,
   ) {
-    const userId = authHelp.resolveUserId(req.user);
     const pid = Number(id);
-    await projectHelper.assertCollaborator(Number(userId), pid);
-
     const payload = await this.projectService.getJSONProject(pid); // { JSONProject: string | null }
 
     // 200 OK
@@ -178,8 +178,6 @@ export class ProjectController {
     @Res({ passthrough: true }) res: Response,
     @Param('id') id: string,
   ) {
-    const userId = authHelp.resolveUserId(req.user);
-    await projectHelper.assertOwner(Number(userId), Number(id));
     await this.projectService.deleteProject(Number(id));
     return http.noContent(res);
   }

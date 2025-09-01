@@ -76,19 +76,28 @@ export class S3Service {
 
   async getThumbnail(projectId: number): Promise<string> {
     const key = `${projectId}/thumbnail.png`;
-    const obj = await this.s3.send(
-      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
-    );
+    try {
+      const obj = await this.s3.send(
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
 
-    const stream = obj.Body as Readable;
-    const chunks: Buffer[] = [];
-    for await (const chunk of stream) {
-      chunks.push(Buffer.from(chunk));
+      const stream = obj.Body as Readable;
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(Buffer.from(chunk));
+      }
+
+      const buffer = Buffer.concat(chunks);
+      const base64 = buffer.toString('base64');
+      return base64;
+    } catch (caught) {
+      if (caught instanceof NoSuchKey) {
+        // TODO : afficher un placeholder a la place de ca
+        return "";
+      }
+
+      throw caught;
     }
-
-    const buffer = Buffer.concat(chunks);
-    const base64 = buffer.toString('base64');
-    return base64;
   }
 
   async deleteProjectFiles(projectId: number) {

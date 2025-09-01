@@ -79,15 +79,6 @@ api.interceptors.response.use(
           resolve(api(originalReq)); // retry original
         } catch (error) {
           processQueue(error);
-          try {
-            // best-effort cookie clear on BE
-            await api.post("/auth/logout");
-          } catch {}
-          if (typeof window !== "undefined") {
-            // clear any any client auth flags stored in localStorage
-            localStorage.removeItem("…");
-            window.location.href = "/login";
-          }
           reject(error);
         } finally {
           isRefreshing = false;
