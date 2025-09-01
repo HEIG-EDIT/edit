@@ -2,7 +2,7 @@ name: Deploy Backend on AWS EC2
 
 on:
   push:
-    branches: ["main"]
+    branches: ["fix/deploy-backend"]
     paths: ["backend/**"]
 
 env:
@@ -85,18 +85,3 @@ jobs:
 
       - name: Remove old images
         run: docker image prune -af
-
-      # Run Prisma migrations (reset or deploy depending on secret)
-      - name: Run Prisma migrations
-        run: |
-          if [ "${{ secrets.RESET_DB }}" = "true" ]; then
-            echo "⚠️ RESETTING DATABASE..."
-            docker exec \
-              ${{ env.CONTAINER_NAME}} \
-              sh -c "npx prisma migrate reset --force --skip-seed"
-          else
-            echo "✅ Applying safe migrations..."
-            docker exec \
-              ${{ env.CONTAINER_NAME}} \
-              sh -c "npx prisma migrate deploy"
-          fi
