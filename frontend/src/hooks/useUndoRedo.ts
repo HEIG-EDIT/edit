@@ -1,30 +1,65 @@
 import { useState, useCallback } from "react";
 import { CircularBuffer } from "@/models/editor/utils/CircularBuffer";
 
-/// Hook to store state with undo / redo capabilities.
-/// It has the ability to group multiple smaller modifications into one.
-/// capacity sets the maximum number of states to keep in memory.
-export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
-  interface UndoRedoState {
-    stateHistory: CircularBuffer<T>;
-    // This is the value of the state that is being returned, which may have
-    // more changes than the last element of stateHistory. The temporary
-    // changes made to this virtual state can be added to the history with the
-    // commitVirtualState function.
-    virtualState: T;
-    // Index of the current state in the stateHistory
-    index: number;
-    isLatestChange: boolean;
-  }
+interface UndoRedoResult<T> {
+  /// The current state held by the hook
+  state: T;
 
-  const [state, setState] = useState<UndoRedoState>({
+  /// Set the current state as a new step in the history. This can be undone with undo
+  setState: React.Dispatch<T>;
+  /// Set the current state but don't add a new step in the history. This can
+  /// be used to group multiple small changes that should be undone or redone as one.
+  /// The caller has the responsibility to commit the changes with commitVirtualState when needed.
+  setVirtualState: React.Dispatch<T>;
+  /// Add the current state as a new history step. This should be used by the caller
+  /// to finalize small changes done with setVirtualState.
+  commitVirtualState: () => void;
+
+  /// Undo the last step of the history
+  /// @throws Error if this operation cannot be performed
+  undo: () => void;
+  /// Redo a previously undone step of the history
+  /// @throws Error if this operation cannot be performed
+  redo: () => void;
+  /// Check if the current history's state allows performing an undo operation
+  canUndo: boolean;
+  /// Check if the current history's state allows performing a redo operation
+  canRedo: boolean;
+}
+
+interface UndoRedoState<T> {
+  /// The circular buffer storing all of the states.
+  stateHistory: CircularBuffer<T>;
+  // This is the value of the state that is being returned, which may have
+  // more changes than the last element of stateHistory. The temporary
+  // changes made to this virtual state can be added to the history with the
+  // commitVirtualState function of the hook.
+  virtualState: T;
+  // Index of the current state in the stateHistory buffer
+  index: number;
+  /// True if the current state returned by the hook is the latest change done by the user
+  /// i.e. if the user has just made a new change or has redone all undone changes.
+  isLatestChange: boolean;
+}
+
+/// Hook to store state with undo / redo capabilities.
+/// It has the ability to group multiple smaller modifications into one with "virtual" modifications.
+/// @tparam T The type of the elements to store in the history
+/// @param initialState The initial state to store in the history.
+/// @param capacity The maximum number of states to store in the history. Reduce this
+///                 to prevent memory consumption issues.
+export function useUndoRedo<T>(
+  initialState: T,
+  capacity: number = 50,
+): UndoRedoResult<T> {
+  const [state, setState] = useState<UndoRedoState<T>>({
     stateHistory: new CircularBuffer<T>(capacity, [initialState]),
     virtualState: initialState,
     index: 0,
     isLatestChange: true,
   });
 
-  /// Public function to update the state while keeping the history
+  /// Public function to update the state while keeping previous changes in the history
   const setStatePublic = useCallback(
     (newState: T | ((prev: T) => T)) => {
       const func =
