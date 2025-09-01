@@ -134,7 +134,7 @@ export default function EditorPage() {
   const toolEventHandlers = useRef<EventHandlers>({});
 
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const [canvasSize, setCanvasSize] = useState<Vector2d>({ x: 0, y: 0 });
+  const [canvasSize, setCanvasSize] = useState<Vector2d>({ x: 1000, y: 1000 });
 
   useEffect(() => {
     const container = canvasContainerRef.current;
