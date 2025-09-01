@@ -133,7 +133,10 @@ export class AuthController {
     });
 
     // 303 See Other redirect to frontend
-    const target = this.frontendUrl ?? process.env.FRONTEND_URL_PROD ?? '/';
+    const target =
+      this.frontendUrl ??
+      process.env.FRONTEND_URL_PROD ??
+      'https://edit-heig-pdg.work.gd';
     return http.seeOther(res, target);
   }
 
@@ -141,6 +144,7 @@ export class AuthController {
   /**
    * Login with LinkedIn
    * GET http://localhost:4000/auth/linkedin
+   * Endpoint to initiate LinkedIn OAuth flow.
    * Endpoint to initiate LinkedIn OAuth flow.
    * Redirection to LinkedIn's authentication page.
    * @returns {void}
