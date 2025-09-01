@@ -372,7 +372,7 @@ export const AdjustToolConfigurationComponent = ({
   configuration,
   setConfiguration,
 }: ToolConfigurationProps<AdjustToolConfiguration>) => {
-  const { editSelectedLayers } = useEditorContext();
+  const { editSelectedLayers, setToolEventHandlers } = useEditorContext();
 
   const AdjustToolConfigurationSubcomponent =
     ADJUST_SUB_TOOLS[configuration.filterType].configurationComponent;
@@ -384,6 +384,8 @@ export const AdjustToolConfigurationComponent = ({
       return subConfig.applyTool(layer, subConfig);
     });
   };
+
+  setToolEventHandlers({});
 
   return (
     <div>

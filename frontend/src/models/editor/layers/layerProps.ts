@@ -22,4 +22,5 @@ export interface LayerProps {
   filters: Filter[];
   filtersConfig: FiltersConfig;
   updateLayer: (callback: LayerUpdateCallback, virtual: boolean) => void;
+  nameSelectedTool: string;
 }
