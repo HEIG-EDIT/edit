@@ -9,16 +9,13 @@
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.9",
-    "@types/jest": "^30.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-microsoft": "^2.1.0",
     "eslint": "^9.31.0",
     "husky": "^9.1.7",
     "i": "^0.3.7",
-    "jest": "^30.1.2",
     "lint-staged": "^16.1.2",
-    "prettier": "^3.6.2",
-    "ts-jest": "^29.4.1"
+    "prettier": "^3.6.2"
   },
   "scripts": {
     "prepare": "husky || echo 'Could not find husky'"
