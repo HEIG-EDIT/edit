@@ -1,6 +1,5 @@
 import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
-import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
 import { KonvaMouseEvent } from "@/models/editor/utils/events";
 import OpenWithRoundedIcon from "@mui/icons-material/OpenWithRounded";
 import { useEditorContext } from "../editorContext";
@@ -10,14 +9,7 @@ import { v2Add, v2Sub } from "@/models/editor/layers/layerUtils";
 
 export type MoveToolConfiguration = ToolConfiguration;
 
-export const MoveToolConfigurationComponent = ({
-  configuration,
-  setConfiguration,
-}: ToolConfigurationProps<MoveToolConfiguration>) => {
-  // TODO : to remove, just for eslink check
-  console.log(configuration);
-  console.log(setConfiguration);
-
+export const MoveToolConfigurationComponent = () => {
   const {
     isHoldingPrimary,
     isTransforming,
@@ -105,7 +97,6 @@ export const MoveToolConfigurationComponent = ({
       const positionDiff = getLayerDragPositionDiff();
 
       // Not dragging
-      // FIXME: Maybe update threshold?
       if (Math.hypot(positionDiff.x, positionDiff.y) < 2) {
         return;
       }
