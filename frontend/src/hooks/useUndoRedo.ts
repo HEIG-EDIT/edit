@@ -1,8 +1,6 @@
 import { useState, useCallback } from "react";
 import { CircularBuffer } from "@/models/editor/utils/CircularBuffer";
 
-export type VirtualStateSetter<T> = (newState: T | ((prev: T) => T)) => void;
-
 /// Hook to store state with undo / redo capabilities.
 /// It has the ability to group multiple smaller modifications into one.
 /// capacity sets the maximum number of states to keep in memory.
@@ -76,8 +74,17 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
     setStatePublic(state.virtualState);
   }, [setStatePublic, state]);
 
+  const canUndo =
+    state.stateHistory.getStartIndex() >= 0 &&
+    state.index > state.stateHistory.getStartIndex();
+  const canRedo =
+    !state.isLatestChange && state.index < state.stateHistory.length - 1;
+
   /// Undo the last change to the state.
   const undo = useCallback(() => {
+    if (!canUndo) {
+      throw new Error("Cannot undo in this state");
+    }
     setState((prev) => {
       return {
         ...prev,
@@ -86,10 +93,13 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
         isLatestChange: false,
       };
     });
-  }, [setState]);
+  }, [setState, canUndo]);
 
   /// Redo a previously un-done change
   const redo = useCallback(() => {
+    if (!canRedo) {
+      throw new Error("Cannot redo in this state");
+    }
     setState((prev) => {
       const index = Math.min(prev.stateHistory.length - 1, prev.index + 1);
       return {
@@ -99,13 +109,7 @@ export function useUndoRedo<T>(initialState: T, capacity: number = 1000) {
         isLatestChange: index == prev.stateHistory.length - 1,
       };
     });
-  }, [setState]);
-
-  const canUndo =
-    state.stateHistory.getStartIndex() >= 0 &&
-    state.index > state.stateHistory.getStartIndex();
-  const canRedo =
-    !state.isLatestChange && state.index < state.stateHistory.length - 1;
+  }, [setState, canRedo]);
 
   return {
     get state() {
