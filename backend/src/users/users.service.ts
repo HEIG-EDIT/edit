@@ -8,7 +8,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
-import { conflict } from '../common/helpers/responses/responses.helper';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
@@ -23,6 +22,10 @@ export class UsersService {
    */
   private generateRandomUsername(): string {
     return `user_${Math.random().toString(36).substring(2, 10)}`;
+  }
+  private isP2002(e: unknown): e is Prisma.PrismaClientKnownRequestError {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return typeof e === 'object' && e !== null && (e as any).code === 'P2002';
   }
 
   //-------------------Auth Methods---------------------------//
@@ -60,20 +63,19 @@ export class UsersService {
           },
         });
       } catch (err: unknown) {
-        if (
-          err instanceof PrismaClientKnownRequestError &&
-          err.code === 'P2002'
-        ) {
-          const target = err.meta?.target as string[] | undefined;
-
-          if (target?.includes('userName')) {
-            // try again with a new username
-            continue;
-          }
-
-          if (target?.includes('email')) {
+        if (this.isP2002(err)) {
+          // Determine which unique field actually collided
+          // 1) Check email again (handles races)
+          const emailTaken = await this.prisma.user.findUnique({
+            where: { email: inputEmail },
+            select: { id: true },
+          });
+          if (emailTaken) {
             throw new ConflictException('Email already exists');
           }
+
+          // 2) If email isn’t the problem, assume it was userName; loop to try a new one
+          continue;
         }
 
         throw err; // rethrow other errors
@@ -208,12 +210,8 @@ export class UsersService {
     });
 
     if (!current) {
+      // UPDATED: unify the "user not found" path so controller can map to 401 if desired
       throw new BadRequestException('User not found.');
-    }
-
-    if (!current) {
-      // UPDATED: let controller map this to 401 (stale session)
-      return null;
     }
 
     // Short-circuit if unchanged (idempotent)
@@ -229,15 +227,20 @@ export class UsersService {
       });
 
       return { updated: true, userName: updated.userName };
-    } catch (e: any) {
-      if (
-        e instanceof PrismaClientKnownRequestError &&
-        e.code === 'P2002' &&
-        Array.isArray(e.meta?.target) &&
-        e.meta.target.includes('userName')
-      ) {
-        // Uses centralized helper to keep errors consistent
-        conflict('Username is already taken.');
+    } catch (e: unknown) {
+      // UPDATED: handle unique constraint violation in a bundler-safe way
+      if (this.isP2002(e)) {
+        // Double-check which field collided. If another process sniped the same username,
+        // this will confirm it and we can return a proper 409.
+        const taken = await this.prisma.user.findUnique({
+          where: { userName: newUsername },
+          select: { id: true },
+        });
+        if (taken) {
+          // UPDATED: consistent, explicit conflict
+          throw new ConflictException('Username is already taken.');
+        }
+        // If it wasn't userName, rethrow so it can be logged/handled upstream.
       }
       throw e;
     }

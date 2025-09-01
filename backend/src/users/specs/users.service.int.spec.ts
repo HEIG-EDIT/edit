@@ -1,8 +1,12 @@
 import { execSync } from 'child_process';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UsersService } from './../users.service';
+import { UsersService } from '../users.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  ConflictException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 jest.setTimeout(60000); // allow enough time for docker + db
@@ -20,6 +24,7 @@ describe('UsersService (integration)', () => {
       try {
         execSync('npx prisma db push', { stdio: 'inherit' });
         break;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         console.log(`DB not ready yet, retrying... (${i + 1}/10)`);
         await new Promise((r) => setTimeout(r, 5000));
@@ -199,8 +204,12 @@ describe('UsersService (integration)', () => {
 
       expect(result.success).toBe(true);
 
-      const updated = await prisma.user.findUnique({ where: { id: created.id } });
-      expect(await bcrypt.compare('NewPass123!', updated!.passwordHash!)).toBe(true);
+      const updated = await prisma.user.findUnique({
+        where: { id: created.id },
+      });
+      expect(await bcrypt.compare('NewPass123!', updated!.passwordHash!)).toBe(
+        true,
+      );
     });
 
     it('should throw ForbiddenException for wrong password', async () => {
@@ -215,7 +224,12 @@ describe('UsersService (integration)', () => {
       });
 
       await expect(
-        service.changePassword(created.id, 'wrongPass', 'NewPass123!', 'NewPass123!'),
+        service.changePassword(
+          created.id,
+          'wrongPass',
+          'NewPass123!',
+          'NewPass123!',
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
