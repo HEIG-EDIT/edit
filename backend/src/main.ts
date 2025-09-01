@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   //CORS
   app.enableCors({
-    origin: ['http://localhost:3000'],
+    origin: ['http://localhost:3000', 'https://edit-heig-pdg.work.gd'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Id'],
@@ -15,9 +15,9 @@ async function bootstrap() {
   app.use(cookieParser());
 
   // Increase body size limit
-  app.use(bodyParser.json({ limit: '5mb' }));  // adjust as needed
+  app.use(bodyParser.json({ limit: '5mb' })); // adjust as needed
   app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
-  
+
   await app.listen(process.env.PORT ?? 4000);
 }
 bootstrap();

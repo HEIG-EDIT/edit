@@ -119,6 +119,7 @@ export class AuthController {
     @Res() res: Response,
   ) {
     const result = await this.authService.providerLogin({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       userInfo: req.user,
       provider: 'google',
     });
@@ -132,7 +133,10 @@ export class AuthController {
     });
 
     // 303 See Other redirect to frontend
-    const target = this.frontendUrl ?? process.env.FRONTEND_URL_PROD ?? '/';
+    const target =
+      this.frontendUrl ??
+      process.env.FRONTEND_URL_PROD ??
+      'https://edit-heig-pdg.work.gd';
     return http.seeOther(res, target);
   }
 
@@ -140,6 +144,7 @@ export class AuthController {
   /**
    * Login with LinkedIn
    * GET http://localhost:4000/auth/linkedin
+   * Endpoint to initiate LinkedIn OAuth flow.
    * Endpoint to initiate LinkedIn OAuth flow.
    * Redirection to LinkedIn's authentication page.
    * @returns {void}
@@ -213,6 +218,7 @@ export class AuthController {
     @Res() res: Response,
   ) {
     const result = await this.authService.providerLogin({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       userInfo: req.user,
       provider: 'microsoft',
     });
@@ -248,8 +254,10 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const refreshToken =
       (req.cookies && (req.cookies['refresh_token'] as string)) ||
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (req as any).signedCookies?.['refresh_token'];
 
     const deviceId =
@@ -265,6 +273,7 @@ export class AuthController {
     }
 
     const result = await this.authService.refreshTokens({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       refreshToken,
       deviceId,
     });
@@ -312,6 +321,7 @@ export class AuthController {
       deviceIdHeader ??
       body.deviceId ??
       (req.cookies && (req.cookies['device_id'] as string)) ??
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (req as any).signedCookies?.['device_id'];
 
     if (!deviceId) {

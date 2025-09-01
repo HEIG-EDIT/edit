@@ -22,7 +22,6 @@ import { RenameProjectDto } from './dto/rename-project.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import * as authHelp from '../common/helpers/auth.helpers';
 import * as http from '../common/helpers/responses/responses.helper';
-import * as projectHelper from '../common/helpers/projects_collab.helper';
 
 @UseGuards(JwtAuthGuard)
 @Controller('projects')
