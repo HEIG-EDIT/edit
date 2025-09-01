@@ -12,6 +12,7 @@ import Konva from "konva";
 import { v2Add, v2Sub } from "@/models/editor/layers/layerUtils";
 import { LayerProps, TransformDiff } from "@/models/editor/layers/layerProps";
 import { useEditorContext } from "../editorContext";
+import { MOVE_TOOL } from "../tools/move";
 
 export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
   (props, ref) => {
@@ -27,6 +28,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       size,
       filters,
       filtersConfig,
+      nameSelectedTool,
     }: Partial<LayerProps> = props;
 
     const { editSelectedLayers, isTransforming } = useEditorContext();
@@ -83,6 +85,21 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
               }
               return newBox;
             }}
+            enabledAnchors={
+              nameSelectedTool != MOVE_TOOL.name
+                ? []
+                : [
+                    "top-left",
+                    "top-center",
+                    "top-right",
+                    "middle-right",
+                    "middle-left",
+                    "bottom-left",
+                    "bottom-center",
+                    "bottom-right",
+                  ]
+            }
+            rotateEnabled={nameSelectedTool == MOVE_TOOL.name}
           />
         )}
         <KonvaGroup

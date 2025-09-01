@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Stage, Layer as KonvaLayer, Rect } from "react-konva";
 import {
   CANVAS_DRAG_MOUSE_BUTTON,
@@ -43,6 +43,7 @@ export const Canvas = ({
   updateLayer,
   width,
   height,
+  nameSelectedTool,
 }: CanvasProps) => {
   const isDraggingCanvas = useRef(false);
   const [canvasDragStartPosition, setCanvasDragStartPosition] =
@@ -61,61 +62,74 @@ export const Canvas = ({
     isHoldingPrimary,
   } = useEditorContext();
 
-  const handleMouseDown = (e: KonvaMouseEvent) => {
-    e.evt.preventDefault();
+  const handleMouseDown = useCallback(
+    (e: KonvaMouseEvent) => {
+      e.evt.preventDefault();
 
-    if (e.evt.button == CANVAS_DRAG_MOUSE_BUTTON) {
-      setCanvasDragStartPosition({
-        x: e.evt.clientX - canvasState.position.x,
-        y: e.evt.clientY - canvasState.position.y,
-      });
+      if (e.evt.button == CANVAS_DRAG_MOUSE_BUTTON) {
+        setCanvasDragStartPosition({
+          x: e.evt.clientX - canvasState.position.x,
+          y: e.evt.clientY - canvasState.position.y,
+        });
 
-      isDraggingCanvas.current = true;
-    } else if (e.evt.button == PRIMARY_MOUSE_BUTTON) {
-      const handler = toolEventHandlers.current[MOUSE_DOWN];
-      if (handler) {
-        handler(e);
+        isDraggingCanvas.current = true;
+      } else if (e.evt.button == PRIMARY_MOUSE_BUTTON) {
+        const handler = toolEventHandlers.current[MOUSE_DOWN];
+        if (handler) {
+          handler(e);
+        }
       }
-    }
-  };
+    },
+    [toolEventHandlers, setCanvasDragStartPosition, isDraggingCanvas],
+  );
 
-  const handleMouseMove = (e: KonvaMouseEvent) => {
-    if (!isDraggingCanvas.current) {
-      const handler = toolEventHandlers.current[MOUSE_MOVE];
-      if (handler) {
-        return handler(e);
+  const handleMouseMove = useCallback(
+    (e: KonvaMouseEvent) => {
+      if (!isDraggingCanvas.current) {
+        console.log("Event handlers", toolEventHandlers.current);
+        const handler = toolEventHandlers.current[MOUSE_MOVE];
+        console.log("Event handler", handler);
+        if (handler) {
+          return handler(e);
+        } else {
+          return;
+        }
       }
-    }
 
-    if (e.evt.buttons != 4) {
-      isDraggingCanvas.current = false;
-    }
+      if (e.evt.buttons != 4) {
+        isDraggingCanvas.current = false;
+      }
 
-    const newPos = {
-      x: e.evt.clientX - canvasDragStartPosition.x,
-      y: e.evt.clientY - canvasDragStartPosition.y,
-    };
-
-    setCanvasState((prev: CanvasState) => {
-      return {
-        ...prev,
-        position: newPos,
+      const newPos = {
+        x: e.evt.clientX - canvasDragStartPosition.x,
+        y: e.evt.clientY - canvasDragStartPosition.y,
       };
-    });
-  };
 
-  const handleMouseUp = (e: KonvaMouseEvent) => {
-    isDraggingCanvas.current = false;
-    isHoldingPrimary.current = false;
+      setCanvasState((prev: CanvasState) => {
+        return {
+          ...prev,
+          position: newPos,
+        };
+      });
+    },
+    [toolEventHandlers, setCanvasState],
+  );
 
-    if (e.evt.button == PRIMARY_MOUSE_BUTTON) {
-      const handler = toolEventHandlers.current[MOUSE_UP];
-      if (handler) {
-        handler(e);
-        return;
+  const handleMouseUp = useCallback(
+    (e: KonvaMouseEvent) => {
+      isDraggingCanvas.current = false;
+      isHoldingPrimary.current = false;
+
+      if (e.evt.button == PRIMARY_MOUSE_BUTTON) {
+        const handler = toolEventHandlers.current[MOUSE_UP];
+        if (handler) {
+          handler(e);
+          return;
+        }
       }
-    }
-  };
+    },
+    [toolEventHandlers, isDraggingCanvas, isHoldingPrimary],
+  );
 
   const handleScroll = (e: KonvaScrollEvent) => {
     e.evt.preventDefault();
@@ -208,6 +222,7 @@ export const Canvas = ({
                 ) => updateLayer(layer.id, callback, virtual)}
                 filters={layer.filters}
                 filtersConfig={layer.filtersConfig}
+                nameSelectedTool={nameSelectedTool}
               />
             );
           })}
