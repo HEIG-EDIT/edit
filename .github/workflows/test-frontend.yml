@@ -1,4 +1,4 @@
-name: Test and lint frontend
+name: Unit test frontend
 
 on: workflow_dispatch
 
