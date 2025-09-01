@@ -2,20 +2,23 @@ import { OutsideCard } from "@/components/outsideCard";
 import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
-import { SubToolConfiguration } from "@/models/editor/tools/subToolConfiguration";
-import { SubToolConfigurationProps } from "@/models/editor/tools/subToolConfigurationProps";
-import { SubTool } from "@/models/editor/tools/subTool";
+import { FilterConfiguration } from "@/models/editor/tools/filterConfiguration";
+import { FilterConfigurationProps } from "@/models/editor/tools/filterConfigurationProps";
+import { Filter } from "@/models/editor/tools/subTool";
 import ContrastRoundedIcon from "@mui/icons-material/ContrastRounded";
+import { Layer } from "@/models/editor/layers/layer";
 
-// TODO (last) : s'occuper de ce composant une fois qu'on sait ce qu'on aura le temps d'implementer
+import Konva from "konva";
+import { useEditorContext } from "../editorContext";
+import { RangeInput } from "./rangeInput";
 
-export type BlackWhiteConfiguration = SubToolConfiguration;
+export type BlackWhiteConfiguration = FilterConfiguration;
 
-export interface GaussianBlurConfiguration extends SubToolConfiguration {
+export interface GaussianBlurConfiguration extends FilterConfiguration {
   blurAmount: number;
 }
 
-export interface ColorAndToneConfiguration extends SubToolConfiguration {
+export interface ColorAndToneConfiguration extends FilterConfiguration {
   saturation: number;
   brightness: number;
   contrast: number;
@@ -23,125 +26,211 @@ export interface ColorAndToneConfiguration extends SubToolConfiguration {
   opacity: number;
 }
 
-export type InvertConfiguration = SubToolConfiguration;
+export type InvertConfiguration = FilterConfiguration;
 
-export interface PixelateConfiguration extends SubToolConfiguration {
-  amount: number;
+export interface PixelateConfiguration extends FilterConfiguration {
+  pixelSize: number;
 }
 
-export interface FlipConfiguration extends SubToolConfiguration {
-  horizontal_flip: boolean;
-  vertical_flip: boolean;
+export interface FlipConfiguration extends FilterConfiguration {
+  horizontalFlip: boolean;
+  verticalFlip: boolean;
 }
 
-export type ThresholdConfiguration = SubToolConfiguration;
+export interface ThresholdConfiguration extends FilterConfiguration {
+  threshold: number;
+}
 
-export type SharpenConfiguration = SubToolConfiguration;
-
-export const BlackWhiteConfigurationSubcomponent = ({
-  configuration,
-  setConfiguration,
-}: SubToolConfigurationProps<BlackWhiteConfiguration>) => {
-  // TODO : to remove, just for eslink check
-  console.log(configuration);
-  console.log(setConfiguration);
-
-  return <div>Black/white</div>;
+export const BlackWhiteConfigurationSubcomponent = () => {
+  return <div></div>;
 };
 
-export const BlackWhite: SubTool<BlackWhiteConfiguration> = {
+export const BlackWhite: Filter<BlackWhiteConfiguration> = {
   name: "Black/white",
-  initialConfiguration: {},
+  initialConfiguration: {
+    applyTool: (layer: Layer) => {
+      console.log("Applying grayscale");
+      return {
+        ...layer,
+        filters: [...layer.filters, Konva.Filters.Grayscale],
+      };
+    },
+  },
   configurationComponent: BlackWhiteConfigurationSubcomponent,
 };
 
 export const GaussianBlurConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
-}: SubToolConfigurationProps<GaussianBlurConfiguration>) => {
+}: FilterConfigurationProps<GaussianBlurConfiguration>) => {
   return (
     <div>
-      <p className="text-violet-50">
-        Blur amount :<br></br>
-      </p>
-      <input
-        type="range"
-        min="1"
-        max="100"
+      <RangeInput
+        property="Blur amount"
         value={configuration.blurAmount}
-        onChange={(e) => {
+        onChange={(value) => {
           setConfiguration({
             ...configuration,
-            blurAmount: Number(e.target.value),
+            blurAmount: Number(value),
           });
         }}
       />
-      <span className="text-violet-50"> {configuration.blurAmount}</span>
     </div>
   );
 };
 
-export const GaussianBlur: SubTool<GaussianBlurConfiguration> = {
+export const GaussianBlur: Filter<GaussianBlurConfiguration> = {
   name: "Gaussian blur",
-  initialConfiguration: { blurAmount: 10 },
+  initialConfiguration: {
+    blurAmount: 10,
+    applyTool: (layer: Layer, config) => {
+      const blurConfig = config as GaussianBlurConfiguration;
+      return {
+        ...layer,
+        filters: [...layer.filters, Konva.Filters.Blur],
+        filtersConfig: {
+          ...layer.filtersConfig,
+          gaussianBlur: blurConfig,
+        },
+      };
+    },
+  },
   configurationComponent: GaussianBlurConfigurationSubcomponent,
 };
 
 export const ColorAndToneConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
-}: SubToolConfigurationProps<ColorAndToneConfiguration>) => {
-  // TODO : to remove, just for eslink check
-  console.log(configuration);
-  console.log(setConfiguration);
-
-  return <div>ColorAndTone</div>;
+}: FilterConfigurationProps<ColorAndToneConfiguration>) => {
+  return (
+    <div>
+      <RangeInput
+        property="Saturation"
+        value={configuration.saturation}
+        step={0.01}
+        range={[-5, 5]}
+        onChange={(value) => {
+          setConfiguration({ ...configuration, saturation: value });
+        }}
+      />
+      <RangeInput
+        property="Brightness"
+        value={configuration.brightness}
+        step={0.01}
+        range={[-1, 1]}
+        onChange={(value) => {
+          setConfiguration({ ...configuration, brightness: value });
+        }}
+      />
+      <RangeInput
+        property="Contrast"
+        value={configuration.contrast}
+        step={1}
+        range={[-100, 100]}
+        onChange={(value) => {
+          setConfiguration({ ...configuration, contrast: value });
+        }}
+      />
+      <RangeInput
+        property="Hue"
+        value={configuration.hue}
+        step={1}
+        range={[0, 359]}
+        onChange={(value) => {
+          setConfiguration({ ...configuration, hue: value });
+        }}
+      />
+      <RangeInput
+        property="Opacity"
+        value={configuration.opacity}
+        step={0.001}
+        range={[0, 1]}
+        onChange={(value) => {
+          setConfiguration({ ...configuration, opacity: value });
+        }}
+      />
+    </div>
+  );
 };
 
-export const ColorAndTone: SubTool<ColorAndToneConfiguration> = {
+export const ColorAndTone: Filter<ColorAndToneConfiguration> = {
   name: "Color & tone",
   initialConfiguration: {
-    saturation: 1,
-    brightness: 2,
-    contrast: 3,
-    hue: 4,
-    opacity: 5,
+    saturation: 0,
+    brightness: 0,
+    contrast: 0,
+    hue: 0,
+    opacity: 1,
+    applyTool(layer, config) {
+      const FILTERS = [
+        Konva.Filters.Brighten,
+        Konva.Filters.Contrast,
+        Konva.Filters.HSL,
+      ];
+      const colorAndToneConfig = config as ColorAndToneConfiguration;
+
+      // These filters should only be added once
+      for (const filter_ of FILTERS) {
+        if (!layer.filters.includes(filter_)) {
+          layer.filters = [...layer.filters, filter_];
+        }
+      }
+      layer.filtersConfig.colorAndTone = colorAndToneConfig;
+      return layer;
+    },
   },
   configurationComponent: ColorAndToneConfigurationSubcomponent,
 };
 
-export const InvertConfigurationSubcomponent = ({
-  configuration,
-  setConfiguration,
-}: SubToolConfigurationProps<InvertConfiguration>) => {
-  // TODO : to remove, just for eslink check
-  console.log(configuration);
-  console.log(setConfiguration);
-
-  return <div>Invert</div>;
+export const InvertConfigurationSubcomponent = () => {
+  return <div></div>;
 };
 
-export const Invert: SubTool<InvertConfiguration> = {
+export const Invert: Filter<InvertConfiguration> = {
   name: "Invert",
-  initialConfiguration: {},
+  initialConfiguration: {
+    applyTool: (layer) => {
+      return {
+        ...layer,
+        filters: [...layer.filters, Konva.Filters.Invert],
+      };
+    },
+  },
   configurationComponent: InvertConfigurationSubcomponent,
 };
 
 export const PixelateConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
-}: SubToolConfigurationProps<PixelateConfiguration>) => {
-  // TODO : to remove, just for eslink check
-  console.log(configuration);
-  console.log(setConfiguration);
-
-  return <div>Pixelate</div>;
+}: FilterConfigurationProps<PixelateConfiguration>) => {
+  return (
+    <div>
+      <RangeInput
+        property="Pixel size"
+        value={configuration.pixelSize}
+        onChange={(value) => {
+          setConfiguration({ ...configuration, pixelSize: value });
+        }}
+      />
+    </div>
+  );
 };
 
-export const Pixelate: SubTool<PixelateConfiguration> = {
+export const Pixelate: Filter<PixelateConfiguration> = {
   name: "Pixelate",
   initialConfiguration: {
-    amount: 5,
+    pixelSize: 5,
+    applyTool: (layer, config) => {
+      const pixConfig = config as PixelateConfiguration;
+      return {
+        ...layer,
+        filters: [...layer.filters, Konva.Filters.Pixelate],
+        filtersConfig: {
+          ...layer.filtersConfig,
+          pixelate: pixConfig,
+        },
+      };
+    },
   },
   configurationComponent: PixelateConfigurationSubcomponent,
 };
@@ -149,31 +238,31 @@ export const Pixelate: SubTool<PixelateConfiguration> = {
 export const FlipConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
-}: SubToolConfigurationProps<FlipConfiguration>) => {
+}: FilterConfigurationProps<FlipConfiguration>) => {
   return (
-    <div>
-      <label>
+    <div className="text-violet-50 mb-4">
+      <label className="p-2">
         Horizontal:{" "}
         <input
           type="checkbox"
-          checked={configuration.horizontal_flip}
+          checked={configuration.horizontalFlip}
           onChange={(e) => {
             setConfiguration({
               ...configuration,
-              horizontal_flip: e.target.checked,
+              horizontalFlip: e.target.checked,
             });
           }}
         />
       </label>
-      <label>
+      <label className="p-2">
         Vertical:{" "}
         <input
           type="checkbox"
-          checked={configuration.vertical_flip}
+          checked={configuration.verticalFlip}
           onChange={(e) => {
             setConfiguration({
               ...configuration,
-              vertical_flip: e.target.checked,
+              verticalFlip: e.target.checked,
             });
           }}
         />
@@ -182,11 +271,36 @@ export const FlipConfigurationSubcomponent = ({
   );
 };
 
-export const Flip: SubTool<FlipConfiguration> = {
+export const Flip: Filter<FlipConfiguration> = {
   name: "Flip (mirror)",
   initialConfiguration: {
-    horizontal_flip: false,
-    vertical_flip: false,
+    horizontalFlip: false,
+    verticalFlip: false,
+    applyTool: (layer, config) => {
+      const { horizontalFlip: horizontal_flip, verticalFlip: vertical_flip } =
+        config as FlipConfiguration;
+      const xScale = horizontal_flip ? -1 : 1;
+      const yScale = vertical_flip ? -1 : 1;
+      layer = {
+        ...layer,
+        scale: {
+          x: layer.scale.x * xScale,
+          y: layer.scale.y * yScale,
+        },
+      };
+      return {
+        ...layer,
+        // The layer is flipped around the origin, we need to adjust the postion
+        position: {
+          x:
+            layer.position.x +
+            (horizontal_flip ? layer.size.x * -layer.scale.x : 0),
+          y:
+            layer.position.y +
+            (vertical_flip ? layer.size.y * -layer.scale.y : 0),
+        },
+      };
+    },
   },
   configurationComponent: FlipConfigurationSubcomponent,
 };
@@ -194,39 +308,46 @@ export const Flip: SubTool<FlipConfiguration> = {
 export const ThresholdConfigurationSubcomponent = ({
   configuration,
   setConfiguration,
-}: SubToolConfigurationProps<ThresholdConfiguration>) => {
-  // TODO : to remove, just for eslink check
-  console.log(configuration);
-  console.log(setConfiguration);
-
-  return <div>Threshold</div>;
+}: FilterConfigurationProps<ThresholdConfiguration>) => {
+  return (
+    <div>
+      <RangeInput
+        property="Threshold"
+        value={configuration.threshold}
+        onChange={(value) => {
+          setConfiguration({
+            ...configuration,
+            threshold: value,
+          });
+        }}
+        range={[0, 1]}
+        step={0.01}
+      />
+    </div>
+  );
 };
 
-export const Threshold: SubTool<ThresholdConfiguration> = {
+export const Threshold: Filter<ThresholdConfiguration> = {
   name: "Threshold",
-  initialConfiguration: {},
+  initialConfiguration: {
+    threshold: 0.5,
+    applyTool: (layer, config) => {
+      const thresholdConfig = config as ThresholdConfiguration;
+      return {
+        ...layer,
+        filters: [...layer.filters, Konva.Filters.Threshold],
+        filtersConfig: {
+          ...layer.filtersConfig,
+          threshold: thresholdConfig,
+        },
+      };
+    },
+  },
   configurationComponent: ThresholdConfigurationSubcomponent,
 };
 
-export const SharpenConfigurationSubcomponent = ({
-  configuration,
-  setConfiguration,
-}: SubToolConfigurationProps<SharpenConfiguration>) => {
-  // TODO : to remove, just for eslink check
-  console.log(configuration);
-  console.log(setConfiguration);
-
-  return <div>Sharpen</div>;
-};
-
-export const Sharpen: SubTool<SharpenConfiguration> = {
-  name: "Sharpen",
-  initialConfiguration: {},
-  configurationComponent: SharpenConfigurationSubcomponent,
-};
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const ADJUST_SUB_TOOLS: Record<string, SubTool<any>> = {
+export const ADJUST_SUB_TOOLS: Record<string, Filter<any>> = {
   [BlackWhite.name]: BlackWhite,
   [GaussianBlur.name]: GaussianBlur,
   [ColorAndTone.name]: ColorAndTone,
@@ -234,10 +355,9 @@ export const ADJUST_SUB_TOOLS: Record<string, SubTool<any>> = {
   [Pixelate.name]: Pixelate,
   [Flip.name]: Flip,
   [Threshold.name]: Threshold,
-  [Sharpen.name]: Sharpen,
 };
 
-const ADJUST_INITIAL_CONFIGURATION: Record<string, SubToolConfiguration> = {};
+const ADJUST_INITIAL_CONFIGURATION: Record<string, FilterConfiguration> = {};
 
 for (const subTool of Object.values(ADJUST_SUB_TOOLS)) {
   ADJUST_INITIAL_CONFIGURATION[subTool.name] = subTool.initialConfiguration;
@@ -245,16 +365,27 @@ for (const subTool of Object.values(ADJUST_SUB_TOOLS)) {
 
 export interface AdjustToolConfiguration extends ToolConfiguration {
   filterType: string;
-  subConfigurations: Record<string, SubToolConfiguration>;
+  subConfigurations: Record<string, FilterConfiguration>;
 }
 
-// TODO : changement de tool amene a une sauvegarde de l'etat du projet (plus dans virtual)
 export const AdjustToolConfigurationComponent = ({
   configuration,
   setConfiguration,
 }: ToolConfigurationProps<AdjustToolConfiguration>) => {
+  const { editSelectedLayers, setToolEventHandlers } = useEditorContext();
+
   const AdjustToolConfigurationSubcomponent =
     ADJUST_SUB_TOOLS[configuration.filterType].configurationComponent;
+  const subConfig = configuration.subConfigurations[configuration.filterType];
+
+  const handleApply = () => {
+    editSelectedLayers((layer) => {
+      layer.groupRef.current?.cache();
+      return subConfig.applyTool(layer, subConfig);
+    });
+  };
+
+  setToolEventHandlers({});
 
   return (
     <div>
@@ -277,7 +408,7 @@ export const AdjustToolConfigurationComponent = ({
           configuration={
             configuration.subConfigurations[configuration.filterType]
           }
-          setConfiguration={(config: SubToolConfiguration) => {
+          setConfiguration={(config: FilterConfiguration) => {
             setConfiguration({
               ...configuration,
               subConfigurations: {
@@ -287,6 +418,12 @@ export const AdjustToolConfigurationComponent = ({
             });
           }}
         />
+        <button
+          className="bg-violet-500 p-2 rounded-xl text-violet-50 border-2 border-violet-50"
+          onClick={handleApply}
+        >
+          Apply
+        </button>
       </OutsideCard>
     </div>
   );
