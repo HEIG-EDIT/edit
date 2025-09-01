@@ -18,6 +18,51 @@ import type { Vector2d } from "konva/lib/types";
 import { isAxiosError, statusMessage } from "@/lib/auth.tools"; // ELBU ADDED
 import { useRequireAuthState } from "@/hooks/auth"; // ELBU ADDED
 
+type sortType = Record<
+  string,
+  {
+    description: string;
+    sortFunction: (p1: Project, p2: Project) => number;
+  }
+>;
+
+const SORTING_TYPES: sortType = {
+  nameAsc: {
+    description: "Project name (A-Z)",
+    sortFunction: (p1, p2) =>
+      p1.projectName.localeCompare(p2.projectName, "en", {
+        sensitivity: "base",
+      }),
+  },
+  nameDesc: {
+    description: "Project name (Z-A)",
+    sortFunction: (p1, p2) =>
+      p2.projectName.localeCompare(p1.projectName, "en", {
+        sensitivity: "base",
+      }),
+  },
+  lastSavedAtAsc: {
+    description: "Last saved date (oldest first)",
+    sortFunction: (p1, p2) => {
+      if (p1.lastSavedAt == null) return -1;
+      if (p2.lastSavedAt == null) return 1;
+      return (
+        new Date(p1.lastSavedAt).getTime() - new Date(p2.lastSavedAt).getTime()
+      );
+    },
+  },
+  lastSavedAtDesc: {
+    description: "Last saved date (newest first)",
+    sortFunction: (p1, p2) => {
+      if (p1.lastSavedAt == null) return 1;
+      if (p2.lastSavedAt == null) return -1;
+      return (
+        new Date(p2.lastSavedAt).getTime() - new Date(p1.lastSavedAt).getTime()
+      );
+    },
+  },
+};
+
 export default function ProjectSelection() {
   const router = useRouter();
   const { checking, allowed } = useRequireAuthState();
@@ -33,53 +78,6 @@ export default function ProjectSelection() {
   const [projectSize, setProjectSize] = useState<Vector2d>({ x: 800, y: 800 });
   const [projectName, setProjectName] = useState<string>("project");
   const [projectId, setProjectId] = useState<number | null>(null);
-
-  type sortType = Record<
-    string,
-    {
-      description: string;
-      sortFunction: (p1: Project, p2: Project) => number;
-    }
-  >;
-
-  const SORTING_TYPES: sortType = {
-    nameAsc: {
-      description: "Project name (A-Z)",
-      sortFunction: (p1, p2) =>
-        p1.projectName.localeCompare(p2.projectName, "en", {
-          sensitivity: "base",
-        }),
-    },
-    nameDesc: {
-      description: "Project name (Z-A)",
-      sortFunction: (p1, p2) =>
-        p2.projectName.localeCompare(p1.projectName, "en", {
-          sensitivity: "base",
-        }),
-    },
-    lastSavedAtAsc: {
-      description: "Last saved date (oldest first)",
-      sortFunction: (p1, p2) => {
-        if (p1.lastSavedAt == null) return -1;
-        if (p2.lastSavedAt == null) return 1;
-        return (
-          new Date(p1.lastSavedAt).getTime() -
-          new Date(p2.lastSavedAt).getTime()
-        );
-      },
-    },
-    lastSavedAtDesc: {
-      description: "Last saved date (newest first)",
-      sortFunction: (p1, p2) => {
-        if (p1.lastSavedAt == null) return 1;
-        if (p2.lastSavedAt == null) return -1;
-        return (
-          new Date(p2.lastSavedAt).getTime() -
-          new Date(p1.lastSavedAt).getTime()
-        );
-      },
-    },
-  };
 
   const [selectedSortType, setSelectedSortType] = useState<string>("nameAsc");
 

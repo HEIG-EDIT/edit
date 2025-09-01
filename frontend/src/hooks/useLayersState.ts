@@ -28,22 +28,26 @@ export interface LayersStateResult {
   /// True if redo can be performed
   canRedo: boolean;
 
+  /// Set all the layers of the canvas.
+  /// @param newLayers The new state of the layers, or a callback returning the new state
+  setLayers: React.Dispatch<Layer[]>;
+
   /// Update the layer with a given id
   /// @param id The id of the layer to update
   /// @param callback A callback returning the updated layer
   /// @param virtual If true, the change will be virtual, meaning that no step in the
-  ///                history is created.
+  ///                history is created. False by default.
   updateLayer: (
     id: LayerId,
     callback: LayerUpdateCallback,
-    virtual: boolean,
+    virtual?: boolean,
   ) => void;
 
   /// Add a new layer
   /// @param layer The new layer to add
   /// @param atTheFront If true, the new layer is added at the front, otherwise
-  ///                   it is added at the back of the canvas.
-  addLayer: (layer: Layer, atTheFront: boolean) => void;
+  ///                   it is added at the back of the canvas. True by default.
+  addLayer: (layer: Layer, atTheFront?: boolean) => void;
 
   /// Apply a modification to all selected layers
   /// @param callback The callback to apply to all selected layers
