@@ -76,9 +76,6 @@ jobs:
             -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
             -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
             -e GOOGLE_CALLBACK_URL="${{ secrets.GOOGLE_CALLBACK_URL }}" \
-            -e LINKEDIN_CLIENT_ID="${{ secrets.LINKEDIN_CLIENT_ID }}" \
-            -e LINKEDIN_CLIENT_SECRET="${{ secrets.LINKEDIN_CLIENT_SECRET }}" \
-            -e LINKEDIN_CALLBACK_URL_LOCAL="${{ secrets.LINKEDIN_CALLBACK_URL_LOCAL }}" \
             -e MICROSOFT_CALLBACK_URL="${{ secrets.MICROSOFT_CALLBACK_URL }}" \
             -e MICROSOFT_CLIENT_ID="${{ secrets.MICROSOFT_CLIENT_ID }}" \
             -e MICROSOFT_CLIENT_SECRET="${{ secrets.MICROSOFT_CLIENT_SECRET }}" \
