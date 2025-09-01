@@ -118,16 +118,6 @@ export class CollaborationService {
       roles: c.roles.map((r) => r.name),
     }));
 
-    const owner = await this.prisma.user.findUnique({
-      where: { id: project.creatorId },
-    });
-
-    collaborations.push({
-      collaborationId: -1,
-      userEmail: owner!.email,
-      roles: ['owner'],
-    });
-
     return collaborations;
   }
 
