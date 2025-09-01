@@ -85,10 +85,13 @@ export const GaussianBlur: Filter<GaussianBlurConfiguration> = {
     blurAmount: 10,
     applyTool: (layer: Layer, config) => {
       const blurConfig = config as GaussianBlurConfiguration;
-      layer.groupRef.current?.blurRadius(blurConfig.blurAmount);
       return {
         ...layer,
         filters: [...layer.filters, Konva.Filters.Blur],
+        filtersConfig: {
+          ...layer.filtersConfig,
+          gaussianBlur: blurConfig,
+        },
       };
     },
   },
@@ -160,27 +163,19 @@ export const ColorAndTone: Filter<ColorAndToneConfiguration> = {
     opacity: 1,
     applyTool(layer, config) {
       const FILTERS = [
-        Konva.Filters.RGBA,
         Konva.Filters.Brighten,
         Konva.Filters.Contrast,
         Konva.Filters.HSL,
       ];
-      const { saturation, brightness, contrast, hue, opacity } =
-        config as ColorAndToneConfiguration;
-
-      layer.groupRef.current?.brightness(brightness);
-      layer.groupRef.current?.contrast(contrast);
-      layer.groupRef.current?.saturation(saturation);
-      layer.groupRef.current?.hue(hue);
-      layer.groupRef.current?.opacity(opacity);
+      const colorAndToneConfig = config as ColorAndToneConfiguration;
 
       // These filters should only be added once
       for (const filter_ of FILTERS) {
         if (!layer.filters.includes(filter_)) {
-          console.log("Adding filter");
           layer.filters = [...layer.filters, filter_];
         }
       }
+      layer.filtersConfig.colorAndTone = colorAndToneConfig;
       return layer;
     },
   },
@@ -227,10 +222,13 @@ export const Pixelate: Filter<PixelateConfiguration> = {
     pixelSize: 5,
     applyTool: (layer, config) => {
       const pixConfig = config as PixelateConfiguration;
-      layer.groupRef.current?.pixelSize(pixConfig.pixelSize);
       return {
         ...layer,
         filters: [...layer.filters, Konva.Filters.Pixelate],
+        filtersConfig: {
+          ...layer.filtersConfig,
+          pixelate: pixConfig,
+        },
       };
     },
   },
@@ -334,11 +332,14 @@ export const Threshold: Filter<ThresholdConfiguration> = {
   initialConfiguration: {
     threshold: 0.5,
     applyTool: (layer, config) => {
-      const { threshold } = config as ThresholdConfiguration;
-      layer.groupRef.current?.threshold(threshold);
+      const thresholdConfig = config as ThresholdConfiguration;
       return {
         ...layer,
         filters: [...layer.filters, Konva.Filters.Threshold],
+        filtersConfig: {
+          ...layer.filtersConfig,
+          threshold: thresholdConfig,
+        },
       };
     },
   },
@@ -367,7 +368,6 @@ export interface AdjustToolConfiguration extends ToolConfiguration {
   subConfigurations: Record<string, FilterConfiguration>;
 }
 
-// TODO : changement de tool amene a une sauvegarde de l'etat du projet (plus dans virtual)
 export const AdjustToolConfigurationComponent = ({
   configuration,
   setConfiguration,

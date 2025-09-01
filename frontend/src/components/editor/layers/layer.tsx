@@ -26,6 +26,7 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       lines,
       size,
       filters,
+      filtersConfig,
     }: Partial<LayerProps> = props;
 
     const { editSelectedLayers, isTransforming } = useEditorContext();
@@ -45,8 +46,10 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
     };
 
     useEffect(() => {
-      if (isSelected && groupRef) {
-        transformerRef.current?.nodes([groupRef?.current]);
+      if (groupRef) {
+        if (isSelected) {
+          transformerRef.current?.nodes([groupRef?.current]);
+        }
       }
     }, [isSelected, groupRef, transformerRef]);
 
@@ -104,6 +107,14 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
             height: size.y,
           }}
           filters={filters}
+          blurRadius={filtersConfig.gaussianBlur.blurAmount}
+          saturation={filtersConfig.colorAndTone.saturation}
+          contrast={filtersConfig.colorAndTone.contrast}
+          brightness={filtersConfig.colorAndTone.brightness}
+          hue={filtersConfig.colorAndTone.hue}
+          opacity={filtersConfig.colorAndTone.opacity}
+          pixelSize={filtersConfig.pixelate.pixelSize}
+          threshold={filtersConfig.threshold.threshold}
         >
           {/* Dummy rectangle, used to select layers with Canvas click */}
           <KonvaRect
