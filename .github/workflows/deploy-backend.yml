@@ -81,8 +81,8 @@ jobs:
             -e MICROSOFT_CLIENT_SECRET="${{ secrets.MICROSOFT_CLIENT_SECRET }}" \
             -e MICROSOFT_TENANT="${{ secrets.MICROSOFT_TENANT }}" \
             -e DATABASE_URL="${{ secrets.DATABASE_URL_PROD }}" \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{needs.build-and-push-image.outputs.image-tag}}
-            sh -c "npx prisma generate && npx prisma migrate deploy"
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{needs.build-and-push-image.outputs.image-tag}} \
+            sh -c "npx prisma generate && npx prisma migrate deploy && npm run start:prod"
 
       - name: Remove old images
         run: docker image prune -af
