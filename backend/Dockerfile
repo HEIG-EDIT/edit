@@ -9,6 +9,7 @@ RUN npm install
 
 # Copy application code
 COPY . .
+#COPY prisma ./prisma
 
 # Build the backend (if using NestJS or TS)
 RUN npm run build
