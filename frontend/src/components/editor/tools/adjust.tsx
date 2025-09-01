@@ -240,8 +240,8 @@ export const FlipConfigurationSubcomponent = ({
   setConfiguration,
 }: FilterConfigurationProps<FlipConfiguration>) => {
   return (
-    <div>
-      <label>
+    <div className="text-violet-50 mb-4">
+      <label className="p-2">
         Horizontal:{" "}
         <input
           type="checkbox"
@@ -254,7 +254,7 @@ export const FlipConfigurationSubcomponent = ({
           }}
         />
       </label>
-      <label>
+      <label className="p-2">
         Vertical:{" "}
         <input
           type="checkbox"
