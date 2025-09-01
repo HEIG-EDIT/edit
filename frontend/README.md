@@ -49,6 +49,6 @@ tests should be meaningfully separated into files.
 The EDIT frontend is deployed by a Github actions workflow using the corresponding
 [Dockerfile](Dockerfile). This deployment workflow is automatically triggered
 whenever a PR containing changes in the `frontend` directory of the monorepo
-(the directory containing this README file).
+(the directory containing this README file) is opened.
 
 This Dockerifle can also be used to build and deploy the app locally.
