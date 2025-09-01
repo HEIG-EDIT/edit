@@ -60,11 +60,6 @@ jobs:
 
       - name: Stop and remove old backend container
         run: docker rm -f ${{ env.CONTAINER_NAME }} || true
-
-      - name: Build new container
-        run: docker build \
-            --build-arg DATABASE_URL=${{ secrets.DATABASE_URL_PROD }} \
-            -t your-image:latest .
             
       - name: Run new backend container
         run: |
