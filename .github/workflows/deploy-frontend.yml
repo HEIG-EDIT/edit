@@ -3,7 +3,7 @@ name: Deploy Frontend on AWS EC2
 on:
   push:
     branches: ["fix/deploy-backend"]
-    paths: ["frontend/**"]
+    paths: ["frontend/**", ".github/workflows/deploy-frontend.yml"]
 
 env:
   REGISTRY: ghcr.io

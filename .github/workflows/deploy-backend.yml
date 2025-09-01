@@ -3,7 +3,7 @@ name: Deploy Backend on AWS EC2
 on:
   push:
     branches: ["fix/deploy-backend"]
-    paths: ["backend/**"]
+    paths: ["backend/**", ".github/workflows/deploy-backend.yml"]
 
 env:
   REGISTRY: ghcr.io
