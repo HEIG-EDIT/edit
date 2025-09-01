@@ -1,6 +1,7 @@
 import { Layer } from "@/models/editor/layers/layer";
 import { renderHook } from "@testing-library/react";
 import { act } from "react";
+import useLayersState from "@/hooks/useLayersState";
 
 const MOVABLE_LAYERS_COUNTS = [5, 20];
 const LAYERS_COUNTS = [0, 1, ...MOVABLE_LAYERS_COUNTS];
