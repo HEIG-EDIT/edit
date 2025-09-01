@@ -9,9 +9,10 @@ RUN npm install
 
 # Copy application code
 COPY . .
+#COPY prisma ./prisma
 
-# Generate Prisma client
-RUN npx prisma generate
+# Generate Prisma client and deploy migrations
+#RUN npx prisma generate
 
 # Build the backend (if using NestJS or TS)
 RUN npm run build
