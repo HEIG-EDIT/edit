@@ -56,6 +56,6 @@ jobs:
       - name: Delete old container
         run: docker rm -f ${{ env.CONTAINER_NAME }}
       - name: Run new container
-        run: docker run -d --restart=always -p 81:3000 --name ${{ env.CONTAINER_NAME }} --network host ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{needs.build-and-push-image.outputs.image-tag}}
+        run: docker run -d --restart=always --name ${{ env.CONTAINER_NAME }} --network host ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{needs.build-and-push-image.outputs.image-tag}}
       - name: Remove old image
         run: docker image prune -af
