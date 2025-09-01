@@ -17,8 +17,10 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { PrismaService } from '../prisma/prisma.service';
 
 import { UsersService } from './users.service';
+import { AuthService } from '../auth/auth.service';
 
 import { ChangeUsernameDto } from './dto/change-username.dto';
 import { ChangeEmailDto } from './dto/change-email.dto';
@@ -37,7 +39,11 @@ import * as authHelp from '../common/helpers/auth.helpers';
 @UseGuards(JwtAuthGuard)
 @Controller('user')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private prisma: PrismaService,
+    private authService: AuthService,
+  ) {}
 
   //--------------------Get User Profile------------------//
 
@@ -161,7 +167,7 @@ export class UsersController {
       });
     }
 
-    if (!result.updated) {
+    if (result.updated === false) {
       // Idempotent no-op → 204
       return noContent(res);
     }

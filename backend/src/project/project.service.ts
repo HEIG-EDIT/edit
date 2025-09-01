@@ -20,7 +20,6 @@ export class ProjectService {
 
   /**
    * Create a new project.
-   * @param userId
    * @param createProjectDto
    * @return The created project.
    */
@@ -71,7 +70,6 @@ export class ProjectService {
    * Rename a project.
    * @param id
    * @param name
-   * @param userId
    */
   async renameProject(id: number, name: string, userId: number): Promise<void> {
     await projectHelper.assertOwner(this.prisma, userId, id);

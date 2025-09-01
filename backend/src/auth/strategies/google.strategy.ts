@@ -21,25 +21,21 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
   /**
    * Validate function to extract user information from Google profile
-   * @param accessToken
-   * @param refreshToken
+   * @param _accessToken
+   * @param _refreshToken
    * @param profile : Profile object returned by Google
-   * @param done : function
+   * @param done : Callback function
    * @returns Object containing email, oauthId, and provider
    */
   validate(
-    accessToken: string,
-    refreshToken: string,
+    _accessToken: string,
+    _refreshToken: string,
     profile: any,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/no-unused-vars
     done: Function,
   ) {
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       email: profile.emails[0].value,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       oauthId: profile.id,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       provider: profile.provider,
     };
   }

@@ -28,14 +28,13 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
    * @param _accessToken
    * @param _refreshToken
    * @param profile : Profile object returned by Microsoft
-   * @param done : function
+   * @param done : Callback function
    * @returns Object containing email, oauthId, and provider
    */
   validate(
     _accessToken: string,
     _refreshToken: string,
     profile: any,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/no-unused-vars
     done: Function,
   ) {
     // Common places where email shows up depending on tenant:
@@ -43,15 +42,10 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
     // - profile._json.mail
     // - profile._json.userPrincipalName
     // - profile._json.preferred_username
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const email =
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       profile?.emails?.[0]?.value ??
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       profile?._json?.mail ??
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       profile?._json?.userPrincipalName ??
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       profile?._json?.preferred_username;
 
     if (!email) {
@@ -61,11 +55,8 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
     }
 
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       email,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
       oauthId: profile.id,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
       provider: profile.provider, // "microsoft"
     };
   }
