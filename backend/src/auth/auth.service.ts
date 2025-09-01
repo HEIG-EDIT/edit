@@ -9,8 +9,6 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 
-import { Prisma } from '@prisma/client';
-
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -72,8 +70,7 @@ export class AuthService {
     } catch (err: any) {
       if (
         err instanceof ConflictException ||
-        (err instanceof PrismaClientKnownRequestError &&
-          err.code === 'P2002')
+        (err instanceof PrismaClientKnownRequestError && err.code === 'P2002')
       ) {
         return {
           message: 'An account with this email already exists',
@@ -159,6 +156,7 @@ export class AuthService {
     provider: 'google' | 'microsoft' | 'linkedin';
   }) {
     // Ensure user exists (create minimal account if necessary)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
     const email = params.userInfo.email;
     let user = await this.userService.findUserByEmail(email);
     if (!user) {
