@@ -3,7 +3,7 @@ name: Deploy Backend on AWS EC2
 on:
   push:
     branches: ["main"]
-    paths: ["backend/**"]
+    paths: ["backend/**", ".github/workflows/deploy-backend.yml"]
 
 env:
   REGISTRY: ghcr.io
@@ -64,9 +64,8 @@ jobs:
       - name: Run new backend container
         run: |
           docker run -d --restart=always \
-            -p 4000:4000 \
             --name ${{ env.CONTAINER_NAME }} \
-            --network app-network \
+            -p 4000:4000 \
             -e AWS_REGION="${{ secrets.AWS_REGION }}" \
             -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
             -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
@@ -85,18 +84,3 @@ jobs:
 
       - name: Remove old images
         run: docker image prune -af
-
-      # Run Prisma migrations (reset or deploy depending on secret)
-      - name: Run Prisma migrations
-        run: |
-          if [ "${{ secrets.RESET_DB }}" = "true" ]; then
-            echo "⚠️ RESETTING DATABASE..."
-            docker exec \
-              ${{ env.CONTAINER_NAME}} \
-              sh -c "npx prisma migrate reset --force --skip-seed"
-          else
-            echo "✅ Applying safe migrations..."
-            docker exec \
-              ${{ env.CONTAINER_NAME}} \
-              sh -c "npx prisma migrate deploy"
-          fi

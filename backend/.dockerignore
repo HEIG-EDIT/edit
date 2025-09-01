@@ -1,0 +1,13 @@
+# ignore everything
+*
+
+# allow files and directories
+!/lib
+!/prisma
+!/src
+!/eslint.config.mjs
+!/nest-cli.json
+!/package-lock.json
+!/package.json
+!/tsconfig.build.json
+!/tsconfig.json

@@ -50,9 +50,9 @@ function validateRegisterPassword(pw: string): boolean {
   return /^(?=.*[A-Z])(?=.*[a-z])(?=.*[\W_]).{10,64}$/.test(pw);
 }
 
-// Login password check matches your LoginDto (MinLength 14)
+// Login password check matches your LoginDto (MinLength 10)
 function validateLoginPassword(pw: string): boolean {
-  return typeof pw === "string" && pw.length >= 14;
+  return typeof pw === "string" && pw.length >= 10;
 }
 
 // Normalize axios error payloads into {status, message}
@@ -217,13 +217,13 @@ export const LoginPanel = (): JSX.Element => {
   }
 
   // ---------- LOGIN ----------
-  // FE validation for login (email + min length 14)
+  // FE validation for login (email + min length 10)
   function validateLoginFields(): boolean {
     const errs: { email?: string; password?: string } = {};
     if (!validateEmail(email))
       errs.email = "Please enter a valid email address.";
     if (!validateLoginPassword(password))
-      errs.password = "Password must be at least 14 characters.";
+      errs.password = "Password must be at least 10 characters.";
     setLoginErrors(errs);
     return Object.keys(errs).length === 0;
   }

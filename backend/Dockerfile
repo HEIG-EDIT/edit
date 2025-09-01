@@ -1,23 +1,23 @@
 FROM node:18-alpine
 
+# Set working directory
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies only
 COPY package*.json ./
-RUN npm install
+RUN npm install 
 
-# Copy prisma schema first
-COPY prisma ./prisma
-
-# Copy the rest of the code
+# Copy application code
 COPY . .
 
-# Generate Prisma client at build time
+# Generate Prisma client
 RUN npx prisma generate
 
-# Build NestJS backend
+# Build the backend
 RUN npm run build
 
+# Expose port (inside container)
 EXPOSE 4000
 
-CMD ["npm", "run", "start:prod"]
+# Start the app
+CMD npx prisma migrate deploy && npm run start:prod
