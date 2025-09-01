@@ -92,11 +92,11 @@ jobs:
           if [ "${{ secrets.RESET_DB }}" = "true" ]; then
             echo "⚠️ RESETTING DATABASE..."
             docker exec \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{needs.build-and-push-image.outputs.image-tag}} \
+              ${{ env.CONTAINER_NAME}} \
               sh -c "npx prisma migrate reset --force --skip-seed"
           else
             echo "✅ Applying safe migrations..."
             docker exec \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{needs.build-and-push-image.outputs.image-tag}} \
+              ${{ env.CONTAINER_NAME}} \
               sh -c "npx prisma migrate deploy"
           fi
