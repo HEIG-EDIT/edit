@@ -5,6 +5,7 @@ import { ADJUST_TOOL } from "@/components/editor/tools/adjust";
 import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "../tools/toolConfiguration";
 
+/// Constant holding all of the tools in the editor
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const TOOLS: Record<string, Tool<any>> = {
   [MOVE_TOOL.name]: MOVE_TOOL,

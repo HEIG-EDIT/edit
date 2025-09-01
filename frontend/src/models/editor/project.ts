@@ -1,15 +1,24 @@
 import { Layer, SerializedLayer } from "@/models/editor/layers/layer";
 import { Vector2d } from "konva/lib/types";
 
+/// Class holding the logic for serialization / deserialization of EDIT projects.
 export class Project {
+  /// A list of layers in the projetc
   layers: Layer[];
+  /// The size of the project's canvas
   canvasSize: Vector2d;
 
+  /// Create a new project from the editor's current state
+  /// @param layers The layers currently in the canvas
+  /// @param canvasSize The size of the editor's current canvas
   constructor(layers: Layer[], canvasSize: Vector2d) {
     this.layers = layers;
     this.canvasSize = canvasSize;
   }
 
+  /// Convert the Project to a JSON string
+  /// @returns A JSON string containing the serialized project. This includes
+  ///          the layers' images encoded as base64.
   toJSON(): string {
     const result = {
       canvasSize: this.canvasSize,
@@ -34,6 +43,9 @@ export class Project {
     return JSON.stringify(result);
   }
 
+  /// Convert a serialized JSON proEct string to a Project object
+  /// @param JSONProject the serialized project's JSON string
+  /// @returns The resulting Project that can be loaded in the editor
   static async fromJSON(JSONProject: string): Promise<Project> {
     const input = JSON.parse(JSONProject);
 

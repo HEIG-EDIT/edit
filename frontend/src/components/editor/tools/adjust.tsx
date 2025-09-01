@@ -4,7 +4,7 @@ import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
 import { FilterConfiguration } from "@/models/editor/tools/filterConfiguration";
 import { FilterConfigurationProps } from "@/models/editor/tools/filterConfigurationProps";
-import { Filter } from "@/models/editor/tools/subTool";
+import { Filter } from "@/models/editor/tools/filter";
 import ContrastRoundedIcon from "@mui/icons-material/ContrastRounded";
 import { Layer } from "@/models/editor/layers/layer";
 
