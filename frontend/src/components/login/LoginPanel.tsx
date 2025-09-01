@@ -1,10 +1,11 @@
 "use client";
 
 import React, { JSX, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // UPDATED
+import { useRouter, useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
+import { AxiosError } from "axios"; // UPDATED: to parse backend statuses
 
 type View = "chooser" | "login" | "register";
 
@@ -12,8 +13,9 @@ const MAX_ATTEMPTS = 8;
 const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
 type Attempts = { count: number; firstAt: number };
-type Flash = { type: "success" | "error"; text: string } | null; // UPDATED
+type Flash = { type: "success" | "error"; text: string } | null;
 
+// ---------- helpers: attempts ----------
 function isAttempts(x: unknown): x is Attempts {
   if (!x || typeof x !== "object") return false;
   const obj = x as Record<string, unknown>;
@@ -36,51 +38,87 @@ function clearAttempts(): void {
   globalThis.localStorage?.removeItem("loginAttempts");
 }
 
+// ---------- helpers: validation ----------
 function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
-function validatePassword(pw: string): boolean {
+
+// Register password policy (matches your DTO): 10–64, upper+lower+symbol
+function validateRegisterPassword(pw: string): boolean {
   return /^(?=.*[A-Z])(?=.*[a-z])(?=.*[\W_]).{10,64}$/.test(pw);
+}
+
+// UPDATED: Login password check matches your LoginDto (MinLength 14)
+function validateLoginPassword(pw: string): boolean {
+  return typeof pw === "string" && pw.length >= 14;
+}
+
+// UPDATED: normalize axios error payloads into {status, message}
+function parseAxiosError(err: unknown): { status?: number; message: string } {
+  const ax = err as AxiosError<any>;
+  const status = ax?.response?.status;
+  const data = ax?.response?.data;
+
+  let message = "Something went wrong.";
+  if (data?.message) {
+    if (Array.isArray(data.message)) message = data.message.join(", ");
+    else if (typeof data.message === "string") message = data.message;
+  } else if (typeof data === "string") {
+    message = data;
+  } else if (ax?.message) {
+    message = ax.message;
+  }
+
+  return { status, message };
 }
 
 export const LoginPanel = (): JSX.Element => {
   const router = useRouter();
-  const searchParams = useSearchParams(); // UPDATED
+  const searchParams = useSearchParams();
   const [view, setView] = useState<View>("chooser");
 
-  // ----- dynamic title per view -----
+  // dynamic title
   const TITLES: Record<View, string> = {
     chooser: "Choose your login Option",
     login: "Login - Welcome Back",
     register: "Register - Welcome",
   };
 
-  // Shared fields
+  // shared fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Eye toggles
+  // visibility toggles
   const [showLoginPw, setShowLoginPw] = useState(false);
   const [showRegisterPw, setShowRegisterPw] = useState(false);
 
-  // Register fields reuse email/password
+  // UPDATED: dedicated error states for each form
+  const [loginErrors, setLoginErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
   const [regErrors, setRegErrors] = useState<{
     email?: string;
     password?: string;
   }>({});
+
   const [submitting, setSubmitting] = useState(false);
 
-  // Generic error message for login
+  // Generic error for login (backend-driven)
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Attempt limiter state
+  // attempt limiter
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
   const [now, setNow] = useState<number>(() => Date.now());
   const intervalRef = useRef<number | null>(null);
 
-  // Flash banner (success/error)
-  const [flash, setFlash] = useState<Flash>(null); // UPDATED
+  // flash banner
+  const [flash, setFlash] = useState<Flash>(null);
 
+  // UPDATED: force-remount nonces to ensure blank inputs after register success (discourage autofill from our state)
+  const [formNonce, setFormNonce] = useState(0);
+
+  // init attempts
   useEffect(() => {
     const a = getAttempts();
     if (!a) return;
@@ -90,6 +128,7 @@ export const LoginPanel = (): JSX.Element => {
     else if (windowEnd <= Date.now()) clearAttempts();
   }, []);
 
+  // ticker for countdown
   useEffect(() => {
     if (!lockedUntil) return;
     intervalRef.current = globalThis.setInterval(
@@ -101,20 +140,26 @@ export const LoginPanel = (): JSX.Element => {
     };
   }, [lockedUntil]);
 
-  // UPDATED: react to ?msg= changes (no remount needed)
+  // UPDATED: react only to ?msg=register_ok (success) — failures stay on the register form with field/global errors
   useEffect(() => {
     const msg = searchParams.get("msg");
     if (msg === "register_ok") {
-      setFlash({ type: "success", text: "Register Success Proceed to Login" });
+      setFlash({ type: "success", text: "Register succeed, proceed to login" });
       setView("login");
-      // clean the URL but keep the flash in state
-      router.replace("/login", { scroll: false });
-    } else if (msg === "register_err") {
-      setFlash({ type: "error", text: "Something went Wrong" });
-      setView("login");
+
+      // wipe fields and remount login form to avoid any state-based autofill
+      setEmail("");
+      setPassword("");
+      setShowLoginPw(false);
+      setShowRegisterPw(false);
+      setLoginErrors({});
+      setRegErrors({});
+      setFormNonce((n) => n + 1);
+
+      // clean URL but keep flash in state
       router.replace("/login", { scroll: false });
     }
-  }, [searchParams, router]); // UPDATED
+  }, [searchParams, router]);
 
   const lockedRemainingMs = useMemo(
     () => (!lockedUntil ? 0 : Math.max(lockedUntil - now, 0)),
@@ -146,32 +191,72 @@ export const LoginPanel = (): JSX.Element => {
     setLockedUntil(null);
   }
 
+  // ---------- LOGIN ----------
+  // UPDATED: FE validation for login (email + min length 14)
+  function validateLoginFields(): boolean {
+    const errs: { email?: string; password?: string } = {};
+    if (!validateEmail(email))
+      errs.email = "Please enter a valid email address.";
+    if (!validateLoginPassword(password))
+      errs.password = "Password must be at least 14 characters.";
+    setLoginErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
   async function handleLogin(
     e: React.FormEvent<HTMLFormElement>,
   ): Promise<void> {
     e.preventDefault();
     setLoginError(null);
+    setFlash(null);
     if (isLocked) return;
+
+    // UPDATED: FE guard
+    if (!validateLoginFields()) return;
+
     try {
       setSubmitting(true);
-      await api.post("/auth/login", { email, password });
-      recordLoginSuccess();
-      router.push("/projects");
-    } catch {
-      setLoginError("Something is wrong. Please check your credentials.");
-      recordLoginFailure();
+      const resp = await api.post("/auth/login", { email, password });
+      // if backend returns 200 OK, proceed
+      if (resp?.status === 200) {
+        recordLoginSuccess();
+        router.push("/projects");
+      } else {
+        // unexpected but safe fallback
+        setLoginError("Unexpected response. Please try again.");
+      }
+    } catch (err) {
+      const { status, message } = parseAxiosError(err);
+
+      // UPDATED: map common statuses
+      if (status === 401) {
+        setLoginError("Invalid email or password.");
+        recordLoginFailure(); // only count auth failures
+      } else if (status === 400 || status === 422) {
+        setLoginError(message || "Invalid input.");
+        // do not increase limiter for validation errors
+      } else if (status === 429) {
+        setLoginError("Too many requests. Please wait a moment and try again.");
+        recordLoginFailure();
+      } else if (typeof status === "number") {
+        setLoginError(`Login failed (HTTP ${status}). ${message}`);
+        recordLoginFailure();
+      } else {
+        setLoginError("Network or server error. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
   }
 
+  // ---------- REGISTER ----------
   function validateRegisterFields(): boolean {
     const errs: { email?: string; password?: string } = {};
     if (!validateEmail(email))
       errs.email = "Please enter a valid email address.";
-    if (!validatePassword(password)) {
+    if (!validateRegisterPassword(password)) {
       errs.password =
-        "Minimum 10 characters, with uppercase, lowercase, and a special character.";
+        "Minimum 10 characters with uppercase, lowercase, and a special character.";
     }
     setRegErrors(errs);
     return Object.keys(errs).length === 0;
@@ -181,21 +266,43 @@ export const LoginPanel = (): JSX.Element => {
     e: React.FormEvent<HTMLFormElement>,
   ): Promise<void> {
     e.preventDefault();
+    setFlash(null); // UPDATED: clear any banner
     setRegErrors({});
+
     if (!validateRegisterFields()) return;
+
     try {
       setSubmitting(true);
-      await api.post("/auth/register", { email, password });
-      // UPDATED: switch view immediately (no flicker)
-      setView("login"); // UPDATED
-      // UPDATED: go to /login with success flag
-      router.replace("/login?msg=register_ok"); // UPDATED
-      // Optionally: router.refresh(); // force a refetch/render if needed
-    } catch {
-      // UPDATED: ensure we land on login view with error
-      setView("login"); // UPDATED
-      router.replace("/login?msg=register_err"); // UPDATED
-      // Optionally: router.refresh();
+      const resp = await api.post("/auth/register", { email, password });
+      // if backend returns 201 Created (or 200 OK from your helper), redirect to login with success flash
+      if (resp?.status === 201 || resp?.status === 200) {
+        // UPDATED: redirect with success flag
+        setView("login");
+        router.replace("/login?msg=register_ok");
+      } else {
+        setFlash({ type: "error", text: "Unexpected response from server." });
+      }
+    } catch (err) {
+      // UPDATED: stay on register view, show backend validation/conflict/etc.
+      const { status, message } = parseAxiosError(err);
+      if (status === 409) {
+        setFlash({
+          type: "error",
+          text: "An account with this email already exists.",
+        });
+      } else if (status === 400 || status === 422) {
+        setFlash({ type: "error", text: message || "Invalid input." });
+      } else if (typeof status === "number") {
+        setFlash({
+          type: "error",
+          text: `Registration failed (HTTP ${status}). ${message}`,
+        });
+      } else {
+        setFlash({
+          type: "error",
+          text: "Network or server error. Please try again.",
+        });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -205,7 +312,7 @@ export const LoginPanel = (): JSX.Element => {
     globalThis.location.href = `http://localhost:4000/auth/${provider}`;
   }
 
-  // ------- styling helpers -------
+  // ------- styling -------
   const labelCls = "text-sm text-violet-50";
   const inputBase =
     "mt-1 w-full rounded-xl border-2 border-violet-500 px-3 py-2 outline-none bg-violet-100 text-gray-900 focus:ring-2 focus:ring-violet-400";
@@ -270,6 +377,13 @@ export const LoginPanel = (): JSX.Element => {
             >
               Continue with Microsoft
             </button>
+            {/*<button
+              type="button"
+              onClick={() => startProvider("linkedin")}
+              className={ghostBtnCls}
+            >
+              Continue with LinkedIn
+            </button>*/}
           </div>
 
           <p className="text-sm text-violet-100 pt-4">
@@ -286,18 +400,31 @@ export const LoginPanel = (): JSX.Element => {
       )}
 
       {view === "login" && (
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form
+          key={`login-${formNonce}`}
+          onSubmit={handleLogin}
+          className="space-y-4"
+          autoComplete="on"
+        >
           <label className="block">
             <span className={labelCls}>Email</span>
             <input
               type="email"
-              autoComplete="email"
+              autoComplete="username" // UPDATED
               className={inputBase}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (loginErrors.email)
+                  setLoginErrors((r) => ({ ...r, email: undefined }));
+              }}
               disabled={submitting}
               required
             />
+            {/* UPDATED: field error */}
+            {loginErrors.email && (
+              <p className="text-xs text-red-300 mt-1">{loginErrors.email}</p>
+            )}
           </label>
 
           <label className="block">
@@ -306,10 +433,14 @@ export const LoginPanel = (): JSX.Element => {
               <input
                 id="login-password"
                 type={showLoginPw ? "text" : "password"}
-                autoComplete="current-password"
+                autoComplete="current-password" // UPDATED
                 className={inputWithIcon}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (loginErrors.password)
+                    setLoginErrors((r) => ({ ...r, password: undefined }));
+                }}
                 disabled={submitting}
                 required
               />
@@ -329,8 +460,15 @@ export const LoginPanel = (): JSX.Element => {
                 )}
               </button>
             </div>
+            {/* UPDATED: field error */}
+            {loginErrors.password && (
+              <p className="text-xs text-red-300 mt-1">
+                {loginErrors.password}
+              </p>
+            )}
           </label>
 
+          {/* backend-driven error */}
           {loginError && <p className="text-sm text-red-300">{loginError}</p>}
 
           {isLocked ? (
@@ -350,7 +488,11 @@ export const LoginPanel = (): JSX.Element => {
             </button>
             <button
               type="button"
-              onClick={() => setView("chooser")}
+              onClick={() => {
+                setView("chooser");
+                setLoginErrors({}); // UPDATED: clean errors on back
+                setLoginError(null);
+              }}
               className={secondaryBtnCls}
               disabled={submitting}
             >
@@ -372,7 +514,11 @@ export const LoginPanel = (): JSX.Element => {
       )}
 
       {view === "register" && (
-        <form onSubmit={handleRegister} className="space-y-4">
+        <form
+          onSubmit={handleRegister}
+          className="space-y-4"
+          autoComplete="off"
+        >
           <label className="block">
             <span className={labelCls}>Email</span>
             <input
@@ -445,7 +591,10 @@ export const LoginPanel = (): JSX.Element => {
             </button>
             <button
               type="button"
-              onClick={() => setView("chooser")}
+              onClick={() => {
+                setView("chooser");
+                setRegErrors({}); // UPDATED: clean errors on back
+              }}
               className={secondaryBtnCls}
               disabled={submitting}
             >
