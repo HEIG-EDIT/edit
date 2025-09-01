@@ -8,6 +8,8 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { SaveProjectDto } from './dto/save-project.dto';
 import { S3Service } from '../s3/s3.service';
 import { AccessibleProjectDto } from './dto/list-accessible-prj.dto';
+import * as authHelp from '../common/helpers/auth.helpers';
+import * as projectHelper from '../common/helpers/projects_collab.helper';
 
 @Injectable()
 export class ProjectService {
@@ -69,7 +71,9 @@ export class ProjectService {
    * @param id
    * @param name
    */
-  async renameProject(id: number, name: string): Promise<void> {
+  async renameProject(id: number, name: string, userId: number): Promise<void> {
+    await projectHelper.assertOwner(this.prisma, userId, id);
+
     // Check if project exists
     const project = await this.prisma.project.findUnique({ where: { id } });
 
@@ -97,7 +101,7 @@ export class ProjectService {
     if (!project)
       throw new NotFoundException(`Project ${dto.projectId} not found`);
 
-    // validate JSON string is actually JSON 
+    // validate JSON string is actually JSON
     try {
       JSON.parse(jsonProject);
     } catch {
@@ -123,17 +127,19 @@ export class ProjectService {
    * @return The project JSON data or null if not found.
    */
 
-  async getJSONProject(projectId: number): Promise<{ JSONProject: string }> {
+  async getJSONProject(
+    projectId: number,
+  ): Promise<{ JSONProject: string | null }> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
-      });
+    });
     if (!project) throw new NotFoundException(`Project ${projectId} not found`);
 
     const json = await this.s3Service.getJson(projectId);
-    if(!json){
+    /*if (!json) {
       throw new NotFoundException('Json fro project ${projectId} not found');
-    }
-    return { JSONProject: json! };
+    }*/
+    return { JSONProject: json };
   }
 
   /**
@@ -143,6 +149,9 @@ export class ProjectService {
   async deleteProject(id: number): Promise<void> {
     const project = await this.prisma.project.findUnique({ where: { id: id } });
     if (!project) throw new NotFoundException(`Project ${id} not found`);
+
+    const userId = authHelp.resolveUserId({ userId: project.creatorId });
+    await projectHelper.assertOwner(this.prisma, Number(userId), Number(id));
 
     await this.s3Service.deleteProjectFiles(id);
     await this.prisma.project.delete({ where: { id: id } });

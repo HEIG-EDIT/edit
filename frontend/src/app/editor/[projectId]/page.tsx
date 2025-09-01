@@ -80,9 +80,8 @@ export default function EditorPage() {
     layersReorderingLogic,
   } = useLayersState();
 
-
   useEffect(() => {
-    if (!authReady || !projectId) return;
+    if (!projectId) return;
 
     const loadProject = async () => {
       setIsLoading(true);
@@ -109,8 +108,6 @@ export default function EditorPage() {
         if (isAxiosError(e)) {
           const st = e.response?.status;
           setStatusNote(statusMessage(st));
-          // Friendly redirects for common cases
-          if (st === 401) router.replace(`/login?next=/editor/${projectId}`);
           if (st === 403 || st === 404) {
             // No access / not found → go back to projects after a short delay
             setTimeout(() => router.replace("/projects"), 400);
@@ -122,7 +119,7 @@ export default function EditorPage() {
     };
 
     void loadProject();
-  }, [authReady, projectId, router, setLayers]);
+  }, [projectId, setLayers]);
 
   const [nameSelectedTool, setNameSelectedTool] = useState<string>(
     MOVE_TOOL.name,

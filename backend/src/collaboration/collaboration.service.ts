@@ -22,13 +22,13 @@ export class CollaborationService {
     currentUserId: number,
     dto: CreateCollaborationDto,
   ) {
-    await projectHelper.assertOwner(currentUserId, dto.projectId);
+    await projectHelper.assertOwner(this.prisma, currentUserId, dto.projectId);
     const user = await this.prisma.user.findUnique({
       where: { email: dto.userEmail },
     });
     if (!user) throw new NotFoundException(`User ${dto.userEmail} not found`);
 
-    await projectHelper.assertProjectExists(dto.projectId);
+    await projectHelper.assertProjectExists(this.prisma, dto.projectId);
 
     // Ensure roles exist or create them
     const roleRecords = await Promise.all(
@@ -100,7 +100,11 @@ export class CollaborationService {
    * @param projectId
    */
   async listPrjCollaborations(currentUserId: number, projectId: number) {
-    await projectHelper.assertCollaborator(currentUserId, projectId);
+    await projectHelper.assertCollaborator(
+      this.prisma,
+      currentUserId,
+      projectId,
+    );
 
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -147,7 +151,11 @@ export class CollaborationService {
         `Collaboration ${dto.collaborationId} not found`,
       );
 
-    await projectHelper.assertOwner(currentUserId, collaboration.project.id);
+    await projectHelper.assertOwner(
+      this.prisma,
+      currentUserId,
+      collaboration.project.id,
+    );
 
     // Ensure project creator always has "owner" role
     if (collaboration.userId === collaboration.project.creatorId) {
@@ -194,7 +202,11 @@ export class CollaborationService {
       throw new NotFoundException(`Collaboration ${id} not found`);
 
     // Only owner of the project can remove a collaboration
-    await projectHelper.assertOwner(currentUserId, collaboration.project.id);
+    await projectHelper.assertOwner(
+      this.prisma,
+      currentUserId,
+      collaboration.project.id,
+    );
 
     // Prevent deleting collaboration for project creator
     if (collaboration.userId === collaboration.project.creatorId) {
