@@ -15,9 +15,9 @@ async function bootstrap() {
   app.use(cookieParser());
 
   // Increase body size limit
-  app.use(bodyParser.json({ limit: '5mb' }));  // adjust as needed
+  app.use(bodyParser.json({ limit: '5mb' })); // adjust as needed
   app.use(bodyParser.urlencoded({ limit: '5mb', extended: true }));
-  
+
   await app.listen(process.env.PORT ?? 4000);
 }
 bootstrap();

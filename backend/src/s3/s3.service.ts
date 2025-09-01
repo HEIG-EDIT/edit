@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
   NoSuchKey,
+  PutObjectCommand,
+  S3Client,
 } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
 
@@ -62,6 +62,7 @@ export class S3Service {
       const stream = obj.Body as Readable;
       const chunks: Buffer[] = [];
       for await (const chunk of stream) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         chunks.push(Buffer.from(chunk));
       }
       return Buffer.concat(chunks).toString('utf-8');
@@ -84,16 +85,16 @@ export class S3Service {
       const stream = obj.Body as Readable;
       const chunks: Buffer[] = [];
       for await (const chunk of stream) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         chunks.push(Buffer.from(chunk));
       }
 
       const buffer = Buffer.concat(chunks);
-      const base64 = buffer.toString('base64');
-      return base64;
+      return buffer.toString('base64');
     } catch (caught) {
       if (caught instanceof NoSuchKey) {
         // TODO : afficher un placeholder a la place de ca
-        return "";
+        return '';
       }
 
       throw caught;
