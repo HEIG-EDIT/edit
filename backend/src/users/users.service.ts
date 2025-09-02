@@ -39,7 +39,7 @@ export class UsersService {
    * @param inputEmail - The email address of the user (must be unique).
    * @param passwordHash - The hashed password of the user.
    * @throws ConflictException if the email already exists or if no unique username could be generated.
-   * @returns The newly created user object (id, email, userName, createdAt, isEmailVerified).
+   * @returns The newly created user object (id, email, userName, createdAt).
    */
   async createUser(inputEmail: string, passwordHash: string | null) {
     for (let i = 0; i < 10; i++) {
@@ -59,7 +59,6 @@ export class UsersService {
             passwordHash: true,
             userName: true,
             createdAt: true,
-            isEmailVerified: true,
           },
         });
       } catch (err: unknown) {
@@ -87,7 +86,7 @@ export class UsersService {
   /**
    * Finds a user by email address.
    *
-   * - Returns selected fields (id, email, passwordHash, userName, createdAt, isEmailVerified).
+   * - Returns selected fields (id, email, passwordHash, userName, createdAt).
    *
    * @param email - The email address to search for.
    * @returns The user object if found, otherwise null.
@@ -101,7 +100,6 @@ export class UsersService {
         passwordHash: true,
         userName: true,
         createdAt: true,
-        isEmailVerified: true,
       },
     });
   }
@@ -109,7 +107,7 @@ export class UsersService {
   /**
    * Finds a user by username.
    *
-   * - Returns selected fields (id, userName, createdAt, isEmailVerified).
+   * - Returns selected fields (id, userName, createdAt).
    * - Throws BadRequestException if username is empty.
    *
    * @param usernameToCheck - The username to search for.
@@ -128,7 +126,6 @@ export class UsersService {
         id: true,
         userName: true,
         createdAt: true,
-        isEmailVerified: true,
       },
     });
   }
@@ -136,7 +133,7 @@ export class UsersService {
   /**
    * Finds a user by their ID.
    *
-   * - Returns selected fields (id, email, userName, createdAt, isEmailVerified).
+   * - Returns selected fields (id, email, userName, createdAt).
    *
    * @param userId - The ID of the user to find.
    * @returns The user object if found, otherwise null.
@@ -150,7 +147,6 @@ export class UsersService {
         passwordHash: true, // Include passwordHash for auth purposes
         userName: true,
         createdAt: true,
-        isEmailVerified: true,
         refreshToken: true,
       },
     });
@@ -161,7 +157,7 @@ export class UsersService {
   /**
    * Gets the profile info of the given user.
    *
-   * - Returns username, email, and 2FA method.
+   * - Returns username, email.
    * - Throws BadRequestException if user not found.
    *
    * @param userId - ID of the authenticated user.
@@ -283,7 +279,7 @@ export class UsersService {
     try {
       await this.prisma.user.update({
         where: { id: userId },
-        data: { email: newEmail, isEmailVerified: false }, // reset verification status
+        data: { email: newEmail }, // reset verification status
       });
       return 'READY';
     } catch (e: unknown) {
@@ -302,8 +298,7 @@ export class UsersService {
   /**
    * Retrieves a snapshot of the user's authentication details.
    *
-   * - Returns id, email, passwordHash, twoFaMethod, and twoFaSecret.
-   * - Used for password change and 2FA validation.
+   * - Returns id, email, passwordHash
    *
    * @param userId - ID of the user.
    * @returns An object with user auth details or null if not found.
@@ -312,8 +307,6 @@ export class UsersService {
     id: number;
     email: string;
     passwordHash: string | null;
-    twoFaMethod: string | null;
-    twoFaSecret: string | null;
   } | null> {
     return this.prisma.user.findUnique({
       where: { id: userId },
@@ -321,8 +314,6 @@ export class UsersService {
         id: true,
         email: true,
         passwordHash: true,
-        twoFaMethod: true,
-        twoFaSecret: true,
       },
     });
   }
@@ -333,7 +324,6 @@ export class UsersService {
    * - Verifies current password.
    * - Ensures new password and confirmation match.
    * - Hashes and updates the new password.
-   * - If 2FA is enabled, returns a flag for the frontend to continue 2FA validation.
    * - Always triggers an email notification in parallel.
    *
    * @param userId - ID of the user.
@@ -349,7 +339,7 @@ export class UsersService {
     newPassword: string,
     repeatPassword: string,
   ): Promise<{ success: boolean }> {
-    // Fetch user with password and 2FA settings
+    // Fetch user with password
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
