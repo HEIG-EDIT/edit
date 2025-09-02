@@ -22,6 +22,10 @@ const mockS3Service = {
     ),
 };
 
+// a valid base64 PNG string
+const base64Thumbnail =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9YpJ8hAAAAAASUVORK5CYII=';
+
 jest.setTimeout(60000); // allow enough time for docker + db
 
 describe('ProjectService (integration)', () => {
@@ -270,12 +274,12 @@ describe('ProjectService (integration)', () => {
 
       await expect(
         service.renameProject(9999, 'DoesNotExist', user.id),
-      ).rejects.toThrow('Project with id 9999 does not exist');
+      ).rejects.toThrow('Project 9999 not found');
 
       await prisma.user.delete({ where: { id: user.id } });
     });
 
-    it('should rename an existing project when called by the owner', async () => {
+    it('should rename an existing project when called by user owner', async () => {
       // Create owner
       const user = await prisma.user.create({
         data: {
@@ -293,6 +297,23 @@ describe('ProjectService (integration)', () => {
           creatorId: user.id,
         },
       });
+
+      // Ensure the role owner exists (create if missing)
+      await prisma.role.upsert({
+        where: { name: 'owner' },  // assumes `name` is unique
+        update: {},                // nothing to update if it exists
+        create: { name: 'owner' }, // create if not found
+      });
+      
+      const collab = await prisma.collaboration.create({
+        data: {
+          userId: user.id,
+          projectId: project.id,
+          roles: {
+            connect: [{ name: 'owner' }], 
+          },
+        }
+      })
 
       // Call renameProject with correct userId
       await service.renameProject(project.id, 'New Name', user.id);
@@ -338,7 +359,7 @@ describe('ProjectService (integration)', () => {
       // Non-owner should be forbidden
       await expect(
         service.renameProject(project.id, 'Hacked Name', otherUser.id),
-      ).rejects.toThrow('Forbidden');
+      ).rejects.toThrow('Only the owner can perform this action');
 
       // Cleanup
       await prisma.project.delete({ where: { id: project.id } });
