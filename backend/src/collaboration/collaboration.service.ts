@@ -3,11 +3,15 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ForbiddenException
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCollaborationDto } from './dto/create-collaboration.dto';
 import { EditCollaborationDto } from './dto/edit-collaboration.dto';
 import * as projectHelper from '../common/helpers/projects_collab.helper';
+
+const allowedRoles = ["owner", "viewer", "editor"] as const;
+type AllowedRole = typeof allowedRoles[number]; // "owner" | "viewer" | "editor"
 
 @Injectable()
 export class CollaborationService {
@@ -29,6 +33,13 @@ export class CollaborationService {
     if (!user) throw new NotFoundException(`User ${dto.userEmail} not found`);
 
     await projectHelper.assertProjectExists(this.prisma, dto.projectId);
+
+    // Ensure roles are allowed
+    for (const role of dto.roles) {
+      if (!allowedRoles.includes(role as AllowedRole)) {
+        throw new ForbiddenException(`Invalid role: ${role}`);
+      }
+    }
 
     // Ensure roles exist or create them
     const roleRecords = await Promise.all(
@@ -146,6 +157,13 @@ export class CollaborationService {
       currentUserId,
       collaboration.project.id,
     );
+    
+    // Ensure roles are allowed
+    for (const role of dto.roles) {
+      if (!allowedRoles.includes(role as AllowedRole)) {
+        throw new ForbiddenException(`Invalid role: ${role}`);
+      }
+    }
 
     // Ensure project creator always has "owner" role
     if (collaboration.userId === collaboration.project.creatorId) {
