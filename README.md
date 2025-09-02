@@ -33,6 +33,8 @@ The project structure for the backend is described [here](./backend/README.md#pr
 
 ### Development setup
 
+**For local development, a *.env* with all the required variables to run the application is needed. This can be share through a NordPass secure note or check the *.env* file in the root directory to see which variables are required.**
+
 See the [dev infrastructure diagram](TODO : ajouter lien vers image) to have an overview.
 
 1) Run the following command to setup the general development environment. This includes commit hooks for linting and formatting the code.
@@ -41,20 +43,21 @@ See the [dev infrastructure diagram](TODO : ajouter lien vers image) to have an 
 npm install
 ```
 
-2) Before starting the backend, move and rename the *./.dev_env* file to *./backend/.env*. Then, run these commands to start the backend :
-   
-For local development, a .env with all the required parameters to run the application is needed. This can be share through a NordPass secure note.
-Along with this .env file, you will also need to create a folder named `keys` in the `backend` folder. This folder will contain the private and public keys used for JWT authentication. You can generate these keys using the following commands (run them in the `backend` folder):
+2) Before starting the backend, place the *.env* file in the *./backend* folder. Then, run these commands to start the backend :
 
 ```bash
 cd backend
+npm install
 mkdir keys
-openssl genpkey -algorithm RSA -out ./keys/private.pem -pkeyopt rsa_keygen_bits:2048 # generate keys to TODO
-openssl rsa -pubout -in ./keys/private.pem -out ./keys/public.pub.pem # TODO
+openssl genpkey -algorithm RSA -out ./keys/private.pem -pkeyopt rsa_keygen_bits:2048 # generate private key for JWT authentication
+openssl rsa -pubout -in ./keys/private.pem -out ./keys/public.pub.pem # generate public key for JWT authentication
+# only if errors when executing docker compose up:
+# chmod +x localstack-init/init-s3.sh 
+# dos2unix localstack-init/init-s3.sh
 docker compose up # start postgres and s3 + introduce dummy data in s3
-npx prisma migrate deploy # TODO
-npx prisma generate # TODO
-npx prisma db seed # introduce dummy data in postgres
+npx prisma generate # generate prisma client
+npx prisma migrate deploy # apply all pending migrations to db
+npx prisma db seed # introduce dummy data in db
 npm run start:dev # start nest app
 ```
 
@@ -64,6 +67,7 @@ To have a look on the db content, execute `npx prisma studio`.
 
 ```bash
 cd frontend
+npm install
 npm run dev # start next app
 ```
 
