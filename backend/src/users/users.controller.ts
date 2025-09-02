@@ -141,7 +141,7 @@ export class UsersController {
     // Ensure sensitive responses aren't cached
     setNoStore(res);
 
-    // UPDATED: trust DTO, rely on guard for auth, resolve user id from strategy payload
+    // Trust DTO, rely on guard for auth, resolve user id from strategy payload
     const userId = authHelp.resolveUserId(req.user);
 
     if (!userId) {

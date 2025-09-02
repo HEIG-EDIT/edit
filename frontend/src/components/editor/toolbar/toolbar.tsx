@@ -50,6 +50,7 @@ export const Toolbar = ({
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  // TODO : a update avec Elbu (si user connecte = viewer alors save impossible)
   const saveProject = async () => {
     const project = new Project(layers, canvasSize);
     const JSONProject = project.toJSON();
@@ -108,7 +109,6 @@ export const Toolbar = ({
         onClick={() => setMenuDisplay(true)}
         style="bg-violet-500 border-gray-800 border-violet-50"
       />
-      {/* TODO : gerer le cas ou le user quitte cette page avant la save pop up */}
       {savePopUpDisplay && (
         <Fragment>
           <div className="fixed inset-0 bg-black opacity-80 z-50" />

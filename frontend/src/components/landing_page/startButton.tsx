@@ -13,7 +13,7 @@ export const StartButton = () => {
     api
       .get("/user/me")
       .then((res) => {
-        setIsUser(!!res.data?.id); // <-- UPDATED
+        setIsUser(!!res.data?.id);
       })
       .catch(() => {
         setIsUser(false);

@@ -29,8 +29,8 @@ import config from '../config/auth.config';
       useFactory: () => {
         const cfg = config().auth;
         return {
-          privateKey: cfg.privateKey, // UPDATED
-          publicKey: cfg.publicKey, // UPDATED
+          privateKey: cfg.privateKey,
+          publicKey: cfg.publicKey,
           signOptions: {
             algorithm: cfg.algorithm, // RS256
             expiresIn: cfg.accessTokenExpiry,

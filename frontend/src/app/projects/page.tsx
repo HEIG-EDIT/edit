@@ -15,8 +15,8 @@ import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { useRouter } from "next/navigation";
 import type { Vector2d } from "konva/lib/types";
-import { isAxiosError, statusMessage } from "@/lib/auth.tools"; // ELBU ADDED
-import { useRequireAuthState } from "@/hooks/auth"; // ELBU ADDED
+import { isAxiosError, statusMessage } from "@/lib/auth.tools";
+import { useRequireAuthState } from "@/hooks/auth";
 
 type sortType = Record<
   string,
@@ -72,7 +72,7 @@ export default function ProjectSelection() {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
-  const [statusNote, setStatusNote] = useState<string | null>(null); // ELBU ADDED
+  const [statusNote, setStatusNote] = useState<string | null>(null);
 
   const [isNewProjectDisplayed, setIsNewProjectDisplayed] = useState(false);
   const [projectSize, setProjectSize] = useState<Vector2d>({ x: 800, y: 800 });
@@ -88,7 +88,6 @@ export default function ProjectSelection() {
       setHasError(false);
       setStatusNote(null);
       try {
-        // UPDATED: correct endpoint + no-store
         const res = await api.get<Project[]>("/projects/accessible", {
           headers: { "Cache-Control": "no-store" },
         });
@@ -158,7 +157,6 @@ export default function ProjectSelection() {
     />
   );
 
-  // ELBU UPDATED: Create via /projects;
   // backend reads user from JWT;
   // 201 Created returns the project { id, ... }
   const handleProjectCreation = async () => {

@@ -31,7 +31,7 @@ export class ProjectService {
     });
 
     if (!user) {
-      throw new NotFoundException(`User with id ${userId} does not exist`); // UPDATED
+      throw new NotFoundException(`User with id ${userId} does not exist`);
     }
 
     // Create the project
@@ -151,9 +151,6 @@ export class ProjectService {
   async deleteProject(id: number): Promise<void> {
     const project = await this.prisma.project.findUnique({ where: { id: id } });
     if (!project) throw new NotFoundException(`Project ${id} not found`);
-
-    const userId = authHelp.resolveUserId({ userId: project.creatorId });
-    await projectHelper.assertOwner(this.prisma, Number(userId), Number(id));
 
     await this.s3Service.deleteProjectFiles(id);
     await this.prisma.project.delete({ where: { id: id } });

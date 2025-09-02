@@ -50,7 +50,7 @@ api.interceptors.response.use(
 
     const url = originalReq?.url || "";
 
-    // 🟣 UPDATED: do NOT try to refresh for logout endpoints
+    //Do NOT try to refresh for logout endpoints
     const isLogoutCall =
       url.includes("/auth/logout") || url.includes("/auth/logout-all");
 
