@@ -22,8 +22,6 @@ TODO : ajouter schema et explications
 
 ## Repository Structure
 
-TODO : @Alessio -> parler de husky et du lien entre back / front
-
 The project structure for the backend is described [here](./backend/README.md#project-structure) and the same is available for the frontend [here](./frontend/README.md#project-structure).
 
 ## Contributing
@@ -71,9 +69,16 @@ npm run dev # start next app
 
 More details can be found in the [backend README](./backend/README.md) or in the [frontend README](./frontend/README.md), depending on which part you would like to contribute to.
 
-### Github workflow
+### Development workflow
 
-TODO (nouvelle branche, pr avec automatiquement canvas + team en reviewers + ci / cd une fois que merge sur main)
+When running `npm install` at the root of the repository, Git commit hooks are initialized using [Husky](https://www.npmjs.com/package/husky/v/3.0.3). These hooks run [ESLint](https://eslint.org) to ensure that the code is properly formatted, free of unused code, and compliant with the project's coding standards.
+
+1. Create an issue in the repository for the bug fix or feature you would like to work on.
+2. Create a branch from main.
+3. Implement your changes on this branch.
+4. Open a PR from your branch into main, fill in the predefined PR template (link corresponding issue and explain your modifications), and create the PR.
+6. The development team will automatically be assigned as reviewers. Once at least one reviewer approves the PR, it can be merged into main.
+7. Merging into main will trigger the CI/CD pipeline, which will build and deploy an updated Docker image to production (frontend and/or backend, depending on where the changes were made).
 
 ## License
 
