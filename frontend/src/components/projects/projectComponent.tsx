@@ -7,9 +7,7 @@ import { useState } from "react";
 import api from "@/lib/api";
 import { ConfirmDeletePopUp } from "./confirmDeletePopUp";
 import type { ProjectProps } from "@/models/projects/projectProps";
-import { isAxiosError, statusMessage } from "@/lib/auth.tools"; // ELBU UPDATED
-
-// TODO : taille du composant a adapter selon taille de la thumbnail
+import { isAxiosError, statusMessage } from "@/lib/auth.tools";
 
 export const ProjectComponent = ({
   project,
@@ -32,7 +30,7 @@ export const ProjectComponent = ({
   const [confirmDeleteDisplay, setConfirmDeleteDisplay] =
     useState<boolean>(false);
 
-  const [renameError, setRenameError] = useState<string | null>(null); // ADDED
+  const [renameError, setRenameError] = useState<string | null>(null);
 
   const saveProjectName = async (projectId: number, newProjectName: string) => {
     if (!newProjectName || newProjectName === project.projectName) {
@@ -43,7 +41,7 @@ export const ProjectComponent = ({
     }
     try {
       setRenameError(null);
-      // ELBU UPDATED: match backend DTO → { projectId, name }
+      // match backend DTO → { projectId, name }
       // endpoint returns 204 No Content
       const res = await api.patch<void>("/projects/rename", {
         projectId,
@@ -79,7 +77,7 @@ export const ProjectComponent = ({
           src={
             project.thumbnail
               ? `data:image/png;base64,${project.thumbnail}`
-              : "/placeholder-thumb.png" // ELBU UPDATED: fallback avoids broken image when thumbnail missing
+              : "/placeholder-thumb.png" // fallback avoids broken image when thumbnail missing
           }
           width={160}
           height={90}

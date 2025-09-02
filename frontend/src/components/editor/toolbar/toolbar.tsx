@@ -19,6 +19,15 @@ import { useParams } from "next/navigation";
 import useOnClickOutside from "@/hooks/useOnClickOutside";
 import { Project } from "@/models/editor/project";
 import { Vector2d } from "konva/lib/types";
+import type { AxiosError } from "axios";
+
+function isAxiosError(err: unknown): err is AxiosError {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "isAxiosError" in (err as Record<string, unknown>)
+  );
+}
 
 export interface ToolBarProps {
   nameSelectedTool: string;
@@ -46,6 +55,7 @@ export const Toolbar = ({
   const params = useParams();
 
   const [hasError, setHasError] = useState<boolean>(false);
+  const [canSave, setCanSave] = useState<boolean>(true);
   const [savePopUpDisplay, setSavePopUpDisplay] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -58,14 +68,20 @@ export const Toolbar = ({
       "",
     );
     try {
+      setHasError(false);
+      setCanSave(true);
       await api.patch("/projects/save", {
         projectId: Number(params.projectId),
         jsonProject: JSONProject,
         thumbnailBase64: base64Thumbnail,
       });
-      setHasError(false);
-    } catch {
-      setHasError(true);
+    } catch (err) {
+      if (isAxiosError(err)) {
+        setHasError(true);
+        if (err.response?.status === 403) {
+          setCanSave(false);
+        }
+      }
     } finally {
       setSavePopUpDisplay(true);
     }
@@ -108,7 +124,6 @@ export const Toolbar = ({
         onClick={() => setMenuDisplay(true)}
         style="bg-violet-500 border-gray-800 border-violet-50"
       />
-      {/* TODO : gerer le cas ou le user quitte cette page avant la save pop up */}
       {savePopUpDisplay && (
         <Fragment>
           <div className="fixed inset-0 bg-black opacity-80 z-50" />
@@ -119,7 +134,9 @@ export const Toolbar = ({
             >
               <p className="text-violet-50 font-bold">
                 {hasError
-                  ? "The project could not be saved, try later..."
+                  ? canSave
+                    ? "The project could not be saved, try later..."
+                    : "You only have viewer access to this project, so changes cannot be saved."
                   : "Project successfully saved!"}
               </p>
             </div>

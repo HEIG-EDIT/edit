@@ -127,9 +127,12 @@ export class ProjectController {
     @Res({ passthrough: true }) res: Response,
     @Body() dto: SaveProjectDto,
   ) {
-    // TODO : ajouter check si owner sinon meme viewer peut modifier projet
-    await this.projectService.saveProject(dto);
-    return http.noContent(res);
+    if (req.user) {
+      await this.projectService.saveProject(
+        dto,
+        req.user.userId!,
+      );
+    }
   }
 
   /**

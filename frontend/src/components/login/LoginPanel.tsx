@@ -1,6 +1,13 @@
 "use client";
 
-import React, { JSX, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  Fragment,
+  JSX,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
@@ -8,6 +15,9 @@ import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
 
 import type { AxiosError } from "axios";
 import { isAxiosError } from "axios";
+
+// UPDATED: import the small, self-contained policies line (with popups inside)
+import { PoliciesAgreeLine } from "@/components/login/PoliciesAgreeLine";
 
 type View = "chooser" | "login" | "register";
 type ApiErrorBody = { message?: string | string[] } | string | null | undefined;
@@ -104,8 +114,8 @@ export const LoginPanel = (): JSX.Element => {
 
   // dynamic title
   const TITLES: Record<View, string> = {
-    chooser: "Choose your login Option",
-    login: "Login - Welcome Back",
+    chooser: "Choose your login option",
+    login: "Login - Welcome back",
     register: "Register - Welcome",
   };
 
@@ -172,7 +182,6 @@ export const LoginPanel = (): JSX.Element => {
       setFlash({ type: "success", text: "Register succeed, proceed to login" });
       setView("login");
 
-      // wipe fields and remount login form to avoid any state-based autofill
       setEmail("");
       setPassword("");
       setShowLoginPw(false);
@@ -181,7 +190,6 @@ export const LoginPanel = (): JSX.Element => {
       setRegErrors({});
       setFormNonce((n) => n + 1);
 
-      // clean URL but keep flash in state
       router.replace("/login", { scroll: false });
     }
   }, [searchParams, router]);
@@ -217,7 +225,6 @@ export const LoginPanel = (): JSX.Element => {
   }
 
   // ---------- LOGIN ----------
-  // FE validation for login (email + min length 10)
   function validateLoginFields(): boolean {
     const errs: { email?: string; password?: string } = {};
     if (!validateEmail(email))
@@ -236,30 +243,25 @@ export const LoginPanel = (): JSX.Element => {
     setFlash(null);
     if (isLocked) return;
 
-    // FE guard
     if (!validateLoginFields()) return;
 
     try {
       setSubmitting(true);
       const resp = await api.post("/auth/login", { email, password });
-      // if backend returns 200 OK, proceed
       if (resp?.status === 200) {
         recordLoginSuccess();
         router.push("/projects");
       } else {
-        // unexpected but safe fallback
         setLoginError("Unexpected response. Please try again.");
       }
     } catch (err) {
       const { status, message } = parseAxiosError(err);
 
-      // Map common statuses
       if (status === 401) {
         setLoginError("Invalid email or password.");
-        recordLoginFailure(); // only count auth failures
+        recordLoginFailure();
       } else if (status === 400 || status === 422) {
         setLoginError(message || "Invalid input.");
-        // do not increase limiter for validation errors
       } else if (status === 429) {
         setLoginError("Too many requests. Please wait a moment and try again.");
         recordLoginFailure();
@@ -291,7 +293,7 @@ export const LoginPanel = (): JSX.Element => {
     e: React.FormEvent<HTMLFormElement>,
   ): Promise<void> {
     e.preventDefault();
-    setFlash(null); // Clear any banner
+    setFlash(null);
     setRegErrors({});
 
     if (!validateRegisterFields()) return;
@@ -299,16 +301,13 @@ export const LoginPanel = (): JSX.Element => {
     try {
       setSubmitting(true);
       const resp = await api.post("/auth/register", { email, password });
-      // if backend returns 201 Created (or 200 OK from your helper), redirect to login with success flash
       if (resp?.status === 201 || resp?.status === 200) {
-        // Redirect with success flag
         setView("login");
         router.replace("/login?msg=register_ok");
       } else {
         setFlash({ type: "error", text: "Unexpected response from server." });
       }
     } catch (err) {
-      // Stay on register view, show backend validation/conflict/etc.
       const { status, message } = parseAxiosError(err);
       if (status === 409) {
         setFlash({
@@ -369,7 +368,7 @@ export const LoginPanel = (): JSX.Element => {
       )}
 
       {view === "chooser" && (
-        <div className="space-y-4">
+        <Fragment>
           <button
             type="button"
             onClick={() => setView("login")}
@@ -378,7 +377,7 @@ export const LoginPanel = (): JSX.Element => {
             Continue with email and password
           </button>
 
-          <div className="relative my-2">
+          <div className="relative my-1">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-violet-300" />
             </div>
@@ -421,7 +420,7 @@ export const LoginPanel = (): JSX.Element => {
               Create one
             </button>
           </p>
-        </div>
+        </Fragment>
       )}
 
       {view === "login" && (
@@ -635,6 +634,9 @@ export const LoginPanel = (): JSX.Element => {
               Sign in
             </button>
           </p>
+          <div className="pt-2">
+            <PoliciesAgreeLine />
+          </div>
         </form>
       )}
     </div>

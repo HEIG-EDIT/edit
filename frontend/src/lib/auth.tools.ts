@@ -20,7 +20,7 @@ export function getCookie(name: string): string | null {
   return decodeURIComponent(parts.pop()!.split(";").shift()!);
 }
 
-/** Map common backend statuses to short UI-friendly messages. // UPDATED */
+// Map common backend statuses to short UI-friendly messages.
 export function statusMessage(status?: number): string {
   switch (status) {
     case 200:

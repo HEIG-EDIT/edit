@@ -210,7 +210,7 @@ export class UsersService {
     });
 
     if (!current) {
-      // UPDATED: unify the "user not found" path so controller can map to 401 if desired
+      // Unify the "user not found" path so controller can map to 401 if desired
       throw new BadRequestException('User not found.');
     }
 
@@ -228,7 +228,7 @@ export class UsersService {
 
       return { updated: true, userName: updated.userName };
     } catch (e: unknown) {
-      // UPDATED: handle unique constraint violation in a bundler-safe way
+      // Handle unique constraint violation in a bundler-safe way
       if (this.isP2002(e)) {
         // Double-check which field collided. If another process sniped the same username,
         // this will confirm it and we can return a proper 409.
@@ -237,7 +237,7 @@ export class UsersService {
           select: { id: true },
         });
         if (taken) {
-          // UPDATED: consistent, explicit conflict
+          // Consistent, explicit conflict
           throw new ConflictException('Username is already taken.');
         }
         // If it wasn't userName, rethrow so it can be logged/handled upstream.
