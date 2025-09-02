@@ -4,8 +4,7 @@ import { ProjectService } from '../project.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { S3Service } from '../../s3/s3.service';
 import { CreateProjectDto } from '../dto/create-project.dto';
-import { SaveProjectDto } from '../dto/save-project.dto';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import * as projectHelper from '../../common/helpers/projects_collab.helper';
 import * as authHelp from '../../common/helpers/auth.helpers';
 
@@ -304,7 +303,7 @@ describe('ProjectService (integration)', () => {
         update: {},                // nothing to update if it exists
         create: { name: 'owner' }, // create if not found
       });
-      
+
       const collab = await prisma.collaboration.create({
         data: {
           userId: user.id,
