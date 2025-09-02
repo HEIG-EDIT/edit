@@ -152,9 +152,6 @@ export class ProjectService {
     const project = await this.prisma.project.findUnique({ where: { id: id } });
     if (!project) throw new NotFoundException(`Project ${id} not found`);
 
-    const userId = authHelp.resolveUserId({ userId: project.creatorId });
-    await projectHelper.assertOwner(this.prisma, Number(userId), Number(id));
-
     await this.s3Service.deleteProjectFiles(id);
     await this.prisma.project.delete({ where: { id: id } });
   }

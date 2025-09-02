@@ -50,6 +50,7 @@ export const Toolbar = ({
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  // TODO : a update avec Elbu (si user connecte = viewer alors save impossible)
   const saveProject = async () => {
     const project = new Project(layers, canvasSize);
     const JSONProject = project.toJSON();
