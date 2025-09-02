@@ -32,7 +32,7 @@ export class ProjectService {
     });
 
     if (!user) {
-      throw new NotFoundException(`User with id ${userId} does not exist`); // UPDATED
+      throw new NotFoundException(`User with id ${userId} does not exist`);
     }
 
     // Create the project
