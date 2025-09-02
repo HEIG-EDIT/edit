@@ -333,7 +333,7 @@ export const LoginPanel = (): JSX.Element => {
   }
 
   function startProvider(provider: "google" | "microsoft" | "linkedin"): void {
-    globalThis.location.href = `http://localhost:4000/auth/${provider}`;
+    globalThis.location.href = `/api/auth/${provider}`;
   }
 
   // ------- styling -------
