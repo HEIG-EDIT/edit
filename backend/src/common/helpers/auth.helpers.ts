@@ -4,7 +4,7 @@ import * as process from 'node:process';
 export const COOKIE_COMMON = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'prod',
-  sameSite: 'lax' as const,
+  //sameSite: 'lax' as const,
   path: '/',
 };
 
@@ -29,7 +29,7 @@ export function setAuthCookies(
   // device id is NOT httpOnly so the frontend may read & attach it as header if needed
   res.cookie('device_id', params.deviceId, {
     secure: process.env.NODE_ENV === 'prod',
-    sameSite: 'lax',
+    //sameSite: 'lax',
     path: '/',
     maxAge: params.refreshTtlSec * 1000,
   });
