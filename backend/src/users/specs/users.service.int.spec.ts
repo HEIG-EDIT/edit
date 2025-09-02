@@ -16,21 +16,6 @@ describe('UsersService (integration)', () => {
   let prisma: PrismaService;
 
   beforeAll(async () => {
-    // Start Docker container
-    execSync('docker compose up -d', { stdio: 'inherit' });
-
-    // Retry db push until ready
-    for (let i = 0; i < 10; i++) {
-      try {
-        execSync('npx prisma db push', { stdio: 'inherit' });
-        break;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (err) {
-        console.log(`DB not ready yet, retrying... (${i + 1}/10)`);
-        await new Promise((r) => setTimeout(r, 5000));
-      }
-    }
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [UsersService, PrismaService],
     }).compile();
@@ -48,7 +33,6 @@ describe('UsersService (integration)', () => {
 
   afterAll(async () => {
     await prisma.$disconnect();
-    execSync('docker compose down', { stdio: 'inherit' });
   });
 
   describe('createUser', () => {

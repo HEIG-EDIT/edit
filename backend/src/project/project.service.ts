@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ForbiddenException
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -95,13 +96,32 @@ export class ProjectService {
    * Save project data (JSON and thumbnail) to S3 and update last saved date in DB.
    * @param dto
    */
-  async saveProject(dto: SaveProjectDto): Promise<void> {
+  async saveProject(dto: SaveProjectDto, userId: number): Promise<void> {
     const { projectId, jsonProject } = dto;
     const project = await this.prisma.project.findUnique({
-      where: { id: dto.projectId },
+      where: { id: projectId },
+      include: {
+        collaborations: {
+          where: { userId },
+          include: { roles: true },
+        },
+      },
     });
     if (!project)
       throw new NotFoundException(`Project ${dto.projectId} not found`);
+
+    // Check permissions
+    const userRoles = project.collaborations.flatMap((c) =>
+      c.roles.map((r) => r.name),
+    );
+
+    const allowedRoles = ["owner", "editor"];
+
+    const hasPermission = userRoles.some((role) => allowedRoles.includes(role));
+
+    if (!hasPermission) {
+      throw new ForbiddenException("You do not have permission to save this project");
+    }
 
     // validate JSON string is actually JSON
     try {
@@ -151,6 +171,9 @@ export class ProjectService {
   async deleteProject(id: number): Promise<void> {
     const project = await this.prisma.project.findUnique({ where: { id: id } });
     if (!project) throw new NotFoundException(`Project ${id} not found`);
+
+    const userId = authHelp.resolveUserId({ userId: project.creatorId });
+    await projectHelper.assertOwner(this.prisma, Number(userId), Number(id));
 
     await this.s3Service.deleteProjectFiles(id);
     await this.prisma.project.delete({ where: { id: id } });
