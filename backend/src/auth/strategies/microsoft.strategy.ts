@@ -15,9 +15,7 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
     super({
       clientID: process.env.MICROSOFT_CLIENT_ID as string,
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET as string,
-      callbackURL:
-        (process.env.MICROSOFT_CALLBACK_URL as string) ??
-        (process.env.MICROSOFT_CALLBACK_URL_LOCAL as string),
+      callbackURL: process.env.GOOGLE_CALLBACK_URL_PROD as string,
       tenant: process.env.MICROSOFT_TENANT_ID ?? 'common',
       scope: ['openid', 'profile', 'email', 'offline_access', 'User.Read'],
     });
