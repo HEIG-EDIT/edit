@@ -9,6 +9,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: heig-edit/edit/backend
   CONTAINER_NAME: backend-container
+  DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
