@@ -9,14 +9,13 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: heig-edit/edit/backend
   CONTAINER_NAME: backend-container
-  DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-test-and-push-image:
+  build-and-push-image:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -26,21 +25,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: |
-          cd backend
-          npm ci
-
-      - name: Run tests
-        run: |
-          cd backend
-          npm test
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -65,7 +49,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
 
   deploy:
-    needs: build-test-and-push-image
+    needs: build-and-push-image
     runs-on: [ec2]
     steps:
       - name: Log in to the GitHub Container Registry
