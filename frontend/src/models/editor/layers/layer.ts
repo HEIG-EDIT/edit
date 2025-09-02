@@ -130,8 +130,6 @@ export class Layer {
       this.name = name;
     } else {
       // Layer is empty
-      // TODO : demander nom pour layer vide ou ajouter possibilite de pouvoir renommer layer (toutes les layers)
-      // TODO : fix car si toutes les layers supprimees et ajout layer vide alors layer vide avec numero x et pas sans numero (compteur pas remis a zero)
       const layerSuffix = Layer.emptyLayerCounter
         ? ` (${Layer.emptyLayerCounter})`
         : "";

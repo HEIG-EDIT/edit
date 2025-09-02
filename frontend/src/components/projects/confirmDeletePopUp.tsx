@@ -1,7 +1,7 @@
 import api from "@/lib/api";
 import React, { Dispatch, Fragment, SetStateAction, useState } from "react";
 import { createPortal } from "react-dom";
-import { isAxiosError, statusMessage } from "@/lib/auth.tools"; // UPDATED
+import { isAxiosError, statusMessage } from "@/lib/auth.tools";
 
 export const ConfirmDeletePopUp = ({
   setConfirmDeleteDisplay,

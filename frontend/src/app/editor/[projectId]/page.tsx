@@ -148,9 +148,6 @@ export default function EditorPage() {
     return () => resizeObserver.disconnect();
   }, []);
 
-  // TODO : a supprimer des que gestion du state global ok
-  useEffect(() => console.log(toolsConfiguration), [toolsConfiguration]);
-
   const layerRef = useRef<Konva.Layer>(null);
 
   const stageRef = useRef<Konva.Stage>(null);
@@ -175,7 +172,6 @@ export default function EditorPage() {
     };
   };
 
-  // ELBU UPDATED : Gated render: show loader / error until project is fetched
   if (isLoading || !authReady) {
     return (
       <main className="bg-gray-900 min-h-screen flex items-center justify-center">
