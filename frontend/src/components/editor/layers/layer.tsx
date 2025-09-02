@@ -12,6 +12,7 @@ import Konva from "konva";
 import { v2Add, v2Sub } from "@/models/editor/layers/layerUtils";
 import { LayerProps, TransformDiff } from "@/models/editor/layers/layerProps";
 import { useEditorContext } from "../editorContext";
+import { MOVE_TOOL } from "../tools/move";
 
 export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
   (props, ref) => {
@@ -25,6 +26,9 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
       isSelected,
       lines,
       size,
+      filters,
+      filtersConfig,
+      nameSelectedTool,
     }: Partial<LayerProps> = props;
 
     const { editSelectedLayers, isTransforming } = useEditorContext();
@@ -44,8 +48,10 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
     };
 
     useEffect(() => {
-      if (isSelected && groupRef) {
-        transformerRef.current?.nodes([groupRef?.current]);
+      if (groupRef) {
+        if (isSelected) {
+          transformerRef.current?.nodes([groupRef?.current]);
+        }
       }
     }, [isSelected, groupRef, transformerRef]);
 
@@ -79,6 +85,21 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
               }
               return newBox;
             }}
+            enabledAnchors={
+              nameSelectedTool != MOVE_TOOL.name
+                ? []
+                : [
+                    "top-left",
+                    "top-center",
+                    "top-right",
+                    "middle-right",
+                    "middle-left",
+                    "bottom-left",
+                    "bottom-center",
+                    "bottom-right",
+                  ]
+            }
+            rotateEnabled={nameSelectedTool == MOVE_TOOL.name}
           />
         )}
         <KonvaGroup
@@ -102,6 +123,15 @@ export const LayerComponent = forwardRef<Konva.Group, LayerProps>(
             width: size.x,
             height: size.y,
           }}
+          filters={filters}
+          blurRadius={filtersConfig.gaussianBlur.blurAmount}
+          saturation={filtersConfig.colorAndTone.saturation}
+          contrast={filtersConfig.colorAndTone.contrast}
+          brightness={filtersConfig.colorAndTone.brightness}
+          hue={filtersConfig.colorAndTone.hue}
+          opacity={filtersConfig.colorAndTone.opacity}
+          pixelSize={filtersConfig.pixelate.pixelSize}
+          threshold={filtersConfig.threshold.threshold}
         >
           {/* Dummy rectangle, used to select layers with Canvas click */}
           <KonvaRect

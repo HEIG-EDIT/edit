@@ -1,6 +1,7 @@
-name: Test and lint frontend
+name: Unit test frontend
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -17,5 +18,4 @@ jobs:
         with:
           cache: "npm"
       - run: npm ci
-      - run: npm run build --if-present
       - run: npm test

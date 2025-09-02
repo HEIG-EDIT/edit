@@ -2,6 +2,17 @@ import { Vector2d } from "konva/lib/types";
 import { createRef, RefObject } from "react";
 import { Line } from "./line";
 import Konva from "konva";
+import { Filter } from "konva/lib/Node";
+import {
+  ColorAndTone,
+  ColorAndToneConfiguration,
+  GaussianBlur,
+  GaussianBlurConfiguration,
+  Pixelate,
+  PixelateConfiguration,
+  Threshold,
+  ThresholdConfiguration,
+} from "@/components/editor/tools/adjust";
 
 export type LayerId = string;
 
@@ -15,6 +26,13 @@ export interface SerializedLayer {
   scale: Vector2d;
   rotation: number;
   size: Vector2d;
+}
+
+export class FiltersConfig {
+  gaussianBlur: GaussianBlurConfiguration = GaussianBlur.initialConfiguration;
+  colorAndTone: ColorAndToneConfiguration = ColorAndTone.initialConfiguration;
+  pixelate: PixelateConfiguration = Pixelate.initialConfiguration;
+  threshold: ThresholdConfiguration = Threshold.initialConfiguration;
 }
 
 export class Layer {
@@ -42,6 +60,8 @@ export class Layer {
   };
   rotation: number = 0;
   lines: Array<Line> = []; // Lines drawn free-hand on a Layer
+  filters: Array<Filter> = [];
+  filtersConfig: FiltersConfig = new FiltersConfig();
 
   size: Vector2d;
 

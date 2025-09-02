@@ -18,7 +18,7 @@
     "prettier": "^3.6.2"
   },
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky || echo 'Could not find husky'"
   },
   "dependencies": {
     "passport-linkedin-oauth2": "^2.0.0",
