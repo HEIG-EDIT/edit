@@ -334,7 +334,6 @@ export const LoginPanel = (): JSX.Element => {
 
   function startProvider(provider: "google" | "microsoft" | "linkedin"): void {
     globalThis.location.href = `http://localhost:4000/api/auth/${provider}`;
-    // In production, use your actual backend URL
   }
 
   // ------- styling -------
