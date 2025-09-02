@@ -15,20 +15,6 @@ describe('CollaborationService (integration)', () => {
   let collaboration: any;
 
   beforeAll(async () => {
-    // Start Docker container
-    execSync('docker compose up -d', { stdio: 'inherit' });
-
-    // Run migrations
-    for (let i = 0; i < 10; i++) {
-        try {
-            execSync('npx prisma db push', { stdio: 'inherit' });
-            break; // success, exit loop
-        } catch (err) {
-            console.log(`DB not ready yet, retrying... (${i+1}/10)`);
-            await new Promise(r => setTimeout(r, 5000));
-        }
-    }
-    
     const module: TestingModule = await Test.createTestingModule({
       providers: [PrismaService, CollaborationService],
     }).compile();
@@ -55,9 +41,6 @@ describe('CollaborationService (integration)', () => {
     await prisma.role.deleteMany();
 
     await prisma.$disconnect();
-
-    // Stop Docker
-    execSync('docker compose down -v', { stdio: 'inherit' });
   });
 
   // ========== addPrjCollaboration ==========

@@ -25,27 +25,12 @@ const mockS3Service = {
 const base64Thumbnail =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9YpJ8hAAAAAASUVORK5CYII=';
 
-jest.setTimeout(60000); // allow enough time for docker + db
 
 describe('ProjectService (integration)', () => {
   let service: ProjectService;
   let prisma: PrismaService;
 
   beforeAll(async () => {
-    // Start Dockerized DB
-    execSync('docker compose up -d', { stdio: 'inherit' });
-
-    // Wait for DB to be ready and push schema
-    for (let i = 0; i < 10; i++) {
-      try {
-        execSync('npx prisma db push', { stdio: 'inherit' });
-        break;
-      } catch (err) {
-        console.log(`DB not ready yet, retrying... (${i + 1}/10)`);
-        await new Promise((r) => setTimeout(r, 5000));
-      }
-    }
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProjectService,
@@ -68,9 +53,6 @@ describe('ProjectService (integration)', () => {
     await prisma.role.deleteMany();
 
     await prisma.$disconnect();
-
-    // Stop Docker
-    execSync('docker compose down -v', { stdio: 'inherit' });
   });
 
   beforeEach(async () => {
