@@ -25,6 +25,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
    * @param refreshToken
    * @param profile : Profile object returned by Google
    * @param done : function
+   *
    * @returns Object containing email, oauthId, and provider
    */
   validate(
