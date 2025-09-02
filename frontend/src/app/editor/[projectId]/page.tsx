@@ -197,7 +197,7 @@ export default function EditorPage() {
   }
 
   return (
-    <main className="bg-gray-900 min-h-screen">
+    <main className="bg-gray-900 min-h-screen p-4">
       <EditorContext
         value={{
           isHoldingPrimary,
@@ -222,7 +222,7 @@ export default function EditorPage() {
           layersReorderingLogic,
         }}
       >
-        <div className="flex flex-row gap-4 px-4">
+        <div className="flex flex-row gap-4">
           <div className="w-1/3">
             <div className="flex flex-col gap-6">
               <ToolsManagement
@@ -249,7 +249,7 @@ export default function EditorPage() {
                   height={canvasSize.y}
                 />
               </div>
-              <div className="flex justify-center">
+              <div className="flex justify-center z-74">
                 <Toolbar
                   undo={undo}
                   canUndo={canUndo}

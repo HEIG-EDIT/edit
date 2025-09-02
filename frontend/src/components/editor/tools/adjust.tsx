@@ -1,4 +1,3 @@
-import { OutsideCard } from "@/components/outsideCard";
 import { Tool } from "@/models/editor/tools/tool";
 import { ToolConfiguration } from "@/models/editor/tools/toolConfiguration";
 import { ToolConfigurationProps } from "@/models/editor/tools/toolConfigurationProps";
@@ -11,6 +10,7 @@ import { Layer } from "@/models/editor/layers/layer";
 import Konva from "konva";
 import { useEditorContext } from "../editorContext";
 import { RangeInput } from "./rangeInput";
+import { Fragment } from "react";
 
 export type BlackWhiteConfiguration = FilterConfiguration;
 
@@ -42,7 +42,7 @@ export interface ThresholdConfiguration extends FilterConfiguration {
 }
 
 export const BlackWhiteConfigurationSubcomponent = () => {
-  return <div></div>;
+  return <p className="text-violet-50">No configuration for this filter.</p>;
 };
 
 export const BlackWhite: Filter<BlackWhiteConfiguration> = {
@@ -183,7 +183,7 @@ export const ColorAndTone: Filter<ColorAndToneConfiguration> = {
 };
 
 export const InvertConfigurationSubcomponent = () => {
-  return <div></div>;
+  return <p className="text-violet-50">No configuration for this filter.</p>;
 };
 
 export const Invert: Filter<InvertConfiguration> = {
@@ -240,11 +240,12 @@ export const FlipConfigurationSubcomponent = ({
   setConfiguration,
 }: FilterConfigurationProps<FlipConfiguration>) => {
   return (
-    <div className="text-violet-50 mb-4">
-      <label className="p-2">
-        Horizontal:{" "}
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-row gap-2 items-center">
+        <p className="text-violet-50">Horizontal:</p>
         <input
           type="checkbox"
+          className="accent-violet-500 border-black cursor-pointer"
           checked={configuration.horizontalFlip}
           onChange={(e) => {
             setConfiguration({
@@ -253,11 +254,12 @@ export const FlipConfigurationSubcomponent = ({
             });
           }}
         />
-      </label>
-      <label className="p-2">
-        Vertical:{" "}
+      </div>
+      <div className="flex flex-row gap-2 items-center">
+        <p className="text-violet-50">Vertical:</p>
         <input
           type="checkbox"
+          className="accent-violet-500 border-black cursor-pointer"
           checked={configuration.verticalFlip}
           onChange={(e) => {
             setConfiguration({
@@ -266,7 +268,7 @@ export const FlipConfigurationSubcomponent = ({
             });
           }}
         />
-      </label>
+      </div>
     </div>
   );
 };
@@ -388,22 +390,24 @@ export const AdjustToolConfigurationComponent = ({
   setToolEventHandlers({});
 
   return (
-    <div>
-      <span className="text-violet-50">
-        Filters : <br />
-      </span>
-      <select
-        className="bg-violet-500 text-violet-50 rounded p-2"
-        value={configuration.filterType}
-        onChange={(e) => {
-          setConfiguration({ ...configuration, filterType: e.target.value });
-        }}
-      >
-        {Object.keys(ADJUST_SUB_TOOLS).map((filterName) => (
-          <option key={filterName}>{filterName}</option>
-        ))}
-      </select>
-      <OutsideCard>
+    <Fragment>
+      <div className="flex flex-row gap-2 items-center mb-4">
+        <span className="text-violet-50">
+          Filters: <br />
+        </span>
+        <select
+          className="bg-violet-500 text-violet-50 rounded p-1"
+          value={configuration.filterType}
+          onChange={(e) => {
+            setConfiguration({ ...configuration, filterType: e.target.value });
+          }}
+        >
+          {Object.keys(ADJUST_SUB_TOOLS).map((filterName) => (
+            <option key={filterName}>{filterName}</option>
+          ))}
+        </select>
+      </div>
+      <div className="bg-gray-800 rounded-2xl p-2 flex flex-col gap-4">
         <AdjustToolConfigurationSubcomponent
           configuration={
             configuration.subConfigurations[configuration.filterType]
@@ -419,13 +423,13 @@ export const AdjustToolConfigurationComponent = ({
           }}
         />
         <button
-          className="bg-violet-500 p-2 rounded-xl text-violet-50 border-2 border-violet-50"
+          className="bg-violet-500 rounded-xl text-violet-50 border-2 border-violet-50 w-fit self-center px-2 py-1"
           onClick={handleApply}
         >
           Apply
         </button>
-      </OutsideCard>
-    </div>
+      </div>
+    </Fragment>
   );
 };
 

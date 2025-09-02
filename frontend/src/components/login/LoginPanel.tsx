@@ -1,6 +1,13 @@
 "use client";
 
-import React, { JSX, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  Fragment,
+  JSX,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
@@ -104,8 +111,8 @@ export const LoginPanel = (): JSX.Element => {
 
   // dynamic title
   const TITLES: Record<View, string> = {
-    chooser: "Choose your login Option",
-    login: "Login - Welcome Back",
+    chooser: "Choose your login option",
+    login: "Login - Welcome back",
     register: "Register - Welcome",
   };
 
@@ -369,7 +376,7 @@ export const LoginPanel = (): JSX.Element => {
       )}
 
       {view === "chooser" && (
-        <div className="space-y-4">
+        <Fragment>
           <button
             type="button"
             onClick={() => setView("login")}
@@ -378,7 +385,7 @@ export const LoginPanel = (): JSX.Element => {
             Continue with email and password
           </button>
 
-          <div className="relative my-2">
+          <div className="relative my-1">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-violet-300" />
             </div>
@@ -421,7 +428,7 @@ export const LoginPanel = (): JSX.Element => {
               Create one
             </button>
           </p>
-        </div>
+        </Fragment>
       )}
 
       {view === "login" && (
