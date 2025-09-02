@@ -20,23 +20,24 @@ import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
 
 import { AuthService } from './auth.service';
-import { UsersService } from '../users/users.service';
-import { ConfigService } from '@nestjs/config';
 
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 import * as http from '../common/helpers/responses/responses.helper';
 import * as authHelp from '../common/helpers/auth.helpers';
 
+/**
+ * AuthController
+ * Handles authentication-related endpoints including registration, login (local and OAuth2),
+ * token refresh, and logout.
+ * All endpoints are protected by default using JwtAuthGuard, except those marked with @Public().
+ * Uses AuthService for business logic and token management.
+ */
 @UseGuards(JwtAuthGuard)
 @Controller('auth')
 export class AuthController {
   private frontendUrl: string;
-  constructor(
-    private readonly authService: AuthService,
-    private readonly usersService: UsersService,
-    private readonly configService: ConfigService,
-  ) {
+  constructor(private readonly authService: AuthService) {
     this.frontendUrl = (
       process.env.NODE_ENV === 'prod'
         ? process.env.FRONTEND_URL_PROD
@@ -149,10 +150,10 @@ export class AuthController {
    * Redirection to LinkedIn's authentication page.
    * @returns {void}
    */
-  @Public()
+  /* @Public()
   @Get('linkedin')
   @UseGuards(AuthGuard('linkedin'))
-  linkedinLogin() {}
+  linkedinLogin() {}*/
 
   /**
    * LinkedIn OAuth callback
@@ -161,7 +162,7 @@ export class AuthController {
    * @param {Request} req - The request object containing user info from LinkedIn.
    * @param {Response} res - The response object to set cookies and redirect.
    */
-  @Public()
+  /* @Public()
   @Get('linkedin/callback')
   @UseGuards(AuthGuard('linkedin'))
   async linkedinAuthCallback(
@@ -188,7 +189,7 @@ export class AuthController {
     // redirect to FE (same logic you use everywhere)
     const target = this.frontendUrl ?? process.env.FRONTEND_URL_PROD ?? '/';
     return http.seeOther(res, target);
-  }
+  }*/
 
   //-------------------Microsoft OAUTH2 LOGIN-------------------------------
   /**

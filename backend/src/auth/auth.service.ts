@@ -14,7 +14,6 @@ import { LoginDto } from './dto/login.dto';
 
 import { UsersService } from '../users/users.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { ConfigService } from '@nestjs/config';
 import { TokensService } from './tokens/tokens.service';
 
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
@@ -26,6 +25,14 @@ const REFRESH_TTL_SEC = Number(
 const DUMMY_BCRYPT_HASH =
   '$2b$12$1w8i2LQyC6z9Yl2wq3FZeu5Vb7J1.2q6oV2Qy1q3bJxJkQe5Lxk1a';
 
+/*
+ * AuthService
+ * - local registration & login
+ * - OAuth login (Google, Microsoft, LinkedIn)
+ * - JWT access tokens
+ * - refresh tokens (with device binding)
+ * - logout (single device or all)
+ */
 @Injectable()
 export class AuthService {
   /**
@@ -33,14 +40,12 @@ export class AuthService {
    * @param userService
    * @param jwtService
    * @param prisma
-   * @param configService
    * @param tokensService
    */
   constructor(
     private readonly userService: UsersService,
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
     private readonly tokensService: TokensService,
   ) {}
 
@@ -50,12 +55,10 @@ export class AuthService {
 
   // -------------------REGISTER---------------------------------------
   /**
-   * Registers a new user and sends a verification email.
+   * Registers a new user
    *
    * Notes:
    * - Handles unique email with a generic response (no account enumeration).
-   * - Deletes any previous unused verification token for this user before creating a new one
-   *   (your schema uses `userId @unique` on EmailVerificationToken).
    */
   async registerUser(dto: RegisterDto) {
     try {
@@ -148,7 +151,6 @@ export class AuthService {
   /**
    * Use this for Google/Microsoft/LinkedIn callbacks:
    * - find or create user by email
-   * - mark email verified
    * - issue tokens the same way
    */
   async providerLogin(params: {
@@ -162,15 +164,6 @@ export class AuthService {
     if (!user) {
       // Create a minimal user with a random username (your UsersService likely has a method)
       user = await this.userService.createUser(email, null);
-    }
-
-    // Treat OAuth emails as verified
-    if (!user.isEmailVerified) {
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: { isEmailVerified: true },
-      });
-      user.isEmailVerified = true;
     }
 
     const access = await this.issueAccessToken({
