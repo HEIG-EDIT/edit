@@ -23,7 +23,7 @@ export class UsersService {
   private generateRandomUsername(): string {
     return `user_${Math.random().toString(36).substring(2, 10)}`;
   }
-  private isP2002(e: unknown): e is Prisma.PrismaClientKnownRequestError {
+  private isP2002(e: unknown): e is PrismaClientKnownRequestError {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     return typeof e === 'object' && e !== null && (e as any).code === 'P2002';
   }
