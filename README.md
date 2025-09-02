@@ -50,7 +50,7 @@ cd backend
 npm install
 mkdir keys
 openssl genpkey -algorithm RSA -out ./keys/private.pem -pkeyopt rsa_keygen_bits:2048 # generate private key for JWT authentication
-openssl rsa -pubout -in ./keys/private.pem -out ./keys/public.pub.pem # generate public key for JWT authentication
+openssl rsa -pubout -in ./keys/private.pem -out ./keys/public.pem # generate public key for JWT authentication
 # only if errors when executing docker compose up:
 # chmod +x localstack-init/init-s3.sh 
 # dos2unix localstack-init/init-s3.sh
