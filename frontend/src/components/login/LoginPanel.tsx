@@ -333,7 +333,7 @@ export const LoginPanel = (): JSX.Element => {
   }
 
   function startProvider(provider: "google" | "microsoft" | "linkedin"): void {
-    globalThis.location.href = `https://edit-heig-pdg.work.gd/api/auth/${provider}`;
+    globalThis.location.href = `/api/auth/${provider}`;
   }
 
   // ------- styling -------
