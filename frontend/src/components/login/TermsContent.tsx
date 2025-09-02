@@ -4,7 +4,7 @@ export function TermsContent(): JSX.Element {
   return (
     <div>
       <p>
-        <strong>Effective Date:</strong> [Insert Date]
+        <strong>Effective Date:</strong> 02 Aug 2025
       </p>
       <p className="mt-2">
         Welcome to our image editing web application. By creating an account or
