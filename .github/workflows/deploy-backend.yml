@@ -91,8 +91,8 @@ jobs:
             -e FRONTEND_URL_PROD="${{ secrets.FRONTEND_URL_PROD }}" \
             -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
             -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
-            -e GOOGLE_CALLBACK_URL_PROD="${{ secrets.GOOGLE_CALLBACK_URL }}" \
-            -e MICROSOFT_CALLBACK_URL_PROD="${{ secrets.MICROSOFT_CALLBACK_URL }}" \
+            -e GOOGLE_CALLBACK_URL="${{ secrets.GOOGLE_CALLBACK_URL }}" \
+            -e MICROSOFT_CALLBACK_URL="${{ secrets.MICROSOFT_CALLBACK_URL }}" \
             -e MICROSOFT_CLIENT_ID="${{ secrets.MICROSOFT_CLIENT_ID }}" \
             -e MICROSOFT_CLIENT_SECRET="${{ secrets.MICROSOFT_CLIENT_SECRET }}" \
             -e MICROSOFT_TENANT="${{ secrets.MICROSOFT_TENANT }}" \
