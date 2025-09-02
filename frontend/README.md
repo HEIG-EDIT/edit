@@ -1,29 +1,27 @@
-# EDIT Frontend
+# EDIT (Frontend)
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This part of the project is a [Next.js](https://nextjs.org) app bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
-First, install the required dependencies:
+### Only start frontend
 
-```bash
-npm install
-```
+First, install the required dependencies executing `npm install`. Then, run the development server with `npm run dev`, and open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-Then, run the development server:
+### Start the entire app
 
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+In this case, you can follow this [documentation](../README.md#development-setup).
 
 ## Project structure
 
-All of the app's pages are located in [./src/app](./src/app). These pages may use
-components defined in [./src/components/](./src/components/), in the subfolder corresponding to the relevant page,
-or at the root of the `components` directory for global components.
+The project is organized as follows:
 
-The images for the app are stored in [./public](./public/).
+- *\__tests\__*: contains unit tests (focused on the editor’s logic)
+- *public*: stores all images used by the app (especially those displayed on the home page)
+- *src*:
+    - *app*: follows the Next.js conventions for routing and page organization (in brief, each folder = one page)
+    - *components*: contains all React components (global components live at the root of this folder and page-specific components are placed in subfolders corresponding to where they are used)
+    - *lib*: manages API calls and authentication logic
+    - *models*: defines global types, interfaces, and classes for the application
 
-Regular typescript utilitary code is stored under [./src/utils](./src/utils/).
+Additionally, the *next.config.ts* file includes configuration for redirecting backend API calls.
