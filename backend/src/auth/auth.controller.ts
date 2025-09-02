@@ -141,56 +141,6 @@ export class AuthController {
     return http.seeOther(res, target);
   }
 
-  //-------------------LinkedIn OAUTH2 LOGIN-------------------------------
-  /**
-   * Login with LinkedIn
-   * GET http://localhost:4000/auth/linkedin
-   * Endpoint to initiate LinkedIn OAuth flow.
-   * Endpoint to initiate LinkedIn OAuth flow.
-   * Redirection to LinkedIn's authentication page.
-   * @returns {void}
-   */
-  /* @Public()
-  @Get('linkedin')
-  @UseGuards(AuthGuard('linkedin'))
-  linkedinLogin() {}*/
-
-  /**
-   * LinkedIn OAuth callback
-   * Endpoint to handle the callback from LinkedIn after user's authentication.
-   * Gets the user info from LinkedIn and processes login or registration.
-   * @param {Request} req - The request object containing user info from LinkedIn.
-   * @param {Response} res - The response object to set cookies and redirect.
-   */
-  /* @Public()
-  @Get('linkedin/callback')
-  @UseGuards(AuthGuard('linkedin'))
-  async linkedinAuthCallback(
-    @Req()
-    req: Request & {
-      user: { email: string; oauthId: string; provider: 'linkedin' };
-    },
-    @Res() res: Response,
-  ) {
-    const result = await this.authService.providerLogin({
-      userInfo: req.user,
-      provider: 'linkedin',
-    });
-
-    // set cookies like Google/MS
-    authHelp.setAuthCookies(res, {
-      accessToken: result.accessToken,
-      accessTtlSec: result.accessTtlSec,
-      refreshToken: result.refreshToken,
-      refreshTtlSec: result.refreshTtlSec,
-      deviceId: result.deviceId,
-    });
-
-    // redirect to FE (same logic you use everywhere)
-    const target = this.frontendUrl ?? process.env.FRONTEND_URL_PROD ?? '/';
-    return http.seeOther(res, target);
-  }*/
-
   //-------------------Microsoft OAUTH2 LOGIN-------------------------------
   /**
    * Login with Microsoft
