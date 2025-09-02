@@ -9,8 +9,6 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 import * as projectHelper from '../../common/helpers/projects_collab.helper';
 import * as authHelp from '../../common/helpers/auth.helpers';
 
-jest.setTimeout(60000); // allow enough time for docker + db
-
 // Mock S3Service
 const mockS3Service = {
   uploadJson: jest.fn(),
@@ -23,6 +21,8 @@ const mockS3Service = {
       Promise.resolve(`https://s3.fake/${projectId}/thumbnail.png`),
     ),
 };
+
+jest.setTimeout(60000); // allow enough time for docker + db
 
 describe('ProjectService (integration)', () => {
   let service: ProjectService;
@@ -111,104 +111,242 @@ describe('ProjectService (integration)', () => {
     });
   });
 
-  describe('saveProject()', () => {
-    it('should throw if project not found', async () => {
-      const dto: SaveProjectDto = {
-        projectId: 9999,
-        jsonProject: '{}',
-        thumbnailBase64: 'base64string',
-      };
-
-      await expect(service.saveProject(dto)).rejects.toThrow(NotFoundException);
-    });
-
-    it('should throw if jsonProject is invalid', async () => {
+  describe('saveProject', () => {
+    it('should save JSON + thumbnail to S3 for an existing project if user has permission', async () => {
       const user = await prisma.user.create({
-        data: { email: 'a@b.com', 
-          userName: 'ab',
-          isEmailVerified: true,
-          passwordHash: 'secret' 
+        data: { 
+          email: 'save@test.com',
+          passwordHash: 'pwd',
+          userName: 'test3',
+          isEmailVerified: false,
         },
       });
 
-      const project = await service.create(user.id, { name: 'p1' });
+      const project = await prisma.project.create({
+        data: { name: 'SaveTestProject', creatorId: user.id },
+      });
 
-      const dto: SaveProjectDto = {
-        projectId: project.id,
-        jsonProject: 'not-json',
-        thumbnailBase64: 'base64string',
-      };
+      // Ensure owner role exists
+      const ownerRole = await prisma.role.upsert({
+        where: { name: 'owner' },
+        update: {},
+        create: { name: 'owner' },
+      });
 
-      await expect(service.saveProject(dto)).rejects.toThrow(
-        BadRequestException,
+      // Link user as owner
+      await prisma.collaboration.create({
+        data: {
+          userId: user.id,
+          projectId: project.id,
+          roles: { connect: { id: ownerRole.id } },
+        },
+      });
+
+      mockS3Service.uploadJson.mockResolvedValueOnce(undefined);
+      mockS3Service.uploadThumbnail.mockResolvedValueOnce(undefined);
+
+      await service.saveProject(
+        {
+          projectId: project.id,
+          jsonProject: JSON.stringify({ foo: 'bar' }),
+          thumbnailBase64: `data:image/png;base64,${base64Thumbnail}`,
+        },
+        user.id,
       );
-    });
 
-    it('should upload files and update project', async () => {
-      const user = await prisma.user.create({
-        data: { email: 'c@d.com',  
-          userName: 'cd',
-          isEmailVerified: true,
-          passwordHash: 'secret' 
-        },
-      });
-
-      const project = await service.create(user.id, { name: 'p2' });
-
-      const dto: SaveProjectDto = {
-        projectId: project.id,
-        jsonProject: JSON.stringify({ hello: 'world' }),
-        thumbnailBase64: 'base64string',
-      };
-
-      await service.saveProject(dto);
-
+      expect(mockS3Service.uploadJson).toHaveBeenCalledTimes(1);
+      expect(mockS3Service.uploadThumbnail).toHaveBeenCalledTimes(1);
       expect(mockS3Service.uploadJson).toHaveBeenCalledWith(
         project.id,
-        dto.jsonProject,
+        JSON.stringify({ foo: 'bar' }),
       );
       expect(mockS3Service.uploadThumbnail).toHaveBeenCalledWith(
         project.id,
-        dto.thumbnailBase64,
+        expect.stringContaining(base64Thumbnail),
       );
 
-      const updated = await prisma.project.findUnique({
-        where: { id: project.id },
-      });
-      expect(updated?.lastSavedAt).not.toBeNull();
+      await prisma.project.delete({ where: { id: project.id } });
+      await prisma.user.delete({ where: { id: user.id } });
     });
-  });
 
-  
-  describe('renameProject()', () => {
     it('should throw if project does not exist', async () => {
-      jest.spyOn(projectHelper, 'assertOwner').mockResolvedValueOnce();
-
-      await expect(
-        service.renameProject(9999, 'newName', 1),
-      ).rejects.toThrow(NotFoundException);
-    });
-
-    it('should rename an existing project if user is owner', async () => {
-      const user = await prisma.user.create({
-        data: { email: 'rename@test.com', 
-          userName: 'rename',
-          isEmailVerified: true,
-          passwordHash: 'secret'
+      const fakeUser = await prisma.user.create({
+        data: { 
+          email: 'fake@test.com',
+          passwordHash: 'pwd',
+          userName: 'fakeuser',
+          isEmailVerified: false,
         },
       });
-      const project = await service.create(user.id, { name: 'oldName' });
 
-      jest.spyOn(projectHelper, 'assertOwner').mockResolvedValueOnce();
+      await expect(
+        service.saveProject(
+          {
+            projectId: 9999,
+            jsonProject: JSON.stringify({ foo: 'bar' }),
+            thumbnailBase64: `data:image/png;base64,${base64Thumbnail}`,
+          },
+          fakeUser.id,
+        ),
+      ).rejects.toThrow('Project 9999 not found');
 
-      await service.renameProject(project.id, 'newName', user.id);
+      await prisma.user.delete({ where: { id: fakeUser.id } });
+    });
+
+    it('should throw ForbiddenException if user has no roles on the project', async () => {
+      const user = await prisma.user.create({
+        data: { email: 'noRole@test.com', passwordHash: 'pwd', userName: 'nrole', isEmailVerified: false },
+      });
+      const project = await prisma.project.create({
+        data: { name: 'NoRoleProject', creatorId: user.id },
+      });
+
+      // no collaboration created!
+
+      await expect(
+        service.saveProject(
+          {
+            projectId: project.id,
+            jsonProject: JSON.stringify({ foo: 'bar' }),
+            thumbnailBase64: `data:image/png;base64,${base64Thumbnail}`,
+          },
+          user.id,
+        ),
+      ).rejects.toThrow('You do not have permission to save this project');
+
+      await prisma.project.delete({ where: { id: project.id } });
+      await prisma.user.delete({ where: { id: user.id } });
+    });
+
+    it('should throw BadRequestException if JSON is invalid', async () => {
+      const user = await prisma.user.create({
+        data: { email: 'badjson@test.com', passwordHash: 'pwd', userName: 'bjson', isEmailVerified: false },
+      });
+      const project = await prisma.project.create({
+        data: { name: 'BadJsonProject', creatorId: user.id },
+      });
+
+      const editorRole = await prisma.role.upsert({
+        where: { name: 'editor' },
+        update: {},
+        create: { name: 'editor' },
+      });
+
+      await prisma.collaboration.create({
+        data: {
+          userId: user.id,
+          projectId: project.id,
+          roles: { connect: { id: editorRole.id } },
+        },
+      });
+
+      await expect(
+        service.saveProject(
+          {
+            projectId: project.id,
+            jsonProject: 'not-json',
+            thumbnailBase64: `data:image/png;base64,${base64Thumbnail}`,
+          },
+          user.id,
+        ),
+      ).rejects.toThrow('jsonProject must be valid JSON');
+
+      await prisma.project.delete({ where: { id: project.id } });
+      await prisma.user.delete({ where: { id: user.id } });
+    });
+  });
+
+  describe('renameProject', () => {
+    it('should fail when renaming a project that does not exist', async () => {
+      // Create a user so we have a valid userId
+      const user = await prisma.user.create({
+        data: {
+          email: 'rename404@example.com',
+          passwordHash: 'hashed',
+          userName: 'rename404',
+          isEmailVerified: false,
+        },
+      });
+
+      await expect(
+        service.renameProject(9999, 'DoesNotExist', user.id),
+      ).rejects.toThrow('Project with id 9999 does not exist');
+
+      await prisma.user.delete({ where: { id: user.id } });
+    });
+
+    it('should rename an existing project when called by the owner', async () => {
+      // Create owner
+      const user = await prisma.user.create({
+        data: {
+          email: 'rename-owner@example.com',
+          passwordHash: 'hashedpassword',
+          userName: 'renameOwner',
+          isEmailVerified: false,
+        },
+      });
+
+      // Create project
+      const project = await prisma.project.create({
+        data: {
+          name: 'Old Name',
+          creatorId: user.id,
+        },
+      });
+
+      // Call renameProject with correct userId
+      await service.renameProject(project.id, 'New Name', user.id);
 
       const updated = await prisma.project.findUnique({
         where: { id: project.id },
       });
-      expect(updated?.name).toBe('newName');
+      expect(updated?.name).toBe('New Name');
+
+      // Cleanup
+      await prisma.project.delete({ where: { id: project.id } });
+      await prisma.user.delete({ where: { id: user.id } });
+    });
+
+    it('should throw if a non-owner tries to rename the project', async () => {
+      // Create owner + project
+      const owner = await prisma.user.create({
+        data: {
+          email: 'owner@example.com',
+          passwordHash: 'hashed',
+          userName: 'ownerUser',
+          isEmailVerified: false,
+        },
+      });
+
+      const project = await prisma.project.create({
+        data: {
+          name: 'Original Name',
+          creatorId: owner.id,
+        },
+      });
+
+      // Create another user
+      const otherUser = await prisma.user.create({
+        data: {
+          email: 'other@example.com',
+          passwordHash: 'hashed',
+          userName: 'otherUser',
+          isEmailVerified: false,
+        },
+      });
+
+      // Non-owner should be forbidden
+      await expect(
+        service.renameProject(project.id, 'Hacked Name', otherUser.id),
+      ).rejects.toThrow('Forbidden');
+
+      // Cleanup
+      await prisma.project.delete({ where: { id: project.id } });
+      await prisma.user.delete({ where: { id: owner.id } });
+      await prisma.user.delete({ where: { id: otherUser.id } });
     });
   });
+
 
   describe('getJSONProject()', () => {
     it('should throw if project does not exist', async () => {
@@ -222,7 +360,7 @@ describe('ProjectService (integration)', () => {
         data: { email: 'json@test.com', 
           userName: 'json',
           isEmailVerified: true,
-          passwordHash: 'secret'
+          passwordHash: 'secret' 
         },
       });
       const project = await service.create(user.id, { name: 'projJson' });
@@ -243,10 +381,10 @@ describe('ProjectService (integration)', () => {
 
     it('should delete project, files and collaboration if user is owner', async () => {
       const user = await prisma.user.create({
-        data: { email: 'del@test.com', 
+        data: { email: 'del@test.com',  
           userName: 'del',
           isEmailVerified: true,
-          passwordHash: 'secret'
+          passwordHash: 'secret' 
         },
       });
       const project = await service.create(user.id, { name: 'projDel' });
@@ -270,7 +408,7 @@ describe('ProjectService (integration)', () => {
   describe('listAccessibleProjects()', () => {
     it('should return empty list if no collaborations', async () => {
       const user = await prisma.user.create({
-        data: { email: 'access@test.com',  
+        data: { email: 'access@test.com', 
           userName: 'access',
           isEmailVerified: true,
           passwordHash: 'secret' 
@@ -284,9 +422,9 @@ describe('ProjectService (integration)', () => {
     it('should return projects where user is collaborator', async () => {
       const user = await prisma.user.create({
         data: { email: 'access2@test.com',  
-          userName: 'access2',
+          userName: 'cd',
           isEmailVerified: true,
-          passwordHash: 'secret'
+          passwordHash: 'secret' 
         },
       });
       const project = await service.create(user.id, { name: 'projAcc' });
@@ -306,18 +444,18 @@ describe('ProjectService (integration)', () => {
   describe('listOwnedProjects()', () => {
     it('should return only projects where role = owner', async () => {
       const owner = await prisma.user.create({
-        data: { email: 'owner@test.com', 
+        data: { email: 'owner@test.com',  
           userName: 'owner',
           isEmailVerified: true,
           passwordHash: 'secret' 
         },
       });
       const collab = await prisma.user.create({
-        data: { email: 'collab@test.com', 
+        data: { email: 'collab@test.com',  
           userName: 'collab',
           isEmailVerified: true,
-          passwordHash: 'secret'
-         },
+          passwordHash: 'secret' 
+        },
       });
 
       const project = await service.create(owner.id, { name: 'projOwner' });
