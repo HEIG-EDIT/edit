@@ -4,7 +4,7 @@ export function PrivacyContent(): JSX.Element {
   return (
     <div>
       <p>
-        <strong>Effective Date:</strong> [Insert Date]
+        <strong>Effective Date:</strong> 02 Aug 2025
       </p>
       <p className="mt-2">
         We respect your privacy. This Privacy Policy explains what data we
