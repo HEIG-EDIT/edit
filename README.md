@@ -44,8 +44,9 @@ npm install
 ```
 
 2) Before starting the backend, move and rename the *./.dev_env* file to *./backend/.env*. Then, run these commands to start the backend :
-
-TODO : creer ou non dossier keys ?
+   
+For local development, a .env with all the required parameters to run the application is needed. This can be share through a NordPass secure note.
+Along with this .env file, you will also need to create a folder named `keys` in the `backend` folder. This folder will contain the private and public keys used for JWT authentication. You can generate these keys using the following commands (run them in the `backend` folder):
 
 ```bash
 cd backend
