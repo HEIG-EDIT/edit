@@ -223,7 +223,7 @@ export const LoginPanel = (): JSX.Element => {
     if (!validateEmail(email))
       errs.email = "Please enter a valid email address.";
     if (!validateLoginPassword(password))
-      errs.password = "Password must be at least 14 characters.";
+      errs.password = "Password must be at least 10 characters.";
     setLoginErrors(errs);
     return Object.keys(errs).length === 0;
   }
