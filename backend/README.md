@@ -1,3 +1,7 @@
+# EDIT (Backend)
+
+This part of the project is a [NestJS](https://nestjs.com) app. NestJS is a progressive ramework for building efficient and scalable server-side applications.
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
@@ -5,52 +9,85 @@
 [circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
 [circleci-url]: https://circleci.com/gh/nestjs/nest
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
-## Project setup
+## How to run backend locally
 
+Copy the .env file for local execution (call it simply `.env`) inside the`./backend` folder.
+From the teminal where you will run the following commands, go into the `./backend` folder. 
+
+Run:
 ```bash
-npm install
+docker compose up
+```
+This will create, with docker, a local instance of the postgres database and of the S3 service using Localstack. The S3-compatible endpoint will be available at: `http://localhost:4566`. Running this command will also seed Localstack.
+
+If this command doesn't work, it is very likely because the `./backend/localstack-init/init-s3.sh` file is using the wrong end of file. In visual studio code, you can change it from CRLF to LF within the user interface, down on the right.
+
+### 1. Check creation of a test bucket
+
+Install AWS CLI if not done already. You can follow this guide:
+`https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions`
+
+Configure AWS CLI to point to Localstack:
+```bash
+aws configure
+# Use dummy values:
+# AWS Access Key ID: test
+# AWS Secret Access Key: test
+# Default region: us-east-1
 ```
 
-## Compile and run the project
+Check that a test bucket and object exist:
+```bash
+aws --endpoint-url=http://localhost:4566 s3 ls s3://test-bucket
+```
+
+### 2. Manage database
+
+Apply last migration:
+```bash
+npx prisma migrate deploy
+```
+
+or, to reset the database and reapply all migrations:
+```bash
+npx prisma migrate reset
+```
+
+Seed the database (if not already done automatically):
+```bash
+npx prisma db seed
+```
+
+Optionally, verify the database:
+```bash
+npx prisma studio
+```
+
+### 3. Compile and run the app
+
+This command is necessary only once, to install dependencies:
 
 ```bash
-# development
-npm run start
+npm install 
+```
 
-# watch mode
+Run the backend to be able to reach the APIs at `http://localhost:4000/projects`:
+
+```bash
 npm run start:dev
-
-# production mode
-npm run start:prod
 ```
 
 ## Run tests
 
+To run all tests in parallel:
+
 ```bash
-# backend unit tests
+# backend integration and unit tests
 cd ../backend
-npm install
-npm run build --if-present
 npm test
 ```
 
@@ -102,79 +139,28 @@ npx prisma generate
 
 After that, our DB reflects our new `schema.prisma`.
 
+## Project structure
 
-## Deployment
+The project is organized as follows:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- *bruno_edit_collection*: contains bruno collections to run tests four the APIs routes
+- *localstack...*: three folders containing the configuration for localstack, a service we used to mock s3 to test our application locally
+- *prisma*: containes our database schema, the `seed.ts` script to seed our local database in case of reset, the `migrations` folder with the history of all previous schemas, needed by prisma to generate the client and deploy new changes. 
+- *src*: controller, module, services, dtos and specs (tests) for the following models
+    - *auth*
+    - *collaboration*
+    - *project*
+    - *s3*
+    - *users*
+    
+    These additional folders:
+    - common
+    - config
+    - prisma: module and service to be able to use prisma client.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-npm install -g @nestjs/mau
-mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## How to run backend locally
-
-Copy the .env file for local execution (call it simply `.env`) inside the`./backend` folder.
-From the teminal where you will run the following commands, go into the `./backend` folder. 
-
-Run:
-```bash
-docker compose up
-```
-This will create, with docker, a local instance of the postgres database and of the S3 service using Localstack. The S3-compatible endpoint will be available at: `http://localhost:4566`. Running this command will also seed Localstack.
-
-If this command doesn't work, it is very likely because the `./backend/localstack-init/init-s3.sh` file is using the wrong end of file. In visual studio code, you can change it from CRLF to LF within the user interface, down on the right.
-
-### 1. Check creation of a test bucket
-
-Install AWS CLI if not done already. You can follow this guide:
-`https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions`
-
-Configure AWS CLI to point to Localstack:
-```bash
-aws configure
-# Use dummy values:
-# AWS Access Key ID: test
-# AWS Secret Access Key: test
-# Default region: us-east-1
-```
-
-Check that a test bucket and object exist:
-```bash
-aws --endpoint-url=http://localhost:4566 s3 ls s3://test-bucket
-```
-
-### 2. Manage database
-
-Apply last migration:
-```bash
-npx prisma migrate deploy
-```
-or, to reset the database and reapply all migrations:
-```bash
-npx prisma migrate reset
-```
-
-Seed the database (if not already done):
-```bash
-npx prisma db seed
-```
-
-Optionally, verify the database:
-```bash
-npx prisma studio
-```
-
-### 3. Run the app
-
-Run the backend to be able to reach the APIs at `http://localhost:4000/projects`:
-```bash
-npm run start:dev
-```
+The *jest.config.ts* file includes configuration for running the tests with the command `npm test`.
+`Dockerfile` is used during the app deployment.
+The `docker-compose` file is used to run the app locally and set up the needed services (postgresSQL and localstack for s3.)
 
 ## Resources
 
@@ -183,21 +169,12 @@ Check out a few resources that may come in handy when working with NestJS:
 - Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
 - For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
 - To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
 - Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
 - Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
 
 ## Support
 
 Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
 
 ## License
 

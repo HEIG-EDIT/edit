@@ -2,4 +2,4 @@ cd frontend
 npx lint-staged
 
 cd ../backend
-npx lint-staged
+npm test
