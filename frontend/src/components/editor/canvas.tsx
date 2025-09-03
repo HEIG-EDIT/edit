@@ -80,15 +80,18 @@ export const Canvas = ({
         }
       }
     },
-    [toolEventHandlers, setCanvasDragStartPosition, isDraggingCanvas],
+    [
+      toolEventHandlers,
+      setCanvasDragStartPosition,
+      isDraggingCanvas,
+      canvasState,
+    ],
   );
 
   const handleMouseMove = useCallback(
     (e: KonvaMouseEvent) => {
       if (!isDraggingCanvas.current) {
-        console.log("Event handlers", toolEventHandlers.current);
         const handler = toolEventHandlers.current[MOUSE_MOVE];
-        console.log("Event handler", handler);
         if (handler) {
           return handler(e);
         } else {
@@ -112,7 +115,12 @@ export const Canvas = ({
         };
       });
     },
-    [toolEventHandlers, setCanvasState],
+    [
+      toolEventHandlers,
+      setCanvasState,
+      isDraggingCanvas,
+      canvasDragStartPosition,
+    ],
   );
 
   const handleMouseUp = useCallback(
