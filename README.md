@@ -23,6 +23,8 @@ The project structure for the backend is described [here](./backend/README.md#pr
 
 ### Development setup
 
+**For local development, a *.env* with all the required variables to run the application is needed. This can be share through a NordPass secure note or check the *.env* file in the *./backend* directory to see which variables are required.**
+
 1) Run the following command to setup the general development environment. This includes commit hooks for linting and formatting the code.
 
 ```bash
@@ -69,3 +71,7 @@ When running `npm install` at the root of the repository, Git commit hooks are i
 4. Open a PR from your branch into main, fill in the predefined PR template (link corresponding issue and explain your modifications), and create the PR.
 6. The development team will automatically be assigned as reviewers. Once at least one reviewer approves the PR, it can be merged into main.
 7. Merging into main will trigger the CI/CD pipeline, which will build and deploy an updated Docker image to production (frontend and/or backend, depending on where the changes were made).
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
