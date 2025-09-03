@@ -24,7 +24,7 @@ import {
 } from "@/components/editor/editorContext";
 import type { Vector2d } from "konva/lib/types";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Project } from "@/models/editor/project";
 import { LoadingComponent } from "@/components/api/loadingComponent";
 import { ErrorComponent } from "@/components/api/errorComponent";
@@ -55,7 +55,14 @@ export default function EditorPage() {
   const authReady = useRequireAuthState(); // prevents flash while auth is being checked
 
   const params = useParams();
+  const searchParams = useSearchParams();
   const projectId = useMemo(() => String(params.projectId), [params.projectId]);
+  const canvasSize = useMemo<Vector2d>(() => {
+    return {
+      x: Number(searchParams.get("width")),
+      y: Number(searchParams.get("height")),
+    };
+  }, [searchParams]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -134,19 +141,6 @@ export default function EditorPage() {
   const toolEventHandlers = useRef<EventHandlers>({});
 
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const [canvasSize, setCanvasSize] = useState<Vector2d>({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        setCanvasSize({ x: (width / 3) * 2, y: (height / 6) * 4 });
-      }
-    });
-
-    resizeObserver.observe(document.body);
-    return () => resizeObserver.disconnect();
-  }, []);
 
   const layerRef = useRef<Konva.Layer>(null);
 
