@@ -57,12 +57,7 @@ export default function EditorPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const projectId = useMemo(() => String(params.projectId), [params.projectId]);
-  const canvasSize = useMemo<Vector2d>(() => {
-    return {
-      x: Number(searchParams.get("width")),
-      y: Number(searchParams.get("height")),
-    };
-  }, [searchParams]);
+  const [canvasSize, setCanvasSize] = useState<Vector2d>({x: 0, y: 0});
 
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -103,8 +98,13 @@ export default function EditorPage() {
           if (res.data.JSONProject) {
             const project = await Project.fromJSON(res.data.JSONProject);
             setLayers(project.layers);
+	    setCanvasSize(project.canvasSize);
           } else {
-            // Empty project is valid; just leave layers empty.
+	    // Get canvas size form query parameters
+	    setCanvasSize({
+		x: searchParams.get("width"),
+		y: searchParams.get("height"),
+	    });
           }
         } else {
           setHasError(true);
