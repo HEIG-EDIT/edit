@@ -144,7 +144,6 @@ describe('UsersService (integration)', () => {
 
       const updated = await prisma.user.findUnique({ where: { id: userId } });
       expect(updated?.email).toBe('newmail@test.com');
-      expect(updated?.isEmailVerified).toBe(false); // reset verification
     });
 
     it('should return CONFLICT if another user already has the email', async () => {

@@ -7,7 +7,6 @@ import { ConfigService } from '@nestjs/config';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
 import * as bcrypt from 'bcrypt';
-import { execSync } from 'child_process';
 
 describe('AuthService (integration)', () => {
   let service: AuthService;
@@ -27,8 +26,7 @@ describe('AuthService (integration)', () => {
       usersService,
       jwtService,
       prisma,
-      configService,
-      tokensService,
+      tokensService
     );
   });
 

@@ -2,6 +2,3 @@
 db/setup/.env
 node_modules
 /generated/prisma
-backend/.env
-backend/.env.local
-backend/.env.prod
