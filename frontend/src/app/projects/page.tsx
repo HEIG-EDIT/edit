@@ -180,10 +180,14 @@ export default function ProjectSelection() {
   };
 
   useEffect(() => {
+    const query = new URLSearchParams({
+      width: String(projectSize.x),
+      height: String(projectSize.y),
+    }).toString();
     if (projectId) {
-      router.push(`/editor/${projectId}`);
+      router.push(`/editor/${projectId}?${query}`);
     }
-  }, [projectId, router]);
+  }, [projectId, router, projectSize]);
 
   // ---------- BLOCKING LOADER while checking or redirecting ----------
   if (checking || !allowed) {

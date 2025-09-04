@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Stage, Layer as KonvaLayer, Rect } from "react-konva";
 import {
   CANVAS_DRAG_MOUSE_BUTTON,
@@ -62,6 +62,20 @@ export const Canvas = ({
     isHoldingPrimary,
   } = useEditorContext();
 
+  const [stageSize, setStageSize] = useState<Vector2d>({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setStageSize({ x: (width / 3) * 2, y: (height / 6) * 4 });
+      }
+    });
+
+    resizeObserver.observe(document.body);
+    return () => resizeObserver.disconnect();
+  }, [setStageSize]);
+
   const handleMouseDown = useCallback(
     (e: KonvaMouseEvent) => {
       e.evt.preventDefault();
@@ -80,15 +94,18 @@ export const Canvas = ({
         }
       }
     },
-    [toolEventHandlers, setCanvasDragStartPosition, isDraggingCanvas],
+    [
+      toolEventHandlers,
+      setCanvasDragStartPosition,
+      isDraggingCanvas,
+      canvasState,
+    ],
   );
 
   const handleMouseMove = useCallback(
     (e: KonvaMouseEvent) => {
       if (!isDraggingCanvas.current) {
-        console.log("Event handlers", toolEventHandlers.current);
         const handler = toolEventHandlers.current[MOUSE_MOVE];
-        console.log("Event handler", handler);
         if (handler) {
           return handler(e);
         } else {
@@ -112,7 +129,12 @@ export const Canvas = ({
         };
       });
     },
-    [toolEventHandlers, setCanvasState],
+    [
+      toolEventHandlers,
+      setCanvasState,
+      isDraggingCanvas,
+      canvasDragStartPosition,
+    ],
   );
 
   const handleMouseUp = useCallback(
@@ -178,8 +200,8 @@ export const Canvas = ({
     <div>
       <Stage
         className="bg-violet-200"
-        height={height}
-        width={width}
+        width={stageSize.x}
+        height={stageSize.y}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
